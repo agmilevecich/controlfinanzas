@@ -102,4 +102,7 @@ public class Inversion {
 		this.fechaVencimiento = fechaVencimiento;
 	}
 
+	public String getNombre() {
+		return descripcion;
+	}
 }
