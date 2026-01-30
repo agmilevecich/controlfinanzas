@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
+import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Inversion;
 
 public class CalculadoraProyeccionSimple implements CalculadoraProyeccion {
@@ -33,4 +34,16 @@ public class CalculadoraProyeccionSimple implements CalculadoraProyeccion {
 
 		return inversion.getCapitalInicial().add(rendimiento);
 	}
+
+	@Override
+	public BigDecimal proyectar(Cuenta cuenta, LocalDate fechaObjetivo) {
+		if (!cuenta.estaActiva(fechaObjetivo)) {
+			return BigDecimal.ZERO;
+		}
+
+		long dias = java.time.temporal.ChronoUnit.DAYS.between(cuenta.getFechaInicio(), fechaObjetivo);
+		double capitalFinal = cuenta.getCapitalInicial().doubleValue() * Math.pow(1 + cuenta.getInteresDiario(), dias);
+		return BigDecimal.valueOf(capitalFinal);
+	}
+
 }
