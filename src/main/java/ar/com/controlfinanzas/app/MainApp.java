@@ -1,9 +1,14 @@
 package ar.com.controlfinanzas.app;
 
+import javax.swing.SwingUtilities;
+
+import ar.com.controlfinanzas.ui.DashboardFrame;
+
 public class MainApp {
 
 	public static void main(String[] args) {
-		System.out.println("Control de Finanzas iniciado");
+		SwingUtilities.invokeLater(() -> {
+			new DashboardFrame().setVisible(true);
+		});
 	}
-
 }
