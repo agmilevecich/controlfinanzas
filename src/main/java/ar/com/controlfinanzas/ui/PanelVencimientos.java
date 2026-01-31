@@ -77,9 +77,12 @@ public class PanelVencimientos extends JPanel {
 	 * Crea un renderer que colorea las barras según el estado de la inversión
 	 */
 	private BarRenderer crearRenderer() {
-		return new BarRenderer() {
+
+		BarRenderer renderer = new BarRenderer() {
+
 			@Override
 			public Paint getItemPaint(int row, int column) {
+
 				String nombreInversion = (String) dataset.getColumnKey(column);
 
 				Inversion inv = inversiones.stream().filter(i -> i.getNombre().equals(nombreInversion)).findFirst()
@@ -93,6 +96,19 @@ public class PanelVencimientos extends JPanel {
 				return super.getItemPaint(row, column);
 			}
 		};
+
+		// 👇 TOOLTIP DINÁMICO
+		renderer.setDefaultToolTipGenerator((dataset, row, column) -> {
+
+			String nombreInversion = (String) dataset.getColumnKey(column);
+
+			Inversion inv = inversiones.stream().filter(i -> i.getNombre().equals(nombreInversion)).findFirst()
+					.orElse(null);
+
+			return inv != null ? generarTooltip(inv) : "";
+		});
+
+		return renderer;
 	}
 
 	/**
@@ -129,4 +145,14 @@ public class PanelVencimientos extends JPanel {
 		// Forzamos repaint
 		this.repaint();
 	}
+
+	private String generarTooltip(Inversion inv) {
+
+		AlertaVencimiento alerta = new AlertaVencimiento(inv, LocalDate.now());
+
+		return "<html>" + "<b>" + inv.getNombre() + "</b><br>" + "Tipo: " + inv.getTipo() + "<br>" + "Capital: "
+				+ inv.getCapitalInicial() + "<br>" + "Vencimiento: " + inv.getFechaVencimiento() + "<br>"
+				+ "Días restantes: " + alerta.getDiasRestantes() + "<br>" + "Estado: " + alerta.getEstado() + "</html>";
+	}
+
 }

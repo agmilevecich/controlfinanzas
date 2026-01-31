@@ -1,5 +1,7 @@
 package ar.com.controlfinanzas.app;
 
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -7,6 +9,7 @@ import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 
 import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.model.Moneda;
@@ -41,6 +44,19 @@ public class MainApp {
 			frame.add(panelVencimientos);
 			frame.setLocationRelativeTo(null);
 			frame.setVisible(true);
+
+			// Timer para actualizar automáticamente los días restantes y colores
+			int intervalo = 1000; // 1000 ms = 1 segundo, podés cambiar a 60000 para 1 minuto
+			Timer timer = new Timer(intervalo, new ActionListener() {
+
+				@Override
+				public void actionPerformed(ActionEvent e) {
+					// Actualiza cada segundo
+					panelVencimientos.actualizarInversiones(inversiones);
+
+				}
+			});
+			timer.start();
 
 			// Simulamos agregar una nueva inversión después de 5 segundos
 			new Thread(() -> {
