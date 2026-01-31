@@ -51,11 +51,17 @@ public class PanelGastos extends JPanel {
 	private GastoDAO gastoDAO = new GastoDAO();
 
 	private JPanel panelGraficos; // contendrá los dos gráficos
+	private PanelResumenFinanciero panelResumen;
 
 	public PanelGastos() {
 		inicializarPanel();
 		cargarGastos();
 		actualizarGraficos();
+	}
+
+	public PanelGastos(PanelResumenFinanciero panelResumen) {
+		this();
+		this.panelResumen = panelResumen;
 	}
 
 	private void inicializarPanel() {
@@ -153,6 +159,9 @@ public class PanelGastos extends JPanel {
 			limpiarFormulario();
 			cargarGastos();
 			actualizarGraficos();
+			if (panelResumen != null) {
+				panelResumen.actualizarResumen();
+			}
 		} catch (Exception ex) {
 			ex.printStackTrace();
 			JOptionPane.showMessageDialog(this, "Error al guardar gasto", "Error", JOptionPane.ERROR_MESSAGE);
