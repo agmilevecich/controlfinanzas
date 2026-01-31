@@ -3,6 +3,8 @@ package ar.com.controlfinanzas.app;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.math.BigDecimal;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,9 +13,13 @@ import javax.swing.JFrame;
 import javax.swing.SwingUtilities;
 import javax.swing.Timer;
 
+import ar.com.controlfinanzas.db.DatabaseInitializer;
+import ar.com.controlfinanzas.db.DatabaseManager;
+import ar.com.controlfinanzas.model.Gasto;
 import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.TipoInversion;
+import ar.com.controlfinanzas.ui.PanelGastos;
 import ar.com.controlfinanzas.ui.PanelVencimientos;
 
 public class MainApp {
@@ -21,6 +27,37 @@ public class MainApp {
 	public static void main(String[] args) {
 
 		SwingUtilities.invokeLater(() -> {
+
+			// Arranca consola web H2 (solo para pruebas)
+			try {
+				org.h2.tools.Server.createWebServer("-web").start();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			// Inicializa base de datos
+			DatabaseInitializer.inicializar();
+
+			Gasto gastoTest = new Gasto(LocalDate.now(), "Supermercado", 3500, "Alimentación");
+
+			try (Connection conn = DatabaseManager.getConnection();
+					PreparedStatement ps = conn.prepareStatement(
+							"INSERT INTO gastos (fecha, descripcion, monto, categoria) VALUES (?, ?, ?, ?)")) {
+
+				ps.setDate(1, java.sql.Date.valueOf(gastoTest.getFecha()));
+				ps.setString(2, gastoTest.getDescripcion());
+				ps.setDouble(3, gastoTest.getMonto());
+				ps.setString(4, gastoTest.getCategoria());
+
+				ps.executeUpdate();
+				System.out.println("Gasto guardado correctamente");
+
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+
+			PanelGastos gastos = new PanelGastos();
+			gastos.setVisible(true);
 
 			// Lista inicial de inversiones
 			List<Inversion> inversiones = new ArrayList<>();
@@ -41,7 +78,9 @@ public class MainApp {
 			frame.setSize(900, 500);
 
 			PanelVencimientos panelVencimientos = new PanelVencimientos(inversiones);
-			frame.add(panelVencimientos);
+			PanelGastos panelGastos = new PanelGastos();
+//			frame.add(panelVencimientos);
+			frame.add(panelGastos);
 			frame.setLocationRelativeTo(null);
 			frame.setVisible(true);
 
