@@ -19,6 +19,7 @@ public class DashboardFrame extends JFrame {
 		tabs.addTab("Patrimonio", new JPanel()); // gráfico línea
 		tabs.addTab("Distribución", new JPanel()); // gráfico torta
 		tabs.addTab("Vencimientos", new JPanel()); // gráfico barras
+		tabs.addTab("Inversion", new JPanel());
 
 		add(tabs, BorderLayout.CENTER);
 	}

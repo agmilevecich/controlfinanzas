@@ -43,7 +43,7 @@ public class InversionDAO {
 
 			while (rs.next()) {
 				Inversion inv = new Inversion();
-				inv.setId(rs.getLong("id"));
+				inv.setId(rs.getInt("id"));
 				inv.setTipo(TipoInversion.valueOf(rs.getString("tipo")));
 				inv.setMoneda(Moneda.valueOf(rs.getString("moneda")));
 				inv.setDescripcion(rs.getString("descripcion"));

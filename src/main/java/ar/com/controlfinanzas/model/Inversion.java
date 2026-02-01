@@ -5,18 +5,20 @@ import java.time.LocalDate;
 
 public class Inversion {
 
-	private Long id;
-
+	private int id;
 	private TipoInversion tipo;
 	private Moneda moneda;
-
 	private String descripcion;
-
 	private BigDecimal capitalInicial;
 	private BigDecimal rendimientoEsperado;
-
 	private LocalDate fechaInicio;
 	private LocalDate fechaVencimiento;
+
+	// 🔹 NUEVOS CAMPOS
+	private BigDecimal cantidad;
+	private BigDecimal precioUnitario;
+	private String cryptoTipo;
+	private String broker;
 
 	public Inversion() {
 	}
@@ -32,18 +34,14 @@ public class Inversion {
 		this.fechaVencimiento = fechaVencimiento;
 	}
 
-	// getters y setters
+	// GETTERS Y SETTERS EXISTENTES
 
-	public boolean tieneVencimiento() {
-		return fechaVencimiento != null;
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
+	public void setId(int id) {
 		this.id = id;
+	}
+
+	public int getId() {
+		return id;
 	}
 
 	public TipoInversion getTipo() {
@@ -102,7 +100,45 @@ public class Inversion {
 		this.fechaVencimiento = fechaVencimiento;
 	}
 
-	public String getNombre() {
-		return descripcion;
+	// 🔹 GETTERS Y SETTERS NUEVOS
+	public BigDecimal getCantidad() {
+		return cantidad;
 	}
+
+	public void setCantidad(BigDecimal cantidad) {
+		this.cantidad = cantidad;
+	}
+
+	public BigDecimal getPrecioUnitario() {
+		return precioUnitario;
+	}
+
+	public void setPrecioUnitario(BigDecimal precioUnitario) {
+		this.precioUnitario = precioUnitario;
+	}
+
+	public String getCryptoTipo() {
+		return cryptoTipo;
+	}
+
+	public void setCryptoTipo(String cryptoTipo) {
+		this.cryptoTipo = cryptoTipo;
+	}
+
+	public String getBroker() {
+		return broker;
+	}
+
+	public void setBroker(String broker) {
+		this.broker = broker;
+	}
+
+	public Comparable getNombre() {
+		return getDescripcion();
+	}
+
+	public boolean tieneVencimiento() {
+		return fechaVencimiento != null;
+	}
+
 }
