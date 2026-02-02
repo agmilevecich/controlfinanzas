@@ -26,6 +26,7 @@ import ar.com.controlfinanzas.dao.InversionDAO;
 import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.TipoInversion;
+import ar.com.controlfinanzas.service.AlertaService;
 
 public class PanelInversionesAvanzado extends JPanel {
 
@@ -42,10 +43,13 @@ public class PanelInversionesAvanzado extends JPanel {
 
 	private PanelVencimientos panelVencimientos;
 	private PanelResumenFinanciero panelResumen;
+	private PanelAlertas panelAlertas;
 
-	public PanelInversionesAvanzado(PanelVencimientos panelVencimientos, PanelResumenFinanciero panelResumen) {
+	public PanelInversionesAvanzado(PanelVencimientos panelVencimientos, PanelResumenFinanciero panelResumen,
+			PanelAlertas panelAlertas) {
 		this.panelVencimientos = panelVencimientos;
 		this.panelResumen = panelResumen;
+		this.panelAlertas = panelAlertas;
 		inversionDAO = new InversionDAO();
 
 		inicializarPanel();
@@ -251,6 +255,12 @@ public class PanelInversionesAvanzado extends JPanel {
 			}
 			if (panelResumen != null) {
 				panelResumen.actualizarResumen();
+			}
+
+			if (panelAlertas != null) {
+				AlertaService alertaService = new AlertaService();
+				panelAlertas
+						.actualizarAlertas(alertaService.generarAlertasInversiones(inversionDAO.listarInversiones()));
 			}
 
 		} catch (Exception ex) {

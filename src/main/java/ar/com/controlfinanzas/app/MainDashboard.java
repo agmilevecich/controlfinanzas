@@ -9,6 +9,7 @@ import javax.swing.SwingUtilities;
 import ar.com.controlfinanzas.dao.InversionDAO;
 import ar.com.controlfinanzas.db.DatabaseInitializer;
 import ar.com.controlfinanzas.model.Inversion;
+import ar.com.controlfinanzas.ui.PanelAlertas;
 import ar.com.controlfinanzas.ui.PanelGastos;
 import ar.com.controlfinanzas.ui.PanelInversionesAvanzado;
 import ar.com.controlfinanzas.ui.PanelResumenFinanciero;
@@ -43,7 +44,9 @@ public class MainDashboard {
 			PanelVencimientos panelVencimientos = new PanelVencimientos(inversiones);
 			PanelResumenFinanciero panelResumen = new PanelResumenFinanciero();
 			PanelGastos panelGastos = new PanelGastos(panelResumen);
-			PanelInversionesAvanzado panelInversiones = new PanelInversionesAvanzado(panelVencimientos, panelResumen);
+			PanelAlertas panelAlertas = new PanelAlertas();
+			PanelInversionesAvanzado panelInversiones = new PanelInversionesAvanzado(panelVencimientos, panelResumen,
+					panelAlertas);
 
 			// Pestañas
 			JTabbedPane tabs = new JTabbedPane();
