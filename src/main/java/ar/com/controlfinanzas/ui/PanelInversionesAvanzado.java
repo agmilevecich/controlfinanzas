@@ -1,12 +1,22 @@
 package ar.com.controlfinanzas.ui;
 
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
 
-import javax.swing.*;
+import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
 import com.github.lgooddatepicker.components.DatePicker;
@@ -162,20 +172,29 @@ public class PanelInversionesAvanzado extends JPanel {
 	}
 
 	private void ajustarCamposSegunTipo() {
-        TipoInversion tipo = (TipoInversion) cbTipo.getSelectedItem();
-        // Ocultar todo primero
-        txtCantidad.setEnabled(false);
-        txtPrecioUnitario.setEnabled(false);
-        txtCryptoTipo.setEnabled(false);
-        txtBroker.setEnabled(false);
+		TipoInversion tipo = (TipoInversion) cbTipo.getSelectedItem();
+		// Ocultar todo primero
+		txtCantidad.setEnabled(false);
+		txtPrecioUnitario.setEnabled(false);
+		txtCryptoTipo.setEnabled(false);
+		txtBroker.setEnabled(false);
 
-        switch(tipo) {
-            case PLAZO_FIJO_UVA -> txtCantidad.setEnabled(true); // cantidad UVA
-            case ACCION, FONDO_COMUN_INVERSION -> { txtCantidad.setEnabled(true); txtPrecioUnitario.setEnabled(true); txtBroker.setEnabled(true); }
-            case CRIPTOMONEDA -> { txtCantidad.setEnabled(true); txtCryptoTipo.setEnabled(true); txtBroker.setEnabled(true); }
-            default -> { /* PF tradicional no necesita campos extra */ }
-        }
-    }
+		switch (tipo) {
+		case PLAZO_FIJO_UVA -> txtCantidad.setEnabled(true); // cantidad UVA
+		case ACCION, FONDO_COMUN_INVERSION -> {
+			txtCantidad.setEnabled(true);
+			txtPrecioUnitario.setEnabled(true);
+			txtBroker.setEnabled(true);
+		}
+		case CRIPTOMONEDA -> {
+			txtCantidad.setEnabled(true);
+			txtCryptoTipo.setEnabled(true);
+			txtBroker.setEnabled(true);
+		}
+		default -> {
+			/* PF tradicional no necesita campos extra */ }
+		}
+	}
 
 	private void agregarInversion() {
 		try {

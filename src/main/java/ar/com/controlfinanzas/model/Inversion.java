@@ -5,26 +5,34 @@ import java.time.LocalDate;
 
 public class Inversion {
 
-	private int id;
+	private Long id;
+
 	private TipoInversion tipo;
 	private Moneda moneda;
 	private String descripcion;
+
 	private BigDecimal capitalInicial;
 	private BigDecimal rendimientoEsperado;
+
 	private LocalDate fechaInicio;
 	private LocalDate fechaVencimiento;
 
-	// 🔹 NUEVOS CAMPOS
+	// Campos opcionales / avanzados
 	private BigDecimal cantidad;
 	private BigDecimal precioUnitario;
-	private String cryptoTipo;
 	private String broker;
+	private String cryptoTipo;
+
+	/*
+	 * ====================== CONSTRUCTORES ======================
+	 */
 
 	public Inversion() {
 	}
 
 	public Inversion(TipoInversion tipo, Moneda moneda, String descripcion, BigDecimal capitalInicial,
 			BigDecimal rendimientoEsperado, LocalDate fechaInicio, LocalDate fechaVencimiento) {
+
 		this.tipo = tipo;
 		this.moneda = moneda;
 		this.descripcion = descripcion;
@@ -32,16 +40,44 @@ public class Inversion {
 		this.rendimientoEsperado = rendimientoEsperado;
 		this.fechaInicio = fechaInicio;
 		this.fechaVencimiento = fechaVencimiento;
+
+		this.cantidad = BigDecimal.ZERO;
+		this.precioUnitario = BigDecimal.ZERO;
 	}
 
-	// GETTERS Y SETTERS EXISTENTES
+	/*
+	 * ====================== MÉTODOS DE NEGOCIO ======================
+	 */
 
-	public void setId(int id) {
-		this.id = id;
+	public boolean tieneVencimiento() {
+		return fechaVencimiento != null;
 	}
 
-	public int getId() {
+	/**
+	 * Usado por gráficos y tooltips
+	 */
+	public String getNombre() {
+		return descripcion;
+	}
+
+	public BigDecimal getCapitalTotalCalculado() {
+		if (cantidad != null && precioUnitario != null && cantidad.compareTo(BigDecimal.ZERO) > 0
+				&& precioUnitario.compareTo(BigDecimal.ZERO) > 0) {
+			return cantidad.multiply(precioUnitario);
+		}
+		return capitalInicial;
+	}
+
+	/*
+	 * ====================== GETTERS & SETTERS ======================
+	 */
+
+	public Long getId() {
 		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
 	}
 
 	public TipoInversion getTipo() {
@@ -100,13 +136,12 @@ public class Inversion {
 		this.fechaVencimiento = fechaVencimiento;
 	}
 
-	// 🔹 GETTERS Y SETTERS NUEVOS
 	public BigDecimal getCantidad() {
 		return cantidad;
 	}
 
 	public void setCantidad(BigDecimal cantidad) {
-		this.cantidad = cantidad;
+		this.cantidad = cantidad != null ? cantidad : BigDecimal.ZERO;
 	}
 
 	public BigDecimal getPrecioUnitario() {
@@ -114,15 +149,7 @@ public class Inversion {
 	}
 
 	public void setPrecioUnitario(BigDecimal precioUnitario) {
-		this.precioUnitario = precioUnitario;
-	}
-
-	public String getCryptoTipo() {
-		return cryptoTipo;
-	}
-
-	public void setCryptoTipo(String cryptoTipo) {
-		this.cryptoTipo = cryptoTipo;
+		this.precioUnitario = precioUnitario != null ? precioUnitario : BigDecimal.ZERO;
 	}
 
 	public String getBroker() {
@@ -133,12 +160,11 @@ public class Inversion {
 		this.broker = broker;
 	}
 
-	public Comparable getNombre() {
-		return getDescripcion();
+	public String getCryptoTipo() {
+		return cryptoTipo;
 	}
 
-	public boolean tieneVencimiento() {
-		return fechaVencimiento != null;
+	public void setCryptoTipo(String cryptoTipo) {
+		this.cryptoTipo = cryptoTipo;
 	}
-
 }

@@ -1,31 +1,51 @@
 package ar.com.controlfinanzas.ui;
 
-import java.awt.BorderLayout;
+import java.util.List;
 
 import javax.swing.JFrame;
-import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
+
+import ar.com.controlfinanzas.dao.InversionDAO;
+import ar.com.controlfinanzas.model.Inversion;
 
 public class DashboardFrame extends JFrame {
 
-	private JTabbedPane tabs = new JTabbedPane();
+	private List<Inversion> inversiones;
 
-	public DashboardFrame() {
-		setTitle("Control de Finanzas Personales");
-		setSize(1100, 700);
+	private PanelResumenFinanciero panelResumen;
+	private PanelVencimientos panelVencimientos;
+	private PanelInversionesAvanzado panelInversiones;
+	private PanelGastos panelGastos;
+
+	private InversionDAO inversionDAO;
+
+	public DashboardFrame() throws Exception {
+		setTitle("Control de Finanzas");
+		setSize(1200, 800);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		tabs.addTab("Patrimonio", new JPanel()); // gráfico línea
-		tabs.addTab("Distribución", new JPanel()); // gráfico torta
-		tabs.addTab("Vencimientos", new JPanel()); // gráfico barras
-		tabs.addTab("Inversion", new JPanel());
+		inversionDAO = new InversionDAO();
+		inversiones = inversionDAO.listarInversiones();
 
-		add(tabs, BorderLayout.CENTER);
+		inicializarComponentes();
 	}
 
-	public JTabbedPane getTabbedPane() {
-		return tabs;
-	}
+	private void inicializarComponentes() {
 
+		panelResumen = new PanelResumenFinanciero();
+		panelVencimientos = new PanelVencimientos(inversiones);
+
+		panelInversiones = new PanelInversionesAvanzado(panelVencimientos, panelResumen);
+
+		panelGastos = new PanelGastos(panelResumen);
+
+		JTabbedPane tabs = new JTabbedPane();
+		tabs.addTab("Resumen", panelResumen);
+		tabs.addTab("Gastos", panelGastos);
+		tabs.addTab("Inversiones", panelInversiones);
+		tabs.addTab("Vencimientos", panelVencimientos);
+
+		add(tabs);
+	}
 }

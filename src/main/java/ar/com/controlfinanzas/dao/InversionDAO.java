@@ -13,49 +13,62 @@ import ar.com.controlfinanzas.model.TipoInversion;
 
 public class InversionDAO {
 
-	// Guardar una inversión en la base de datos
 	public void guardarInversion(Inversion inv) throws Exception {
-		String sql = "INSERT INTO inversion (tipo, moneda, descripcion, capital_inicial, rendimiento_esperado, fecha_inicio, fecha_vencimiento) "
-				+ "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
-		try (Connection conn = DatabaseManager.getConnection(); PreparedStatement stmt = conn.prepareStatement(sql)) {
+		String sql = """
+				INSERT INTO inversion
+				(tipo, moneda, descripcion, capital_inicial, rendimiento_esperado,
+				 fecha_inicio, fecha_vencimiento,
+				 cantidad, precio_unitario, broker, crypto_tipo)
+				VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+				""";
 
-			stmt.setString(1, inv.getTipo().name());
-			stmt.setString(2, inv.getMoneda().name());
-			stmt.setString(3, inv.getDescripcion());
-			stmt.setBigDecimal(4, inv.getCapitalInicial());
-			stmt.setBigDecimal(5, inv.getRendimientoEsperado());
-			stmt.setDate(6, java.sql.Date.valueOf(inv.getFechaInicio()));
-			stmt.setDate(7, java.sql.Date.valueOf(inv.getFechaVencimiento()));
+		try (Connection conn = DatabaseManager.getConnection(); PreparedStatement ps = conn.prepareStatement(sql)) {
 
-			stmt.executeUpdate();
+			ps.setString(1, inv.getTipo().name());
+			ps.setString(2, inv.getMoneda().name());
+			ps.setString(3, inv.getDescripcion());
+			ps.setBigDecimal(4, inv.getCapitalInicial());
+			ps.setBigDecimal(5, inv.getRendimientoEsperado());
+			ps.setDate(6, java.sql.Date.valueOf(inv.getFechaInicio()));
+			ps.setDate(7, java.sql.Date.valueOf(inv.getFechaVencimiento()));
+
+			ps.setBigDecimal(8, inv.getCantidad());
+			ps.setBigDecimal(9, inv.getPrecioUnitario());
+			ps.setString(10, inv.getBroker());
+			ps.setString(11, inv.getCryptoTipo());
+
+			ps.executeUpdate();
 		}
 	}
 
-	// Listar todas las inversiones
 	public List<Inversion> listarInversiones() throws Exception {
-		List<Inversion> inversiones = new ArrayList<>();
+
+		List<Inversion> lista = new ArrayList<>();
+
 		String sql = "SELECT * FROM inversion";
 
 		try (Connection conn = DatabaseManager.getConnection();
-				PreparedStatement stmt = conn.prepareStatement(sql);
-				ResultSet rs = stmt.executeQuery()) {
+				PreparedStatement ps = conn.prepareStatement(sql);
+				ResultSet rs = ps.executeQuery()) {
 
 			while (rs.next()) {
-				Inversion inv = new Inversion();
-				inv.setId(rs.getInt("id"));
-				inv.setTipo(TipoInversion.valueOf(rs.getString("tipo")));
-				inv.setMoneda(Moneda.valueOf(rs.getString("moneda")));
-				inv.setDescripcion(rs.getString("descripcion"));
-				inv.setCapitalInicial(rs.getBigDecimal("capital_inicial"));
-				inv.setRendimientoEsperado(rs.getBigDecimal("rendimiento_esperado"));
-				inv.setFechaInicio(rs.getDate("fecha_inicio").toLocalDate());
-				inv.setFechaVencimiento(rs.getDate("fecha_vencimiento").toLocalDate());
 
-				inversiones.add(inv);
+				Inversion inv = new Inversion(TipoInversion.valueOf(rs.getString("tipo")),
+						Moneda.valueOf(rs.getString("moneda")), rs.getString("descripcion"),
+						rs.getBigDecimal("capital_inicial"), rs.getBigDecimal("rendimiento_esperado"),
+						rs.getDate("fecha_inicio").toLocalDate(), rs.getDate("fecha_vencimiento").toLocalDate());
+
+				inv.setId(rs.getLong("id"));
+				inv.setCantidad(rs.getBigDecimal("cantidad"));
+				inv.setPrecioUnitario(rs.getBigDecimal("precio_unitario"));
+				inv.setBroker(rs.getString("broker"));
+				inv.setCryptoTipo(rs.getString("crypto_tipo"));
+
+				lista.add(inv);
 			}
 		}
 
-		return inversiones;
+		return lista;
 	}
 }
