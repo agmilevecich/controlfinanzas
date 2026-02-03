@@ -33,8 +33,27 @@ public class PanelAlertas extends JPanel {
 			return;
 		}
 
-		for (Alerta alerta : alertas) {
-			textArea.append("• " + alerta.getTitulo() + ":" + alerta.getMensaje() + "\n");
+		alertas.stream().sorted((a1, a2) -> prioridad(a1.getNivel()) - prioridad(a2.getNivel())).forEach(alerta -> {
+			textArea.append("• " + alerta.getTitulo() + ": " + alerta.getMensaje() + "\n");
+		});
+	}
+
+	private int prioridad(Alerta.Nivel nivel) {
+		if (nivel == null) {
+			return 99;
+		}
+
+		switch (nivel) {
+		case HOY:
+			return 1;
+		case CRITICA:
+			return 2;
+		case PROXIMA:
+			return 3;
+		case INFO:
+		default:
+			return 4;
 		}
 	}
+
 }
