@@ -5,49 +5,36 @@ import java.util.List;
 
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.JTextArea;
 
 import ar.com.controlfinanzas.model.Alerta;
 
 public class PanelAlertas extends JPanel {
 
-	private JTable tabla;
-	private DefaultTableModel modelo;
-
-	public PanelAlertas(List<Alerta> alertas) {
-
-		setLayout(new BorderLayout());
-
-		modelo = new DefaultTableModel(new Object[] { "Tipo", "Descripción", "Fecha" }, 0);
-
-		tabla = new JTable(modelo);
-		add(new JScrollPane(tabla), BorderLayout.CENTER);
-
-		cargarAlertas(alertas);
-	}
+	private JTextArea textArea;
 
 	public PanelAlertas() {
 		setLayout(new BorderLayout());
 
-		modelo = new DefaultTableModel(new Object[] { "Tipo", "Descripción", "Fecha" }, 0);
+		textArea = new JTextArea();
+		textArea.setEditable(false);
+		textArea.setLineWrap(true);
+		textArea.setWrapStyleWord(true);
 
-		tabla = new JTable(modelo);
-		add(new JScrollPane(tabla), BorderLayout.CENTER);
-	}
+		add(new JScrollPane(textArea), BorderLayout.CENTER);
 
-	private void cargarAlertas(List<Alerta> alertas) {
-		modelo.setRowCount(0);
-
-		for (Alerta alerta : alertas) {
-			modelo.addRow(new Object[] { alerta.getTipo(), alerta.getDescripcion(), alerta.getFechaEvento() });
-		}
 	}
 
 	public void actualizarAlertas(List<Alerta> alertas) {
-		modelo.setRowCount(0);
+		textArea.setText("");
+
+		if (alertas == null || alertas.isEmpty()) {
+			textArea.append("No hay alertas activas.\n");
+			return;
+		}
+
 		for (Alerta alerta : alertas) {
-			modelo.addRow(new Object[] { alerta.getTipo(), alerta.getDescripcion(), alerta.getFechaEvento() });
+			textArea.append("• " + alerta.getTitulo() + ":" + alerta.getMensaje() + "\n");
 		}
 	}
 }

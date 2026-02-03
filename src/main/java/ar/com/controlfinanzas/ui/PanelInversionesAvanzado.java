@@ -44,12 +44,10 @@ public class PanelInversionesAvanzado extends JPanel {
 	private PanelVencimientos panelVencimientos;
 	private PanelResumenFinanciero panelResumen;
 	private PanelAlertas panelAlertas;
+	private DashboardFrame dashboard;
 
-	public PanelInversionesAvanzado(PanelVencimientos panelVencimientos, PanelResumenFinanciero panelResumen,
-			PanelAlertas panelAlertas) {
-		this.panelVencimientos = panelVencimientos;
-		this.panelResumen = panelResumen;
-		this.panelAlertas = panelAlertas;
+	public PanelInversionesAvanzado(DashboardFrame dashboard) {
+		this.dashboard = dashboard;
 		inversionDAO = new InversionDAO();
 
 		inicializarPanel();

@@ -25,10 +25,28 @@ public class AlertaService {
 
 			long dias = ChronoUnit.DAYS.between(hoy, inv.getFechaVencimiento());
 
-			if (dias >= 0 && dias <= DIAS_AVISO) {
-				alertas.add(new Alerta("Vencimiento próximo", inv.getDescripcion() + " vence en " + dias + " días",
-						inv.getFechaVencimiento(), Alerta.TipoAlerta.VENCIMIENTO));
+			// Fuera de rango → no genera alerta
+			if (dias < 0 || dias > DIAS_AVISO) {
+				continue;
 			}
+
+			Alerta.Nivel nivel;
+			String titulo;
+
+			if (dias == 0) {
+				nivel = Alerta.Nivel.HOY;
+				titulo = "Vence hoy";
+			} else if (dias <= 2) {
+				nivel = Alerta.Nivel.CRITICA;
+				titulo = "Vencimiento crítico";
+			} else {
+				nivel = Alerta.Nivel.PROXIMA;
+				titulo = "Vencimiento próximo";
+			}
+
+			String mensaje = inv.getDescripcion() + " vence en " + dias + " días";
+
+			alertas.add(new Alerta(titulo, mensaje, inv.getFechaVencimiento(), Alerta.TipoAlerta.VENCIMIENTO, nivel));
 		}
 
 		return alertas;
