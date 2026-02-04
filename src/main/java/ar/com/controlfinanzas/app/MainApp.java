@@ -2,6 +2,7 @@ package ar.com.controlfinanzas.app;
 
 import javax.swing.SwingUtilities;
 
+import ar.com.controlfinanzas.db.DatabaseInitializer;
 import ar.com.controlfinanzas.ui.DashboardFrame;
 
 public class MainApp {
@@ -11,6 +12,7 @@ public class MainApp {
 		SwingUtilities.invokeLater(() -> {
 
 			try {
+				DatabaseInitializer.inicializar();
 				new DashboardFrame().setVisible(true);
 			} catch (Exception e) {
 				// TODO Auto-generated catch block

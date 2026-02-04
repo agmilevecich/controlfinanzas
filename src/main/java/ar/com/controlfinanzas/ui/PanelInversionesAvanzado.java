@@ -6,7 +6,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
-import java.time.LocalDate;
 import java.util.List;
 
 import javax.swing.JButton;
@@ -26,32 +25,32 @@ import ar.com.controlfinanzas.dao.InversionDAO;
 import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.TipoInversion;
-import ar.com.controlfinanzas.service.AlertaService;
 
 public class PanelInversionesAvanzado extends JPanel {
 
 	private JTable tabla;
 	private DefaultTableModel tablaModel;
-	private InversionDAO inversionDAO;
+	private final InversionDAO inversionDAO;
+	private final DashboardFrame dashboard;
 
 	private JComboBox<TipoInversion> cbTipo;
 	private JComboBox<Moneda> cbMoneda;
 
-	private JTextField txtDescripcion, txtCapital, txtRendimiento, txtCantidad, txtPrecioUnitario, txtCryptoTipo,
-			txtBroker;
-	private DatePicker dpFechaInicio, dpFechaVencimiento;
+	private JTextField txtDescripcion;
+	private JTextField txtCapital;
+	private JTextField txtRendimiento;
+	private JTextField txtCantidad;
+	private JTextField txtPrecioUnitario;
+	private JTextField txtCryptoTipo;
+	private JTextField txtBroker;
 
-	private PanelVencimientos panelVencimientos;
-	private PanelResumenFinanciero panelResumen;
-	private PanelAlertas panelAlertas;
-	private DashboardFrame dashboard;
+	private DatePicker dpFechaInicio;
+	private DatePicker dpFechaVencimiento;
 
 	public PanelInversionesAvanzado(DashboardFrame dashboard) {
 		this.dashboard = dashboard;
-		inversionDAO = new InversionDAO();
-
+		this.inversionDAO = new InversionDAO();
 		inicializarPanel();
-		cargarInversiones();
 	}
 
 	private void inicializarPanel() {
@@ -62,7 +61,6 @@ public class PanelInversionesAvanzado extends JPanel {
 		gbc.insets = new Insets(5, 5, 5, 5);
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 
-		// Tipo
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		panelForm.add(new JLabel("Tipo:"), gbc);
@@ -70,7 +68,6 @@ public class PanelInversionesAvanzado extends JPanel {
 		gbc.gridx = 1;
 		panelForm.add(cbTipo, gbc);
 
-		// Moneda
 		gbc.gridx = 0;
 		gbc.gridy++;
 		panelForm.add(new JLabel("Moneda:"), gbc);
@@ -78,7 +75,6 @@ public class PanelInversionesAvanzado extends JPanel {
 		gbc.gridx = 1;
 		panelForm.add(cbMoneda, gbc);
 
-		// Descripción
 		gbc.gridx = 0;
 		gbc.gridy++;
 		panelForm.add(new JLabel("Descripción:"), gbc);
@@ -86,7 +82,6 @@ public class PanelInversionesAvanzado extends JPanel {
 		txtDescripcion = new JTextField(15);
 		panelForm.add(txtDescripcion, gbc);
 
-		// Capital
 		gbc.gridx = 0;
 		gbc.gridy++;
 		panelForm.add(new JLabel("Capital inicial:"), gbc);
@@ -94,7 +89,6 @@ public class PanelInversionesAvanzado extends JPanel {
 		txtCapital = new JTextField(10);
 		panelForm.add(txtCapital, gbc);
 
-		// Rendimiento
 		gbc.gridx = 0;
 		gbc.gridy++;
 		panelForm.add(new JLabel("Rendimiento (%):"), gbc);
@@ -102,7 +96,6 @@ public class PanelInversionesAvanzado extends JPanel {
 		txtRendimiento = new JTextField(5);
 		panelForm.add(txtRendimiento, gbc);
 
-		// Fecha inicio
 		gbc.gridx = 0;
 		gbc.gridy++;
 		panelForm.add(new JLabel("Fecha inicio:"), gbc);
@@ -112,7 +105,6 @@ public class PanelInversionesAvanzado extends JPanel {
 		dpFechaInicio = new DatePicker(startSettings);
 		panelForm.add(dpFechaInicio, gbc);
 
-		// Fecha vencimiento
 		gbc.gridx = 0;
 		gbc.gridy++;
 		panelForm.add(new JLabel("Fecha vencimiento:"), gbc);
@@ -122,7 +114,6 @@ public class PanelInversionesAvanzado extends JPanel {
 		dpFechaVencimiento = new DatePicker(endSettings);
 		panelForm.add(dpFechaVencimiento, gbc);
 
-		// Campos dinámicos adicionales
 		gbc.gridx = 0;
 		gbc.gridy++;
 		panelForm.add(new JLabel("Cantidad:"), gbc);
@@ -146,12 +137,11 @@ public class PanelInversionesAvanzado extends JPanel {
 
 		gbc.gridx = 0;
 		gbc.gridy++;
-		panelForm.add(new JLabel("Broker/Exchange:"), gbc);
+		panelForm.add(new JLabel("Broker / Exchange:"), gbc);
 		gbc.gridx = 1;
 		txtBroker = new JTextField(15);
 		panelForm.add(txtBroker, gbc);
 
-		// Botón agregar
 		gbc.gridx = 0;
 		gbc.gridy++;
 		gbc.gridwidth = 2;
@@ -162,27 +152,25 @@ public class PanelInversionesAvanzado extends JPanel {
 
 		add(panelForm, BorderLayout.NORTH);
 
-		// Tabla
 		tablaModel = new DefaultTableModel(new Object[] { "Tipo", "Moneda", "Descripción", "Capital", "Rendimiento",
-				"Fecha Inicio", "Fecha Vencimiento", "Cantidad", "Precio", "Cripto", "Broker" }, 0);
+				"Inicio", "Vencimiento", "Cantidad", "Precio", "Cripto", "Broker" }, 0);
+
 		tabla = new JTable(tablaModel);
 		add(new JScrollPane(tabla), BorderLayout.CENTER);
 
-		// Ajuste dinámico de campos según tipo
 		cbTipo.addActionListener(e -> ajustarCamposSegunTipo());
-		ajustarCamposSegunTipo(); // inicial
+		ajustarCamposSegunTipo();
 	}
 
 	private void ajustarCamposSegunTipo() {
 		TipoInversion tipo = (TipoInversion) cbTipo.getSelectedItem();
-		// Ocultar todo primero
+
 		txtCantidad.setEnabled(false);
 		txtPrecioUnitario.setEnabled(false);
 		txtCryptoTipo.setEnabled(false);
 		txtBroker.setEnabled(false);
 
 		switch (tipo) {
-		case PLAZO_FIJO_UVA -> txtCantidad.setEnabled(true); // cantidad UVA
 		case ACCION, FONDO_COMUN_INVERSION -> {
 			txtCantidad.setEnabled(true);
 			txtPrecioUnitario.setEnabled(true);
@@ -194,75 +182,41 @@ public class PanelInversionesAvanzado extends JPanel {
 			txtBroker.setEnabled(true);
 		}
 		default -> {
-			/* PF tradicional no necesita campos extra */ }
+		}
 		}
 	}
 
 	private void agregarInversion() {
 		try {
-			String descripcion = txtDescripcion.getText().trim();
-			String capitalStr = txtCapital.getText().trim();
-			String rendimientoStr = txtRendimiento.getText().trim();
-			String cantidadStr = txtCantidad.getText().trim();
-			String precioStr = txtPrecioUnitario.getText().trim();
-			String cryptoTipo = txtCryptoTipo.getText().trim();
-			String broker = txtBroker.getText().trim();
+			if (txtDescripcion.getText().trim().isEmpty() || txtCapital.getText().trim().isEmpty()
+					|| txtRendimiento.getText().trim().isEmpty() || dpFechaInicio.getDate() == null
+					|| dpFechaVencimiento.getDate() == null) {
 
-			TipoInversion tipo = (TipoInversion) cbTipo.getSelectedItem();
-			Moneda moneda = (Moneda) cbMoneda.getSelectedItem();
-			LocalDate fechaInicio = dpFechaInicio.getDate();
-			LocalDate fechaVencimiento = dpFechaVencimiento.getDate();
-
-			if (descripcion.isEmpty() || capitalStr.isEmpty() || rendimientoStr.isEmpty() || fechaInicio == null
-					|| fechaVencimiento == null) {
 				JOptionPane.showMessageDialog(this, "Complete todos los campos obligatorios", "Error",
 						JOptionPane.ERROR_MESSAGE);
 				return;
 			}
 
-			BigDecimal capital = new BigDecimal(capitalStr);
-			BigDecimal rendimiento = new BigDecimal(rendimientoStr);
-			BigDecimal cantidad = cantidadStr.isEmpty() ? BigDecimal.ZERO : new BigDecimal(cantidadStr);
-			BigDecimal precio = precioStr.isEmpty() ? BigDecimal.ZERO : new BigDecimal(precioStr);
+			Inversion inv = new Inversion((TipoInversion) cbTipo.getSelectedItem(), (Moneda) cbMoneda.getSelectedItem(),
+					txtDescripcion.getText().trim(), new BigDecimal(txtCapital.getText().trim()),
+					new BigDecimal(txtRendimiento.getText().trim()), dpFechaInicio.getDate(),
+					dpFechaVencimiento.getDate());
 
-			Inversion inv = new Inversion(tipo, moneda, descripcion, capital, rendimiento, fechaInicio,
-					fechaVencimiento);
-			inv.setCantidad(cantidad);
-			inv.setPrecioUnitario(precio);
-			inv.setCryptoTipo(cryptoTipo);
-			inv.setBroker(broker);
+			inv.setCantidad(txtCantidad.getText().isEmpty() ? BigDecimal.ZERO : new BigDecimal(txtCantidad.getText()));
+			inv.setPrecioUnitario(txtPrecioUnitario.getText().isEmpty() ? BigDecimal.ZERO
+					: new BigDecimal(txtPrecioUnitario.getText()));
+			inv.setCryptoTipo(txtCryptoTipo.getText().trim());
+			inv.setBroker(txtBroker.getText().trim());
 
 			inversionDAO.guardarInversion(inv);
 
 			cargarInversiones();
+			limpiarCampos();
 
-			// Limpiar campos
-			txtDescripcion.setText("");
-			txtCapital.setText("");
-			txtRendimiento.setText("");
-			txtCantidad.setText("");
-			txtPrecioUnitario.setText("");
-			txtCryptoTipo.setText("");
-			txtBroker.setText("");
-			dpFechaInicio.clear();
-			dpFechaVencimiento.clear();
+			dashboard.onInversionesActualizadas();
 
-			// Actualizar paneles
-			if (panelVencimientos != null) {
-				panelVencimientos.actualizarInversiones(inversionDAO.listarInversiones());
-			}
-			if (panelResumen != null) {
-				panelResumen.actualizarResumen();
-			}
-
-			if (panelAlertas != null) {
-				AlertaService alertaService = new AlertaService();
-				panelAlertas
-						.actualizarAlertas(alertaService.generarAlertasInversiones(inversionDAO.listarInversiones()));
-			}
-
-		} catch (Exception ex) {
-			ex.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 			JOptionPane.showMessageDialog(this, "Error al guardar inversión", "Error", JOptionPane.ERROR_MESSAGE);
 		}
 	}
@@ -271,6 +225,7 @@ public class PanelInversionesAvanzado extends JPanel {
 		try {
 			tablaModel.setRowCount(0);
 			List<Inversion> inversiones = inversionDAO.listarInversiones();
+
 			for (Inversion inv : inversiones) {
 				tablaModel.addRow(
 						new Object[] { inv.getTipo(), inv.getMoneda(), inv.getDescripcion(), inv.getCapitalInicial(),
@@ -280,5 +235,17 @@ public class PanelInversionesAvanzado extends JPanel {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	private void limpiarCampos() {
+		txtDescripcion.setText("");
+		txtCapital.setText("");
+		txtRendimiento.setText("");
+		txtCantidad.setText("");
+		txtPrecioUnitario.setText("");
+		txtCryptoTipo.setText("");
+		txtBroker.setText("");
+		dpFechaInicio.clear();
+		dpFechaVencimiento.clear();
 	}
 }
