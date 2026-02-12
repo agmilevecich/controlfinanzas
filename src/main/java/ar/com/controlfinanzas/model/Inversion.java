@@ -3,23 +3,47 @@ package ar.com.controlfinanzas.model;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "inversion")
 public class Inversion {
 
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@Enumerated(EnumType.STRING)
 	private TipoInversion tipo;
+
+	@Enumerated(EnumType.STRING)
 	private Moneda moneda;
+
 	private String descripcion;
 
+	@Column(precision = 19, scale = 4)
 	private BigDecimal capitalInicial;
+
+	@Column(precision = 19, scale = 4)
 	private BigDecimal rendimientoEsperado;
 
 	private LocalDate fechaInicio;
 	private LocalDate fechaVencimiento;
 
 	// Campos opcionales / avanzados
+	@Column(precision = 19, scale = 4)
 	private BigDecimal cantidad;
+
+	@Column(precision = 19, scale = 4)
 	private BigDecimal precioUnitario;
+
 	private String broker;
 	private String cryptoTipo;
 
@@ -53,9 +77,6 @@ public class Inversion {
 		return fechaVencimiento != null;
 	}
 
-	/**
-	 * Usado por gráficos y tooltips
-	 */
 	public String getNombre() {
 		return descripcion;
 	}

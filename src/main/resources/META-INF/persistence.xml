@@ -5,7 +5,7 @@
              xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence
              https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
 
-    <persistence-unit name="controlfinanzasPU" transaction-type="RESOURCE_LOCAL">
+    <persistence-unit name="controlFinanzasPU" transaction-type="RESOURCE_LOCAL">
 
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 
