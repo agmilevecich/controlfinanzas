@@ -21,16 +21,16 @@ import javax.swing.table.DefaultTableModel;
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
 
-import ar.com.controlfinanzas.dao.InversionDAO;
 import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.TipoInversion;
+import ar.com.controlfinanzas.service.InversionService;
 
 public class PanelInversionesAvanzado extends JPanel {
 
 	private JTable tabla;
 	private DefaultTableModel tablaModel;
-	private final InversionDAO inversionDAO;
+	private final InversionService inversionService;
 	private final DashboardFrame dashboard;
 
 	private JComboBox<TipoInversion> cbTipo;
@@ -49,8 +49,9 @@ public class PanelInversionesAvanzado extends JPanel {
 
 	public PanelInversionesAvanzado(DashboardFrame dashboard) {
 		this.dashboard = dashboard;
-		this.inversionDAO = new InversionDAO();
+		this.inversionService = new InversionService();
 		inicializarPanel();
+		cargarInversiones();
 	}
 
 	private void inicializarPanel() {
@@ -208,7 +209,7 @@ public class PanelInversionesAvanzado extends JPanel {
 			inv.setCryptoTipo(txtCryptoTipo.getText().trim());
 			inv.setBroker(txtBroker.getText().trim());
 
-			inversionDAO.guardarInversion(inv);
+			inversionService.crearInversion(inv);
 
 			cargarInversiones();
 			limpiarCampos();
@@ -224,7 +225,7 @@ public class PanelInversionesAvanzado extends JPanel {
 	private void cargarInversiones() {
 		try {
 			tablaModel.setRowCount(0);
-			List<Inversion> inversiones = inversionDAO.listarInversiones();
+			List<Inversion> inversiones = inversionService.obtenerTodas();
 
 			for (Inversion inv : inversiones) {
 				tablaModel.addRow(

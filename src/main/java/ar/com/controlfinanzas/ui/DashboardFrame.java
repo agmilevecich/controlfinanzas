@@ -6,9 +6,9 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
-import ar.com.controlfinanzas.dao.InversionDAO;
 import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.service.AlertaService;
+import ar.com.controlfinanzas.service.InversionService;
 
 public class DashboardFrame extends JFrame {
 
@@ -21,12 +21,12 @@ public class DashboardFrame extends JFrame {
 
 	// Servicios
 	private final AlertaService alertaService;
-	private final InversionDAO inversionDAO;
+	private final InversionService inversionService;
 
 	public DashboardFrame() {
 
 		this.alertaService = new AlertaService();
-		this.inversionDAO = new InversionDAO();
+		this.inversionService = new InversionService();
 
 		setTitle("Control Finanzas");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -70,11 +70,16 @@ public class DashboardFrame extends JFrame {
 		cargarInversiones();
 		actualizarAlertas();
 		actualizarVencimientos();
+		actualizarResumen();
+	}
+
+	private void actualizarResumen() {
+		panelResumen.actualizarResumen();
 	}
 
 	private void cargarInversiones() {
 		try {
-			inversiones = inversionDAO.listarInversiones();
+			inversiones = inversionService.obtenerTodas();
 		} catch (Exception e) {
 			e.printStackTrace();
 			inversiones = List.of();

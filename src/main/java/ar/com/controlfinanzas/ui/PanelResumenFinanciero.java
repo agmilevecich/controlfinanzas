@@ -17,15 +17,15 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
 import ar.com.controlfinanzas.dao.GastoDAO;
-import ar.com.controlfinanzas.dao.InversionDAO;
 import ar.com.controlfinanzas.model.Gasto;
 import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.model.TipoInversion;
+import ar.com.controlfinanzas.service.InversionService;
 
 public class PanelResumenFinanciero extends JPanel {
 
 	private GastoDAO gastoDAO = new GastoDAO();
-	private InversionDAO inversionDAO = new InversionDAO();
+	private InversionService inversionService = new InversionService();
 
 	private JLabel lblTotalGastos;
 	private JLabel lblTotalInversiones;
@@ -70,7 +70,7 @@ public class PanelResumenFinanciero extends JPanel {
 				totalGastos = totalGastos.add(BigDecimal.valueOf(g.getMonto()));
 			}
 
-			List<Inversion> inversiones = inversionDAO.listarInversiones();
+			List<Inversion> inversiones = inversionService.obtenerTodas();
 			for (Inversion inv : inversiones) {
 				totalInversiones = totalInversiones.add(inv.getCapitalInicial());
 			}
@@ -88,7 +88,7 @@ public class PanelResumenFinanciero extends JPanel {
 		// --- Gráfico de barras de inversiones por tipo ---
 		DefaultCategoryDataset datasetInv = new DefaultCategoryDataset();
 		try {
-			List<Inversion> inversiones = inversionDAO.listarInversiones();
+			List<Inversion> inversiones = inversionService.obtenerTodas();
 			Map<TipoInversion, BigDecimal> sumaPorTipo = new HashMap<>();
 			for (Inversion inv : inversiones) {
 				sumaPorTipo.put(inv.getTipo(),
