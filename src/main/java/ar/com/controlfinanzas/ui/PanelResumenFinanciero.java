@@ -24,8 +24,8 @@ import ar.com.controlfinanzas.service.InversionService;
 
 public class PanelResumenFinanciero extends JPanel {
 
-	private GastoDAO gastoDAO = new GastoDAO();
-	private InversionService inversionService = new InversionService();
+	private final GastoDAO gastoDAO = new GastoDAO();
+	private final InversionService inversionService;
 
 	private JLabel lblTotalGastos;
 	private JLabel lblTotalInversiones;
@@ -33,7 +33,8 @@ public class PanelResumenFinanciero extends JPanel {
 
 	private JPanel panelGraficos;
 
-	public PanelResumenFinanciero() {
+	public PanelResumenFinanciero(InversionService inversionService) {
+		this.inversionService = inversionService;
 		inicializarPanel();
 		actualizarResumen();
 	}
@@ -41,16 +42,15 @@ public class PanelResumenFinanciero extends JPanel {
 	private void inicializarPanel() {
 		this.setLayout(new BorderLayout());
 
-		// --- Panel resumen numérico ---
 		JPanel panelNumerico = new JPanel(new GridLayout(1, 3, 10, 10));
 		lblTotalInversiones = new JLabel("Total Inversiones: $0");
 		lblTotalGastos = new JLabel("Total Gastos: $0");
 		lblSaldoNeto = new JLabel("Saldo Neto: $0");
+
 		panelNumerico.add(lblTotalInversiones);
 		panelNumerico.add(lblTotalGastos);
 		panelNumerico.add(lblSaldoNeto);
 
-		// --- Panel gráficos ---
 		panelGraficos = new JPanel(new GridLayout(1, 2, 10, 10));
 
 		this.add(panelNumerico, BorderLayout.NORTH);
@@ -60,7 +60,6 @@ public class PanelResumenFinanciero extends JPanel {
 	public void actualizarResumen() {
 		panelGraficos.removeAll();
 
-		// --- Totales ---
 		BigDecimal totalGastos = BigDecimal.ZERO;
 		BigDecimal totalInversiones = BigDecimal.ZERO;
 
@@ -85,37 +84,42 @@ public class PanelResumenFinanciero extends JPanel {
 			e.printStackTrace();
 		}
 
-		// --- Gráfico de barras de inversiones por tipo ---
+		// -------- Inversiones por tipo --------
 		DefaultCategoryDataset datasetInv = new DefaultCategoryDataset();
+
 		try {
 			List<Inversion> inversiones = inversionService.obtenerTodas();
 			Map<TipoInversion, BigDecimal> sumaPorTipo = new HashMap<>();
+
 			for (Inversion inv : inversiones) {
 				sumaPorTipo.put(inv.getTipo(),
 						sumaPorTipo.getOrDefault(inv.getTipo(), BigDecimal.ZERO).add(inv.getCapitalInicial()));
 			}
+
 			for (Map.Entry<TipoInversion, BigDecimal> entry : sumaPorTipo.entrySet()) {
 				datasetInv.addValue(entry.getValue(), "Inversiones", entry.getKey().name());
 			}
 
 			JFreeChart chartInv = ChartFactory.createBarChart("Inversiones por Tipo", "Tipo", "Monto", datasetInv);
 
-			ChartPanel panelChartInv = new ChartPanel(chartInv);
-			panelGraficos.add(panelChartInv);
+			panelGraficos.add(new ChartPanel(chartInv));
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 
-		// --- Gráfico de pastel de gastos por categoría ---
+		// -------- Gastos por categoría --------
 		DefaultPieDataset datasetGastos = new DefaultPieDataset();
+
 		try {
 			List<Gasto> gastos = gastoDAO.listarGastos();
 			Map<String, BigDecimal> sumaPorCategoria = new HashMap<>();
+
 			for (Gasto g : gastos) {
 				sumaPorCategoria.put(g.getCategoria(), sumaPorCategoria.getOrDefault(g.getCategoria(), BigDecimal.ZERO)
 						.add(BigDecimal.valueOf(g.getMonto())));
 			}
+
 			for (Map.Entry<String, BigDecimal> entry : sumaPorCategoria.entrySet()) {
 				datasetGastos.setValue(entry.getKey(), entry.getValue());
 			}
@@ -123,8 +127,7 @@ public class PanelResumenFinanciero extends JPanel {
 			JFreeChart chartGastos = ChartFactory.createPieChart("Gastos por Categoría", datasetGastos, true, true,
 					false);
 
-			ChartPanel panelChartGastos = new ChartPanel(chartGastos);
-			panelGraficos.add(panelChartGastos);
+			panelGraficos.add(new ChartPanel(chartGastos));
 
 		} catch (Exception e) {
 			e.printStackTrace();

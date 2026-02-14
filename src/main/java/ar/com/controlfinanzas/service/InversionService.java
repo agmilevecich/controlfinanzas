@@ -9,8 +9,8 @@ public class InversionService {
 
 	private final InversionRepository repository;
 
-	public InversionService() {
-		this.repository = new InversionRepository();
+	public InversionService(InversionRepository inversionRepositoty) {
+		this.repository = inversionRepositoty;
 	}
 
 	public Inversion crearInversion(Inversion inversion) {
