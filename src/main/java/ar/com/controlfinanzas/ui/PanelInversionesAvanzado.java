@@ -21,17 +21,16 @@ import javax.swing.table.DefaultTableModel;
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
 
+import ar.com.controlfinanzas.controller.InversionController;
 import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.TipoInversion;
-import ar.com.controlfinanzas.service.InversionService;
 
 public class PanelInversionesAvanzado extends JPanel {
 
 	private JTable tabla;
 	private DefaultTableModel tablaModel;
-	private final InversionService inversionService;
-	private final DashboardFrame dashboard;
+	private final InversionController inversionController;
 
 	private JComboBox<TipoInversion> cbTipo;
 	private JComboBox<Moneda> cbMoneda;
@@ -47,14 +46,16 @@ public class PanelInversionesAvanzado extends JPanel {
 	private DatePicker dpFechaInicio;
 	private DatePicker dpFechaVencimiento;
 
-	public PanelInversionesAvanzado(DashboardFrame dashboard) {
-		this.dashboard = dashboard;
-		this.inversionService = new InversionService();
+	public PanelInversionesAvanzado(InversionController inversionController) {
+		this.inversionController = inversionController;
 		inicializarPanel();
+
+		inversionController.addListener(() -> cargarInversiones());
 		cargarInversiones();
 	}
 
 	private void inicializarPanel() {
+
 		setLayout(new BorderLayout());
 
 		JPanel panelForm = new JPanel(new GridBagLayout());
@@ -153,42 +154,18 @@ public class PanelInversionesAvanzado extends JPanel {
 
 		add(panelForm, BorderLayout.NORTH);
 
-		tablaModel = new DefaultTableModel(new Object[] { "Tipo", "Moneda", "Descripción", "Capital", "Rendimiento",
-				"Inicio", "Vencimiento", "Cantidad", "Precio", "Cripto", "Broker" }, 0);
+		tablaModel = new DefaultTableModel(new Object[] { "ID", "Tipo", "Moneda", "Descripción", "Capital",
+				"Rendimiento", "Inicio", "Vencimiento", "Cantidad", "Precio", "Cripto", "Broker" }, 0);
 
 		tabla = new JTable(tablaModel);
+		tabla.removeColumn(tabla.getColumnModel().getColumn(0)); // ocultamos ID
+
 		add(new JScrollPane(tabla), BorderLayout.CENTER);
-
-		cbTipo.addActionListener(e -> ajustarCamposSegunTipo());
-		ajustarCamposSegunTipo();
-	}
-
-	private void ajustarCamposSegunTipo() {
-		TipoInversion tipo = (TipoInversion) cbTipo.getSelectedItem();
-
-		txtCantidad.setEnabled(false);
-		txtPrecioUnitario.setEnabled(false);
-		txtCryptoTipo.setEnabled(false);
-		txtBroker.setEnabled(false);
-
-		switch (tipo) {
-		case ACCION, FONDO_COMUN_INVERSION -> {
-			txtCantidad.setEnabled(true);
-			txtPrecioUnitario.setEnabled(true);
-			txtBroker.setEnabled(true);
-		}
-		case CRIPTOMONEDA -> {
-			txtCantidad.setEnabled(true);
-			txtCryptoTipo.setEnabled(true);
-			txtBroker.setEnabled(true);
-		}
-		default -> {
-		}
-		}
 	}
 
 	private void agregarInversion() {
 		try {
+
 			if (txtDescripcion.getText().trim().isEmpty() || txtCapital.getText().trim().isEmpty()
 					|| txtRendimiento.getText().trim().isEmpty() || dpFechaInicio.getDate() == null
 					|| dpFechaVencimiento.getDate() == null) {
@@ -204,17 +181,16 @@ public class PanelInversionesAvanzado extends JPanel {
 					dpFechaVencimiento.getDate());
 
 			inv.setCantidad(txtCantidad.getText().isEmpty() ? BigDecimal.ZERO : new BigDecimal(txtCantidad.getText()));
+
 			inv.setPrecioUnitario(txtPrecioUnitario.getText().isEmpty() ? BigDecimal.ZERO
 					: new BigDecimal(txtPrecioUnitario.getText()));
+
 			inv.setCryptoTipo(txtCryptoTipo.getText().trim());
 			inv.setBroker(txtBroker.getText().trim());
 
-			inversionService.crearInversion(inv);
+			inversionController.agregarInversion(inv);
 
-			cargarInversiones();
 			limpiarCampos();
-
-			dashboard.onInversionesActualizadas();
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -223,18 +199,16 @@ public class PanelInversionesAvanzado extends JPanel {
 	}
 
 	private void cargarInversiones() {
-		try {
-			tablaModel.setRowCount(0);
-			List<Inversion> inversiones = inversionService.obtenerTodas();
 
-			for (Inversion inv : inversiones) {
-				tablaModel.addRow(
-						new Object[] { inv.getTipo(), inv.getMoneda(), inv.getDescripcion(), inv.getCapitalInicial(),
-								inv.getRendimientoEsperado(), inv.getFechaInicio(), inv.getFechaVencimiento(),
-								inv.getCantidad(), inv.getPrecioUnitario(), inv.getCryptoTipo(), inv.getBroker() });
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
+		tablaModel.setRowCount(0);
+
+		List<Inversion> inversiones = inversionController.getInversiones();
+
+		for (Inversion inv : inversiones) {
+			tablaModel.addRow(new Object[] { inv.getId(), inv.getTipo(), inv.getMoneda(), inv.getDescripcion(),
+					inv.getCapitalInicial(), inv.getRendimientoEsperado(), inv.getFechaInicio(),
+					inv.getFechaVencimiento(), inv.getCantidad(), inv.getPrecioUnitario(), inv.getCryptoTipo(),
+					inv.getBroker() });
 		}
 	}
 

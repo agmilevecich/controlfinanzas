@@ -21,4 +21,9 @@ public class InversionService {
 	public List<Inversion> obtenerTodas() {
 		return repository.listar();
 	}
+
+	public void eliminarInversion(Long id) {
+		repository.eliminar(id);
+	}
+
 }

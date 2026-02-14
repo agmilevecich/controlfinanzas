@@ -5,6 +5,7 @@ import java.util.List;
 import ar.com.controlfinanzas.model.Inversion;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.Persistence;
 
 public class InversionRepository {
@@ -36,4 +37,26 @@ public class InversionRepository {
 			em.close();
 		}
 	}
+
+	public void eliminar(Long id) {
+		EntityManager em = emf.createEntityManager();
+		EntityTransaction tx = em.getTransaction();
+
+		try {
+			tx.begin();
+			Inversion inversion = em.find(Inversion.class, id);
+			if (inversion != null) {
+				em.remove(inversion);
+			}
+			tx.commit();
+		} catch (Exception e) {
+			if (tx.isActive()) {
+				tx.rollback();
+			}
+			throw e;
+		} finally {
+			em.close();
+		}
+	}
+
 }
