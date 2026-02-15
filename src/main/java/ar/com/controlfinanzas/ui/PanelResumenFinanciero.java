@@ -3,6 +3,7 @@ package ar.com.controlfinanzas.ui;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,16 +17,16 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
-import ar.com.controlfinanzas.dao.GastoDAO;
 import ar.com.controlfinanzas.model.Gasto;
 import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.model.TipoInversion;
+import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.InversionService;
 
 public class PanelResumenFinanciero extends JPanel {
 
-	private final GastoDAO gastoDAO = new GastoDAO();
 	private final InversionService inversionService;
+	private final GastoService gastoService;
 
 	private JLabel lblTotalGastos;
 	private JLabel lblTotalInversiones;
@@ -33,16 +34,21 @@ public class PanelResumenFinanciero extends JPanel {
 
 	private JPanel panelGraficos;
 
-	public PanelResumenFinanciero(InversionService inversionService) {
+	public PanelResumenFinanciero(InversionService inversionService, GastoService gastoService) {
+
 		this.inversionService = inversionService;
+		this.gastoService = gastoService;
+
 		inicializarPanel();
 		actualizarResumen();
 	}
 
 	private void inicializarPanel() {
+
 		this.setLayout(new BorderLayout());
 
 		JPanel panelNumerico = new JPanel(new GridLayout(1, 3, 10, 10));
+
 		lblTotalInversiones = new JLabel("Total Inversiones: $0");
 		lblTotalGastos = new JLabel("Total Gastos: $0");
 		lblSaldoNeto = new JLabel("Saldo Neto: $0");
@@ -58,37 +64,35 @@ public class PanelResumenFinanciero extends JPanel {
 	}
 
 	public void actualizarResumen() {
+
 		panelGraficos.removeAll();
 
-		BigDecimal totalGastos = BigDecimal.ZERO;
-		BigDecimal totalInversiones = BigDecimal.ZERO;
-
 		try {
-			List<Gasto> gastos = gastoDAO.listarGastos();
-			for (Gasto g : gastos) {
-				totalGastos = totalGastos.add(BigDecimal.valueOf(g.getMonto()));
-			}
 
+			// Obtener datos UNA sola vez
 			List<Inversion> inversiones = inversionService.obtenerTodas();
+			List<Gasto> gastos = gastoService.obtenerTodos();
+
+			// Totales
+			BigDecimal totalGastos = gastoService.calcularTotalGastos();
+			BigDecimal totalInversiones = BigDecimal.ZERO;
+
 			for (Inversion inv : inversiones) {
 				totalInversiones = totalInversiones.add(inv.getCapitalInicial());
 			}
 
-			lblTotalGastos.setText("Total Gastos: $" + totalGastos.setScale(2, BigDecimal.ROUND_HALF_UP));
-			lblTotalInversiones
-					.setText("Total Inversiones: $" + totalInversiones.setScale(2, BigDecimal.ROUND_HALF_UP));
+			lblTotalGastos.setText("Total Gastos: $" + totalGastos.setScale(2, RoundingMode.HALF_UP));
+
+			lblTotalInversiones.setText("Total Inversiones: $" + totalInversiones.setScale(2, RoundingMode.HALF_UP));
+
 			lblSaldoNeto.setText(
-					"Saldo Neto: $" + totalInversiones.subtract(totalGastos).setScale(2, BigDecimal.ROUND_HALF_UP));
+					"Saldo Neto: $" + totalInversiones.subtract(totalGastos).setScale(2, RoundingMode.HALF_UP));
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+			// ============================
+			// Gráfico Inversiones por Tipo
+			// ============================
 
-		// -------- Inversiones por tipo --------
-		DefaultCategoryDataset datasetInv = new DefaultCategoryDataset();
-
-		try {
-			List<Inversion> inversiones = inversionService.obtenerTodas();
+			DefaultCategoryDataset datasetInv = new DefaultCategoryDataset();
 			Map<TipoInversion, BigDecimal> sumaPorTipo = new HashMap<>();
 
 			for (Inversion inv : inversiones) {
@@ -104,15 +108,11 @@ public class PanelResumenFinanciero extends JPanel {
 
 			panelGraficos.add(new ChartPanel(chartInv));
 
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+			// ============================
+			// Gráfico Gastos por Categoría
+			// ============================
 
-		// -------- Gastos por categoría --------
-		DefaultPieDataset datasetGastos = new DefaultPieDataset();
-
-		try {
-			List<Gasto> gastos = gastoDAO.listarGastos();
+			DefaultPieDataset datasetGastos = new DefaultPieDataset();
 			Map<String, BigDecimal> sumaPorCategoria = new HashMap<>();
 
 			for (Gasto g : gastos) {

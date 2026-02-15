@@ -42,4 +42,9 @@ public class GastoDAO {
 		}
 		return lista;
 	}
+
+	public void eliminar(Long id) {
+		// TODO Auto-generated method stub
+
+	}
 }

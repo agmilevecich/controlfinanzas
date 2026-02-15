@@ -8,8 +8,10 @@ import javax.swing.JTabbedPane;
 
 import ar.com.controlfinanzas.controller.InversionController;
 import ar.com.controlfinanzas.model.Inversion;
+import ar.com.controlfinanzas.repository.GastoRepository;
 import ar.com.controlfinanzas.repository.InversionRepository;
 import ar.com.controlfinanzas.service.AlertaService;
+import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.InversionService;
 
 public class DashboardFrame extends JFrame {
@@ -27,12 +29,18 @@ public class DashboardFrame extends JFrame {
 	private final InversionService inversionService;
 	private final InversionController inversionController;
 
+	private final GastoRepository gastoRepository;
+	private final GastoService gastoService;
+
 	public DashboardFrame() {
 
 		this.alertaService = new AlertaService();
 		this.inversionRepository = new InversionRepository();
 		this.inversionService = new InversionService(inversionRepository);
 		this.inversionController = new InversionController(inversionService);
+		this.gastoRepository = new GastoRepository();
+		this.gastoService = new GastoService(gastoRepository);
+		panelResumen = new PanelResumenFinanciero(inversionService, gastoService);
 
 		setTitle("Control Finanzas");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -43,7 +51,7 @@ public class DashboardFrame extends JFrame {
 		// ===============================
 		// Paneles
 		// ===============================
-		panelResumen = new PanelResumenFinanciero(inversionService);
+
 		PanelGastos panelGastos = new PanelGastos(panelResumen);
 		panelAlertas = new PanelAlertas();
 
