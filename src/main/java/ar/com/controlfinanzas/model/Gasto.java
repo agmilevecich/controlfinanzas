@@ -1,19 +1,30 @@
 package ar.com.controlfinanzas.model;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "gastos")
 public class Gasto {
 
+	@Id
+	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private int id;
 	private LocalDate fecha;
 	private String descripcion;
-	private double monto;
+	private BigDecimal monto;
 	private String categoria;
 
 	public Gasto() {
 	}
 
-	public Gasto(int id, LocalDate fecha, String descripcion, double monto, String categoria) {
+	public Gasto(int id, LocalDate fecha, String descripcion, BigDecimal monto, String categoria) {
 		this.id = id;
 		this.fecha = fecha;
 		this.descripcion = descripcion;
@@ -21,7 +32,7 @@ public class Gasto {
 		this.categoria = categoria;
 	}
 
-	public Gasto(LocalDate fecha, String descripcion, double monto, String categoria) {
+	public Gasto(LocalDate fecha, String descripcion, BigDecimal monto, String categoria) {
 		this.fecha = fecha;
 		this.descripcion = descripcion;
 		this.monto = monto;
@@ -52,11 +63,11 @@ public class Gasto {
 		this.descripcion = descripcion;
 	}
 
-	public double getMonto() {
+	public BigDecimal getMonto() {
 		return monto;
 	}
 
-	public void setMonto(double monto) {
+	public void setMonto(BigDecimal monto) {
 		this.monto = monto;
 	}
 

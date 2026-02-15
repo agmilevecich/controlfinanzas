@@ -52,7 +52,7 @@ public class DashboardFrame extends JFrame {
 		// Paneles
 		// ===============================
 
-		PanelGastos panelGastos = new PanelGastos(panelResumen);
+		PanelGastos panelGastos = new PanelGastos(gastoService, panelResumen);
 		panelAlertas = new PanelAlertas();
 
 		PanelInversionesAvanzado panelInversiones = new PanelInversionesAvanzado(inversionController);

@@ -116,8 +116,8 @@ public class PanelResumenFinanciero extends JPanel {
 			Map<String, BigDecimal> sumaPorCategoria = new HashMap<>();
 
 			for (Gasto g : gastos) {
-				sumaPorCategoria.put(g.getCategoria(), sumaPorCategoria.getOrDefault(g.getCategoria(), BigDecimal.ZERO)
-						.add(BigDecimal.valueOf(g.getMonto())));
+				sumaPorCategoria.put(g.getCategoria(),
+						sumaPorCategoria.getOrDefault(g.getCategoria(), BigDecimal.ZERO).add(g.getMonto()));
 			}
 
 			for (Map.Entry<String, BigDecimal> entry : sumaPorCategoria.entrySet()) {

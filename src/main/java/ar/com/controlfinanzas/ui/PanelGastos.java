@@ -1,8 +1,6 @@
 package ar.com.controlfinanzas.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -30,16 +28,11 @@ import javax.swing.table.DefaultTableModel;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.labels.PieSectionLabelGenerator;
-import org.jfree.chart.labels.StandardPieSectionLabelGenerator;
-import org.jfree.chart.plot.CategoryPlot;
-import org.jfree.chart.plot.PiePlot;
-import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
-import ar.com.controlfinanzas.dao.GastoDAO;
 import ar.com.controlfinanzas.model.Gasto;
+import ar.com.controlfinanzas.service.GastoService;
 
 public class PanelGastos extends JPanel {
 
@@ -48,26 +41,24 @@ public class PanelGastos extends JPanel {
 	private JComboBox<String> cbCategoria;
 	private JTable tableGastos;
 	private DefaultTableModel tableModel;
-	private GastoDAO gastoDAO = new GastoDAO();
 
-	private JPanel panelGraficos; // contendrá los dos gráficos
+	private JPanel panelGraficos;
+
+	private final GastoService gastoService;
 	private PanelResumenFinanciero panelResumen;
 
-	public PanelGastos() {
+	public PanelGastos(GastoService gastoService, PanelResumenFinanciero panelResumen) {
+		this.gastoService = gastoService;
+		this.panelResumen = panelResumen;
 		inicializarPanel();
 		cargarGastos();
 		actualizarGraficos();
 	}
 
-	public PanelGastos(PanelResumenFinanciero panelResumen) {
-		this();
-		this.panelResumen = panelResumen;
-	}
-
 	private void inicializarPanel() {
+
 		this.setLayout(new BorderLayout());
 
-		// --- Formulario y tabla en panelTabla ---
 		JPanel panelFormulario = new JPanel(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.insets = new Insets(5, 5, 5, 5);
@@ -103,68 +94,63 @@ public class PanelGastos extends JPanel {
 
 		tableModel = new DefaultTableModel(new String[] { "ID", "Fecha", "Descripción", "Monto", "Categoría" }, 0) {
 			@Override
-			public boolean isCellEditable(int row, int column) {
+			public boolean isCellEditable(int r, int c) {
 				return false;
 			}
 		};
+
 		tableGastos = new JTable(tableModel);
-		JScrollPane scrollTabla = new JScrollPane(tableGastos);
 
 		JPanel panelTabla = new JPanel(new BorderLayout());
 		panelTabla.add(panelFormulario, BorderLayout.NORTH);
-		panelTabla.add(scrollTabla, BorderLayout.CENTER);
+		panelTabla.add(new JScrollPane(tableGastos), BorderLayout.CENTER);
 
-		// --- Panel de gráficos ---
 		panelGraficos = new JPanel(new GridLayout(2, 1, 5, 5));
 
-		// --- Split pane para tabla y gráficos ---
-		JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelTabla, panelGraficos);
-		splitPane.setResizeWeight(0.5); // 50%-50% al redimensionar
-		splitPane.setContinuousLayout(true); // actualiza mientras movés el divider
-		splitPane.setOneTouchExpandable(true); // colapsar paneles con un click
-		panelTabla.setMinimumSize(new Dimension(400, 300));
-		panelGraficos.setMinimumSize(new Dimension(400, 300));
-		splitPane.setDividerLocation(0.5); // divider inicial en la mitad
-		this.add(splitPane, BorderLayout.CENTER);
+		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelTabla, panelGraficos);
 
-		// Acción botón agregar
+		split.setResizeWeight(0.5);
+		split.setContinuousLayout(true);
+		split.setOneTouchExpandable(true);
+
+		this.add(split, BorderLayout.CENTER);
+
 		btnAgregar.addActionListener(e -> agregarGasto());
 	}
 
 	private void agregarGasto() {
-		String descripcion = txtDescripcion.getText().trim();
-		String montoStr = txtMonto.getText().trim();
-		String categoria = (String) cbCategoria.getSelectedItem();
 
-		if (descripcion.isEmpty() || montoStr.isEmpty()) {
-			JOptionPane.showMessageDialog(this, "Complete todos los campos", "Error", JOptionPane.ERROR_MESSAGE);
-			return;
-		}
-
-		double monto;
 		try {
-			monto = Double.parseDouble(montoStr);
-			if (monto <= 0) {
-				throw new NumberFormatException();
+			String descripcion = txtDescripcion.getText().trim();
+			String montoStr = txtMonto.getText().trim();
+			String categoria = (String) cbCategoria.getSelectedItem();
+
+			if (descripcion.isEmpty() || montoStr.isEmpty()) {
+				JOptionPane.showMessageDialog(this, "Complete todos los campos");
+				return;
 			}
-		} catch (NumberFormatException ex) {
-			JOptionPane.showMessageDialog(this, "Monto inválido", "Error", JOptionPane.ERROR_MESSAGE);
-			return;
-		}
 
-		Gasto gasto = new Gasto(LocalDate.now(), descripcion, monto, categoria);
+			BigDecimal monto = new BigDecimal(montoStr);
 
-		try {
-			gastoDAO.guardarGasto(gasto);
+			Gasto gasto = new Gasto();
+			gasto.setFecha(LocalDate.now());
+			gasto.setDescripcion(descripcion);
+			gasto.setMonto(monto);
+			gasto.setCategoria(categoria);
+
+			gastoService.guardar(gasto);
+
 			limpiarFormulario();
 			cargarGastos();
 			actualizarGraficos();
+
 			if (panelResumen != null) {
 				panelResumen.actualizarResumen();
 			}
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			JOptionPane.showMessageDialog(this, "Error al guardar gasto", "Error", JOptionPane.ERROR_MESSAGE);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(this, "Error al guardar gasto");
 		}
 	}
 
@@ -177,11 +163,10 @@ public class PanelGastos extends JPanel {
 	private void cargarGastos() {
 		tableModel.setRowCount(0);
 		try {
-			List<Gasto> gastos = gastoDAO.listarGastos();
+			List<Gasto> gastos = gastoService.obtenerTodos();
 			for (Gasto g : gastos) {
-				BigDecimal bdMonto = new BigDecimal(g.getMonto()).setScale(2, RoundingMode.HALF_UP);
-				tableModel.addRow(new Object[] { g.getId(), g.getFecha(), g.getDescripcion(), bdMonto.doubleValue(),
-						g.getCategoria() });
+				tableModel.addRow(new Object[] { g.getId(), g.getFecha(), g.getDescripcion(),
+						g.getMonto().setScale(2, RoundingMode.HALF_UP), g.getCategoria() });
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -198,30 +183,23 @@ public class PanelGastos extends JPanel {
 
 	private void actualizarGraficoPie() {
 		try {
-			List<Gasto> gastos = gastoDAO.listarGastos();
+			List<Gasto> gastos = gastoService.obtenerTodos();
 			DefaultPieDataset dataset = new DefaultPieDataset();
 
-			Map<String, Double> totalPorCategoria = new HashMap<>();
+			Map<String, BigDecimal> totales = new HashMap<>();
+
 			for (Gasto g : gastos) {
-				double sumaAnterior = totalPorCategoria.getOrDefault(g.getCategoria(), 0.0);
-				double sumaNueva = sumaAnterior + g.getMonto();
-				BigDecimal bd = new BigDecimal(sumaNueva).setScale(2, RoundingMode.HALF_UP);
-				totalPorCategoria.put(g.getCategoria(), bd.doubleValue());
+				totales.put(g.getCategoria(),
+						totales.getOrDefault(g.getCategoria(), BigDecimal.ZERO).add(g.getMonto()));
 			}
 
-			for (Map.Entry<String, Double> entry : totalPorCategoria.entrySet()) {
-				dataset.setValue(entry.getKey(), entry.getValue());
+			for (Map.Entry<String, BigDecimal> e : totales.entrySet()) {
+				dataset.setValue(e.getKey(), e.getValue());
 			}
 
 			JFreeChart chart = ChartFactory.createPieChart("Gastos por Categoría", dataset, true, true, false);
 
-			PieSectionLabelGenerator labelGenerator = new StandardPieSectionLabelGenerator("{0}: {1}");
-			PiePlot piePlot = (PiePlot) chart.getPlot();
-			piePlot.setLabelGenerator(labelGenerator);
-
-			ChartPanel chartPanel = new ChartPanel(chart);
-			chartPanel.setPreferredSize(new Dimension(400, 300));
-			panelGraficos.add(chartPanel);
+			panelGraficos.add(new ChartPanel(chart));
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -230,33 +208,25 @@ public class PanelGastos extends JPanel {
 
 	private void actualizarGraficoBarras() {
 		try {
-			List<Gasto> gastos = gastoDAO.listarGastos();
+			List<Gasto> gastos = gastoService.obtenerTodos();
 			DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-			Map<Integer, Double> totalPorMes = new HashMap<>();
+
+			Map<Integer, BigDecimal> totales = new HashMap<>();
 
 			for (Gasto g : gastos) {
 				int mes = g.getFecha().getMonthValue();
-				double sumaAnterior = totalPorMes.getOrDefault(mes, 0.0);
-				double sumaNueva = sumaAnterior + g.getMonto();
-				BigDecimal bd = new BigDecimal(sumaNueva).setScale(2, RoundingMode.HALF_UP);
-				totalPorMes.put(mes, bd.doubleValue());
+				totales.put(mes, totales.getOrDefault(mes, BigDecimal.ZERO).add(g.getMonto()));
 			}
 
-			for (Map.Entry<Integer, Double> entry : totalPorMes.entrySet()) {
-				String nombreMes = java.time.Month.of(entry.getKey()).getDisplayName(TextStyle.SHORT,
-						Locale.getDefault());
-				dataset.addValue(entry.getValue(), "Gastos", nombreMes);
+			for (Map.Entry<Integer, BigDecimal> e : totales.entrySet()) {
+				String nombreMes = java.time.Month.of(e.getKey()).getDisplayName(TextStyle.SHORT, Locale.getDefault());
+
+				dataset.addValue(e.getValue(), "Gastos", nombreMes);
 			}
 
 			JFreeChart chart = ChartFactory.createBarChart("Gastos Mensuales", "Mes", "Monto", dataset);
 
-			CategoryPlot plot = chart.getCategoryPlot();
-			BarRenderer renderer = (BarRenderer) plot.getRenderer();
-			renderer.setSeriesPaint(0, new Color(79, 129, 189));
-
-			ChartPanel chartPanel = new ChartPanel(chart);
-			chartPanel.setPreferredSize(new Dimension(400, 300));
-			panelGraficos.add(chartPanel);
+			panelGraficos.add(new ChartPanel(chart));
 
 		} catch (Exception e) {
 			e.printStackTrace();

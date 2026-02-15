@@ -22,7 +22,7 @@ public class GastoService {
 		BigDecimal total = BigDecimal.ZERO;
 
 		for (Gasto g : repository.listarTodos()) {
-			total = total.add(BigDecimal.valueOf(g.getMonto()));
+			total = total.add(g.getMonto());
 		}
 
 		return total;
