@@ -48,12 +48,15 @@ public class PanelGastos extends JPanel {
 	private final GastoService gastoService;
 	private PanelResumenFinanciero panelResumen;
 
+	// 🔥 NUEVO: cache en memoria
+	private List<Gasto> gastosCache;
+
 	public PanelGastos(GastoService gastoService, PanelResumenFinanciero panelResumen) {
 		this.gastoService = gastoService;
 		this.panelResumen = panelResumen;
 		inicializarPanel();
-		cargarGastos();
-		actualizarGraficos();
+		cargarGastos(); // 1 sola consulta
+		actualizarGraficos(); // usa cache
 	}
 
 	private void inicializarPanel() {
@@ -68,6 +71,7 @@ public class PanelGastos extends JPanel {
 		txtDescripcion = new JTextField(15);
 		txtMonto = new JTextField(8);
 		cbCategoria = new JComboBox<>(new String[] { "Alimentación", "Transporte", "Hogar", "Ocio", "Otros" });
+
 		JButton btnAgregar = new JButton("Agregar gasto");
 
 		gbc.gridx = 0;
@@ -109,7 +113,6 @@ public class PanelGastos extends JPanel {
 		panelGraficos = new JPanel(new GridLayout(2, 1, 5, 5));
 
 		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelTabla, panelGraficos);
-
 		split.setResizeWeight(0.5);
 		split.setContinuousLayout(true);
 		split.setOneTouchExpandable(true);
@@ -143,6 +146,8 @@ public class PanelGastos extends JPanel {
 			gastoService.guardar(gasto);
 
 			limpiarFormulario();
+
+			// 🔥 refrescamos cache UNA sola vez
 			cargarGastos();
 			actualizarGraficos();
 
@@ -165,11 +170,13 @@ public class PanelGastos extends JPanel {
 	private void cargarGastos() {
 		tableModel.setRowCount(0);
 		try {
-			List<Gasto> gastos = gastoService.listarPorUsuario(MainApp.getUsuarioActivo().getUsuarioID());
-			for (Gasto g : gastos) {
+			gastosCache = gastoService.listarPorUsuario(MainApp.getUsuarioActivo().getUsuarioID());
+
+			for (Gasto g : gastosCache) {
 				tableModel.addRow(new Object[] { g.getId(), g.getFecha(), g.getDescripcion(),
 						g.getMonto().setScale(2, RoundingMode.HALF_UP), g.getCategoria() });
 			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -184,54 +191,49 @@ public class PanelGastos extends JPanel {
 	}
 
 	private void actualizarGraficoPie() {
-		try {
-			List<Gasto> gastos = gastoService.listarPorUsuario(MainApp.getUsuarioActivo().getUsuarioID());
-			DefaultPieDataset dataset = new DefaultPieDataset();
 
-			Map<String, BigDecimal> totales = new HashMap<>();
-
-			for (Gasto g : gastos) {
-				totales.put(g.getCategoria(),
-						totales.getOrDefault(g.getCategoria(), BigDecimal.ZERO).add(g.getMonto()));
-			}
-
-			for (Map.Entry<String, BigDecimal> e : totales.entrySet()) {
-				dataset.setValue(e.getKey(), e.getValue());
-			}
-
-			JFreeChart chart = ChartFactory.createPieChart("Gastos por Categoría", dataset, true, true, false);
-
-			panelGraficos.add(new ChartPanel(chart));
-
-		} catch (Exception e) {
-			e.printStackTrace();
+		if (gastosCache == null || gastosCache.isEmpty()) {
+			return;
 		}
+
+		DefaultPieDataset dataset = new DefaultPieDataset();
+		Map<String, BigDecimal> totales = new HashMap<>();
+
+		for (Gasto g : gastosCache) {
+			totales.put(g.getCategoria(), totales.getOrDefault(g.getCategoria(), BigDecimal.ZERO).add(g.getMonto()));
+		}
+
+		for (Map.Entry<String, BigDecimal> e : totales.entrySet()) {
+			dataset.setValue(e.getKey(), e.getValue());
+		}
+
+		JFreeChart chart = ChartFactory.createPieChart("Gastos por Categoría", dataset, true, true, false);
+
+		panelGraficos.add(new ChartPanel(chart));
 	}
 
 	private void actualizarGraficoBarras() {
-		try {
-			List<Gasto> gastos = gastoService.listarPorUsuario(MainApp.getUsuarioActivo().getUsuarioID());
-			DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
-			Map<Integer, BigDecimal> totales = new HashMap<>();
-
-			for (Gasto g : gastos) {
-				int mes = g.getFecha().getMonthValue();
-				totales.put(mes, totales.getOrDefault(mes, BigDecimal.ZERO).add(g.getMonto()));
-			}
-
-			for (Map.Entry<Integer, BigDecimal> e : totales.entrySet()) {
-				String nombreMes = java.time.Month.of(e.getKey()).getDisplayName(TextStyle.SHORT, Locale.getDefault());
-
-				dataset.addValue(e.getValue(), "Gastos", nombreMes);
-			}
-
-			JFreeChart chart = ChartFactory.createBarChart("Gastos Mensuales", "Mes", "Monto", dataset);
-
-			panelGraficos.add(new ChartPanel(chart));
-
-		} catch (Exception e) {
-			e.printStackTrace();
+		if (gastosCache == null || gastosCache.isEmpty()) {
+			return;
 		}
+
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+		Map<Integer, BigDecimal> totales = new HashMap<>();
+
+		for (Gasto g : gastosCache) {
+			int mes = g.getFecha().getMonthValue();
+			totales.put(mes, totales.getOrDefault(mes, BigDecimal.ZERO).add(g.getMonto()));
+		}
+
+		for (Map.Entry<Integer, BigDecimal> e : totales.entrySet()) {
+			String nombreMes = java.time.Month.of(e.getKey()).getDisplayName(TextStyle.SHORT, Locale.getDefault());
+
+			dataset.addValue(e.getValue(), "Gastos", nombreMes);
+		}
+
+		JFreeChart chart = ChartFactory.createBarChart("Gastos Mensuales", "Mes", "Monto", dataset);
+
+		panelGraficos.add(new ChartPanel(chart));
 	}
 }
