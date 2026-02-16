@@ -3,17 +3,14 @@ package ar.com.controlfinanzas.repository;
 import java.util.List;
 
 import ar.com.controlfinanzas.model.Inversion;
+import ar.com.controlfinanzas.persistence.JPAUtil;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.EntityTransaction;
-import jakarta.persistence.Persistence;
 
 public class InversionRepository {
 
-	private static final EntityManagerFactory emf = Persistence.createEntityManagerFactory("controlFinanzasPU");
-
 	public Inversion guardar(Inversion inversion) {
-		EntityManager em = emf.createEntityManager();
+		EntityManager em = JPAUtil.getEntityManager();
 		try {
 			em.getTransaction().begin();
 			em.persist(inversion);
@@ -30,7 +27,7 @@ public class InversionRepository {
 	}
 
 	public List<Inversion> listar() {
-		EntityManager em = emf.createEntityManager();
+		EntityManager em = JPAUtil.getEntityManager();
 		try {
 			return em.createQuery("SELECT i FROM Inversion i", Inversion.class).getResultList();
 		} finally {
@@ -39,7 +36,7 @@ public class InversionRepository {
 	}
 
 	public void eliminar(Long id) {
-		EntityManager em = emf.createEntityManager();
+		EntityManager em = JPAUtil.getEntityManager();
 		EntityTransaction tx = em.getTransaction();
 
 		try {

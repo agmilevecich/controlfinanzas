@@ -17,6 +17,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
+import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.model.Gasto;
 import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.model.TipoInversion;
@@ -71,7 +72,7 @@ public class PanelResumenFinanciero extends JPanel {
 
 			// Obtener datos UNA sola vez
 			List<Inversion> inversiones = inversionService.obtenerTodas();
-			List<Gasto> gastos = gastoService.obtenerTodos();
+			List<Gasto> gastos = gastoService.listarPorUsuario(MainApp.getUsuarioActivo().getUsuarioID());
 
 			// Totales
 			BigDecimal totalGastos = gastoService.calcularTotalGastos();

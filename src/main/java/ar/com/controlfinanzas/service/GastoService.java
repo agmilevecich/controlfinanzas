@@ -3,6 +3,7 @@ package ar.com.controlfinanzas.service;
 import java.math.BigDecimal;
 import java.util.List;
 
+import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.model.Gasto;
 import ar.com.controlfinanzas.repository.GastoRepository;
 
@@ -14,25 +15,19 @@ public class GastoService {
 		this.repository = repository;
 	}
 
-	public List<Gasto> obtenerTodos() throws Exception {
-		return repository.listarTodos();
+	public List<Gasto> listarPorUsuario(Integer usuarioId) {
+		return repository.listarPorUsuario(usuarioId);
 	}
 
 	public BigDecimal calcularTotalGastos() throws Exception {
-		BigDecimal total = BigDecimal.ZERO;
-
-		for (Gasto g : repository.listarTodos()) {
-			total = total.add(g.getMonto());
-		}
-
-		return total;
+		return repository.obtenerTotalPorUsuario(MainApp.getUsuarioActivo().getUsuarioID());
 	}
 
 	public void guardar(Gasto gasto) throws Exception {
 		repository.guardar(gasto);
 	}
 
-	public void eliminar(Long id) {
+	public void eliminar(Integer id) {
 		repository.eliminar(id);
 	}
 }

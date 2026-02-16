@@ -7,6 +7,8 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -15,35 +17,42 @@ public class Gasto {
 
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
-	private int id;
+	private Integer id;
 	private LocalDate fecha;
 	private String descripcion;
 	private BigDecimal monto;
 	private String categoria;
 
+	@ManyToOne(optional = false)
+	@JoinColumn(name = "UsuarioID", nullable = false)
+	private Usuario usuario;
+
 	public Gasto() {
 	}
 
-	public Gasto(int id, LocalDate fecha, String descripcion, BigDecimal monto, String categoria) {
+	public Gasto(Integer id, LocalDate fecha, String descripcion, BigDecimal monto, String categoria, Usuario usuario) {
 		this.id = id;
 		this.fecha = fecha;
 		this.descripcion = descripcion;
 		this.monto = monto;
 		this.categoria = categoria;
+		this.usuario = usuario;
 	}
 
-	public Gasto(LocalDate fecha, String descripcion, BigDecimal monto, String categoria) {
+	public Gasto(LocalDate fecha, String descripcion, BigDecimal monto, String categoria, Usuario usuario) {
+		super();
 		this.fecha = fecha;
 		this.descripcion = descripcion;
 		this.monto = monto;
 		this.categoria = categoria;
+		this.usuario = usuario;
 	}
 
-	public int getId() {
+	public Integer getId() {
 		return id;
 	}
 
-	public void setId(int id) {
+	public void setId(Integer id) {
 		this.id = id;
 	}
 
@@ -78,4 +87,13 @@ public class Gasto {
 	public void setCategoria(String categoria) {
 		this.categoria = categoria;
 	}
+
+	public Usuario getUsuario() {
+		return usuario;
+	}
+
+	public void setUsuario(Usuario usuario) {
+		this.usuario = usuario;
+	}
+
 }

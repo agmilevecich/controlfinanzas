@@ -10,6 +10,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
 @Entity
@@ -46,6 +48,10 @@ public class Inversion {
 
 	private String broker;
 	private String cryptoTipo;
+
+	@ManyToOne(optional = false)
+	@JoinColumn(name = "UsuarioID", nullable = false)
+	private Usuario usuario;
 
 	/*
 	 * ====================== CONSTRUCTORES ======================
@@ -187,5 +193,15 @@ public class Inversion {
 
 	public void setCryptoTipo(String cryptoTipo) {
 		this.cryptoTipo = cryptoTipo;
+
 	}
+
+	public Usuario getUsuario() {
+		return usuario;
+	}
+
+	public void setUsuario(Usuario usuario) {
+		this.usuario = usuario;
+	}
+
 }

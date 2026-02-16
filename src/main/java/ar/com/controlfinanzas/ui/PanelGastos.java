@@ -31,6 +31,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
+import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.model.Gasto;
 import ar.com.controlfinanzas.service.GastoService;
 
@@ -137,6 +138,7 @@ public class PanelGastos extends JPanel {
 			gasto.setDescripcion(descripcion);
 			gasto.setMonto(monto);
 			gasto.setCategoria(categoria);
+			gasto.setUsuario(MainApp.getUsuarioActivo());
 
 			gastoService.guardar(gasto);
 
@@ -163,7 +165,7 @@ public class PanelGastos extends JPanel {
 	private void cargarGastos() {
 		tableModel.setRowCount(0);
 		try {
-			List<Gasto> gastos = gastoService.obtenerTodos();
+			List<Gasto> gastos = gastoService.listarPorUsuario(MainApp.getUsuarioActivo().getUsuarioID());
 			for (Gasto g : gastos) {
 				tableModel.addRow(new Object[] { g.getId(), g.getFecha(), g.getDescripcion(),
 						g.getMonto().setScale(2, RoundingMode.HALF_UP), g.getCategoria() });
@@ -183,7 +185,7 @@ public class PanelGastos extends JPanel {
 
 	private void actualizarGraficoPie() {
 		try {
-			List<Gasto> gastos = gastoService.obtenerTodos();
+			List<Gasto> gastos = gastoService.listarPorUsuario(MainApp.getUsuarioActivo().getUsuarioID());
 			DefaultPieDataset dataset = new DefaultPieDataset();
 
 			Map<String, BigDecimal> totales = new HashMap<>();
@@ -208,7 +210,7 @@ public class PanelGastos extends JPanel {
 
 	private void actualizarGraficoBarras() {
 		try {
-			List<Gasto> gastos = gastoService.obtenerTodos();
+			List<Gasto> gastos = gastoService.listarPorUsuario(MainApp.getUsuarioActivo().getUsuarioID());
 			DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 
 			Map<Integer, BigDecimal> totales = new HashMap<>();
