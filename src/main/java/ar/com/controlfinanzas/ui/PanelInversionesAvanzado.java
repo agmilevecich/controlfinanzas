@@ -21,6 +21,7 @@ import javax.swing.table.DefaultTableModel;
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
 
+import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.controller.InversionController;
 import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.model.Moneda;
@@ -187,6 +188,7 @@ public class PanelInversionesAvanzado extends JPanel {
 
 			inv.setCryptoTipo(txtCryptoTipo.getText().trim());
 			inv.setBroker(txtBroker.getText().trim());
+			inv.setUsuario(MainApp.getUsuarioActivo());
 
 			inversionController.agregarInversion(inv);
 

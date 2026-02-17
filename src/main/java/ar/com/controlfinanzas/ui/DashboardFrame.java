@@ -52,6 +52,10 @@ public class DashboardFrame extends JFrame {
 		// Paneles
 		// ===============================
 
+		inversionController.addListener(() -> {
+			onInversionesActualizadas();
+		});
+
 		PanelGastos panelGastos = new PanelGastos(gastoService, panelResumen);
 		panelAlertas = new PanelAlertas();
 
