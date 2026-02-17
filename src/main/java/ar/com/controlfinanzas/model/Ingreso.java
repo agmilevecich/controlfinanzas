@@ -5,6 +5,8 @@ import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -27,6 +29,9 @@ public class Ingreso {
 
 	private LocalDate fecha;
 
+	@Enumerated(EnumType.STRING)
+	private CategoriaIngreso categoria;
+
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "UsuarioID", nullable = false)
 	private Usuario usuario;
@@ -34,10 +39,11 @@ public class Ingreso {
 	public Ingreso() {
 	}
 
-	public Ingreso(String descripcion, BigDecimal monto, LocalDate fecha, Usuario usuario) {
+	public Ingreso(String descripcion, BigDecimal monto, LocalDate fecha, CategoriaIngreso categoria, Usuario usuario) {
 		this.descripcion = descripcion;
 		this.monto = monto;
 		this.fecha = fecha;
+		this.categoria = categoria;
 		this.usuario = usuario;
 	}
 
@@ -67,6 +73,18 @@ public class Ingreso {
 
 	public void setFecha(LocalDate fecha) {
 		this.fecha = fecha;
+	}
+
+	public CategoriaIngreso getCategoria() {
+		return this.categoria;
+	}
+
+	public void setcategoria(CategoriaIngreso categoria) {
+		this.categoria = categoria;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
 	}
 
 	public Usuario getUsuario() {
