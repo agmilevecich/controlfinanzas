@@ -26,10 +26,13 @@ public class InversionRepository {
 		}
 	}
 
-	public List<Inversion> listar() {
+	public List<Inversion> listarPorUsuario(Integer usuarioId) {
 		EntityManager em = JPAUtil.getEntityManager();
+
 		try {
-			return em.createQuery("SELECT i FROM Inversion i", Inversion.class).getResultList();
+			return em.createQuery("SELECT i FROM Inversion i WHERE i.usuario.usuarioID = :usuarioId", Inversion.class)
+					.setParameter("usuarioId", usuarioId).getResultList();
+
 		} finally {
 			em.close();
 		}

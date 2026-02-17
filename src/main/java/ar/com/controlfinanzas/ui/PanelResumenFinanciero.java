@@ -4,12 +4,14 @@ import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingConstants;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -29,9 +31,10 @@ public class PanelResumenFinanciero extends JPanel {
 	private final InversionService inversionService;
 	private final GastoService gastoService;
 
-	private JLabel lblTotalGastos;
 	private JLabel lblTotalInversiones;
+	private JLabel lblTotalGastos;
 	private JLabel lblSaldoNeto;
+	private JLabel lblGastosMes;
 
 	private JPanel panelGraficos;
 
@@ -40,28 +43,29 @@ public class PanelResumenFinanciero extends JPanel {
 		this.inversionService = inversionService;
 		this.gastoService = gastoService;
 
-		inicializarPanel();
-		actualizarResumen();
+		setLayout(new BorderLayout());
+
+		inicializarComponentes();
 	}
 
-	private void inicializarPanel() {
+	private void inicializarComponentes() {
 
-		this.setLayout(new BorderLayout());
+		JPanel panelMetricas = new JPanel(new GridLayout(4, 1));
 
-		JPanel panelNumerico = new JPanel(new GridLayout(1, 3, 10, 10));
+		lblTotalInversiones = new JLabel("Total Inversiones: $0.00", SwingConstants.CENTER);
+		lblTotalGastos = new JLabel("Gastos Históricos: $0.00", SwingConstants.CENTER);
+		lblSaldoNeto = new JLabel("Patrimonio Neto: $0.00", SwingConstants.CENTER);
+		lblGastosMes = new JLabel("Gastos Mes Actual: $0.00", SwingConstants.CENTER);
 
-		lblTotalInversiones = new JLabel("Total Inversiones: $0");
-		lblTotalGastos = new JLabel("Total Gastos: $0");
-		lblSaldoNeto = new JLabel("Saldo Neto: $0");
+		panelMetricas.add(lblTotalInversiones);
+		panelMetricas.add(lblTotalGastos);
+		panelMetricas.add(lblSaldoNeto);
+		panelMetricas.add(lblGastosMes);
 
-		panelNumerico.add(lblTotalInversiones);
-		panelNumerico.add(lblTotalGastos);
-		panelNumerico.add(lblSaldoNeto);
+		add(panelMetricas, BorderLayout.NORTH);
 
-		panelGraficos = new JPanel(new GridLayout(1, 2, 10, 10));
-
-		this.add(panelNumerico, BorderLayout.NORTH);
-		this.add(panelGraficos, BorderLayout.CENTER);
+		panelGraficos = new JPanel(new GridLayout(1, 2));
+		add(panelGraficos, BorderLayout.CENTER);
 	}
 
 	public void actualizarResumen() {
@@ -70,35 +74,41 @@ public class PanelResumenFinanciero extends JPanel {
 
 		try {
 
-			// Obtener datos UNA sola vez
-			List<Inversion> inversiones = inversionService.obtenerTodas();
-			List<Gasto> gastos = gastoService.listarPorUsuario(MainApp.getUsuarioActivo().getUsuarioID());
+			Integer usuarioId = MainApp.getUsuarioActivo().getUsuarioID();
+			YearMonth mesActual = YearMonth.now();
 
-			// Totales
-			BigDecimal totalGastos = gastoService.calcularTotalGastos();
-			BigDecimal totalInversiones = BigDecimal.ZERO;
+			// ============================
+			// MÉTRICAS FINANCIERAS
+			// ============================
 
-			for (Inversion inv : inversiones) {
-				totalInversiones = totalInversiones.add(inv.getCapitalInicial());
-			}
+			BigDecimal totalInversiones = inversionService.calcularCapitalTotal();
+			BigDecimal totalGastosHistorico = gastoService.calcularTotalHistorico(usuarioId);
+			BigDecimal gastosMes = gastoService.calcularTotalPorMes(usuarioId, mesActual);
 
-			lblTotalGastos.setText("Total Gastos: $" + totalGastos.setScale(2, RoundingMode.HALF_UP));
+			BigDecimal patrimonioNeto = totalInversiones.subtract(totalGastosHistorico);
 
 			lblTotalInversiones.setText("Total Inversiones: $" + totalInversiones.setScale(2, RoundingMode.HALF_UP));
 
-			lblSaldoNeto.setText(
-					"Saldo Neto: $" + totalInversiones.subtract(totalGastos).setScale(2, RoundingMode.HALF_UP));
+			lblTotalGastos.setText("Gastos Históricos: $" + totalGastosHistorico.setScale(2, RoundingMode.HALF_UP));
+
+			lblSaldoNeto.setText("Patrimonio Neto: $" + patrimonioNeto.setScale(2, RoundingMode.HALF_UP));
+
+			lblGastosMes.setText("Gastos " + mesActual + ": $" + gastosMes.setScale(2, RoundingMode.HALF_UP));
 
 			// ============================
-			// Gráfico Inversiones por Tipo
+			// GRÁFICO INVERSIONES POR TIPO
 			// ============================
+
+			List<Inversion> inversiones = inversionService.obtenerTodas();
 
 			DefaultCategoryDataset datasetInv = new DefaultCategoryDataset();
 			Map<TipoInversion, BigDecimal> sumaPorTipo = new HashMap<>();
 
 			for (Inversion inv : inversiones) {
-				sumaPorTipo.put(inv.getTipo(),
-						sumaPorTipo.getOrDefault(inv.getTipo(), BigDecimal.ZERO).add(inv.getCapitalInicial()));
+
+				BigDecimal capital = inv.getCapitalInicial() != null ? inv.getCapitalInicial() : BigDecimal.ZERO;
+
+				sumaPorTipo.put(inv.getTipo(), sumaPorTipo.getOrDefault(inv.getTipo(), BigDecimal.ZERO).add(capital));
 			}
 
 			for (Map.Entry<TipoInversion, BigDecimal> entry : sumaPorTipo.entrySet()) {
@@ -110,23 +120,31 @@ public class PanelResumenFinanciero extends JPanel {
 			panelGraficos.add(new ChartPanel(chartInv));
 
 			// ============================
-			// Gráfico Gastos por Categoría
+			// GRÁFICO GASTOS POR CATEGORÍA (MES ACTUAL)
 			// ============================
+
+			List<Gasto> gastos = gastoService.listarPorUsuario(usuarioId);
 
 			DefaultPieDataset datasetGastos = new DefaultPieDataset();
 			Map<String, BigDecimal> sumaPorCategoria = new HashMap<>();
 
 			for (Gasto g : gastos) {
-				sumaPorCategoria.put(g.getCategoria(),
-						sumaPorCategoria.getOrDefault(g.getCategoria(), BigDecimal.ZERO).add(g.getMonto()));
+
+				if (g.getFecha() != null && YearMonth.from(g.getFecha()).equals(mesActual)) {
+
+					BigDecimal monto = g.getMonto() != null ? g.getMonto() : BigDecimal.ZERO;
+
+					sumaPorCategoria.put(g.getCategoria(),
+							sumaPorCategoria.getOrDefault(g.getCategoria(), BigDecimal.ZERO).add(monto));
+				}
 			}
 
 			for (Map.Entry<String, BigDecimal> entry : sumaPorCategoria.entrySet()) {
 				datasetGastos.setValue(entry.getKey(), entry.getValue());
 			}
 
-			JFreeChart chartGastos = ChartFactory.createPieChart("Gastos por Categoría", datasetGastos, true, true,
-					false);
+			JFreeChart chartGastos = ChartFactory.createPieChart("Gastos por Categoría (" + mesActual + ")",
+					datasetGastos, true, true, false);
 
 			panelGraficos.add(new ChartPanel(chartGastos));
 
