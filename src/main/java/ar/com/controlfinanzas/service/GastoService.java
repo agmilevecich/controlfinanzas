@@ -6,6 +6,7 @@ import java.util.List;
 
 import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.model.Gasto;
+import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.repository.GastoRepository;
 
 public class GastoService {
@@ -43,6 +44,10 @@ public class GastoService {
 	public BigDecimal calcularTotalPorMes(Integer usuarioId, YearMonth mes) {
 		return repository.listarPorUsuario(usuarioId).stream().filter(g -> YearMonth.from(g.getFecha()).equals(mes))
 				.map(g -> g.getMonto()).reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
+
+	public BigDecimal calcularTotalGastosHistoricos(Usuario usuario) {
+		return repository.obtenerTotalPorUsuario(usuario.getUsuarioID());
 	}
 
 }

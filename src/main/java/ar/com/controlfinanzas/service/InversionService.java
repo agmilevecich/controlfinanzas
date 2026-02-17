@@ -1,10 +1,12 @@
 package ar.com.controlfinanzas.service;
 
 import java.math.BigDecimal;
+import java.time.YearMonth;
 import java.util.List;
 
 import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.model.Inversion;
+import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.repository.InversionRepository;
 
 public class InversionService {
@@ -28,18 +30,37 @@ public class InversionService {
 		repository.eliminar(id);
 	}
 
-	public BigDecimal calcularCapitalTotal() {
-		List<Inversion> inversiones = obtenerTodas();
+	public BigDecimal calcularCapitalTotal(Integer usuarioId) {
 
-		return inversiones.stream().map(inv -> {
-			// Si tiene cantidad y precio, calculamos por ahí
-			if (inv.getCantidad() != null && inv.getPrecioUnitario() != null
-					&& inv.getCantidad().compareTo(BigDecimal.ZERO) > 0
-					&& inv.getPrecioUnitario().compareTo(BigDecimal.ZERO) > 0) {
-				return inv.getCantidad().multiply(inv.getPrecioUnitario());
+		return repository.listarPorUsuario(usuarioId).stream()
+				.map(inv -> inv.getCapitalInicial() != null ? inv.getCapitalInicial() : BigDecimal.ZERO)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
+
+	public BigDecimal calcularTotalPorMes(Integer usuarioId, YearMonth mes) {
+
+		return repository.listarPorUsuario(usuarioId).stream()
+				.filter(inv -> inv.getFechaInicio() != null && YearMonth.from(inv.getFechaInicio()).equals(mes))
+				.map(inv -> inv.getCapitalInicial() != null ? inv.getCapitalInicial() : BigDecimal.ZERO)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
+
+	public BigDecimal calcularTotalInvertido(Usuario usuario) {
+
+		List<Inversion> inversiones = repository.listarPorUsuario(usuario.getUsuarioID());
+
+		BigDecimal total = BigDecimal.ZERO;
+
+		for (Inversion inv : inversiones) {
+
+			BigDecimal capital = inv.getCapitalTotalCalculado();
+
+			if (capital != null) {
+				total = total.add(capital);
 			}
-			return inv.getCapitalInicial() != null ? inv.getCapitalInicial() : BigDecimal.ZERO;
-		}).reduce(BigDecimal.ZERO, BigDecimal::add);
+		}
+
+		return total;
 	}
 
 }

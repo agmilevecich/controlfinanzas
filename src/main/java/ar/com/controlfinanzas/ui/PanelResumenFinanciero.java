@@ -81,17 +81,30 @@ public class PanelResumenFinanciero extends JPanel {
 			// MÉTRICAS FINANCIERAS
 			// ============================
 
-			BigDecimal totalInversiones = inversionService.calcularCapitalTotal();
+			BigDecimal totalInversiones = inversionService.calcularCapitalTotal(usuarioId);
 			BigDecimal totalGastosHistorico = gastoService.calcularTotalHistorico(usuarioId);
 			BigDecimal gastosMes = gastoService.calcularTotalPorMes(usuarioId, mesActual);
 
-			BigDecimal patrimonioNeto = totalInversiones.subtract(totalGastosHistorico);
+			if (totalInversiones == null) {
+				totalInversiones = BigDecimal.ZERO;
+			}
+
+			if (totalGastosHistorico == null) {
+				totalGastosHistorico = BigDecimal.ZERO;
+			}
+
+			if (gastosMes == null) {
+				gastosMes = BigDecimal.ZERO;
+			}
+
+			// Por ahora el patrimonio es el total invertido
+			BigDecimal patrimonioNeto = totalInversiones;
 
 			lblTotalInversiones.setText("Total Inversiones: $" + totalInversiones.setScale(2, RoundingMode.HALF_UP));
 
 			lblTotalGastos.setText("Gastos Históricos: $" + totalGastosHistorico.setScale(2, RoundingMode.HALF_UP));
 
-			lblSaldoNeto.setText("Patrimonio Neto: $" + patrimonioNeto.setScale(2, RoundingMode.HALF_UP));
+			lblSaldoNeto.setText("Activos Invertidos: $" + patrimonioNeto.setScale(2, RoundingMode.HALF_UP));
 
 			lblGastosMes.setText("Gastos " + mesActual + ": $" + gastosMes.setScale(2, RoundingMode.HALF_UP));
 
