@@ -24,12 +24,14 @@ import ar.com.controlfinanzas.model.Gasto;
 import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.model.TipoInversion;
 import ar.com.controlfinanzas.service.GastoService;
+import ar.com.controlfinanzas.service.IngresoService;
 import ar.com.controlfinanzas.service.InversionService;
 
 public class PanelResumenFinanciero extends JPanel {
 
 	private final InversionService inversionService;
 	private final GastoService gastoService;
+	private final IngresoService ingresoService;
 
 	private JLabel lblTotalInversiones;
 	private JLabel lblTotalGastos;
@@ -38,10 +40,12 @@ public class PanelResumenFinanciero extends JPanel {
 
 	private JPanel panelGraficos;
 
-	public PanelResumenFinanciero(InversionService inversionService, GastoService gastoService) {
+	public PanelResumenFinanciero(InversionService inversionService, GastoService gastoService,
+			IngresoService ingresoService) {
 
 		this.inversionService = inversionService;
 		this.gastoService = gastoService;
+		this.ingresoService = ingresoService;
 
 		setLayout(new BorderLayout());
 
@@ -99,6 +103,12 @@ public class PanelResumenFinanciero extends JPanel {
 
 			// Por ahora el patrimonio es el total invertido
 			BigDecimal patrimonioNeto = totalInversiones;
+
+			BigDecimal totalIngresosHistorico = ingresoService.calcularTotalHistorico(usuarioId);
+			BigDecimal ingresosMes = ingresoService.calcularTotalPorMes(usuarioId, mesActual);
+
+			BigDecimal resultadoAcumulado = totalIngresosHistorico.subtract(totalGastosHistorico);
+			BigDecimal resultadoMes = ingresosMes.subtract(gastosMes);
 
 			lblTotalInversiones.setText("Total Inversiones: $" + totalInversiones.setScale(2, RoundingMode.HALF_UP));
 

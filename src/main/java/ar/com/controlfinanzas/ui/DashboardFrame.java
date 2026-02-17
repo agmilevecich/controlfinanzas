@@ -12,6 +12,7 @@ import ar.com.controlfinanzas.repository.GastoRepository;
 import ar.com.controlfinanzas.repository.InversionRepository;
 import ar.com.controlfinanzas.service.AlertaService;
 import ar.com.controlfinanzas.service.GastoService;
+import ar.com.controlfinanzas.service.IngresoService;
 import ar.com.controlfinanzas.service.InversionService;
 
 public class DashboardFrame extends JFrame {
@@ -32,6 +33,8 @@ public class DashboardFrame extends JFrame {
 	private final GastoRepository gastoRepository;
 	private final GastoService gastoService;
 
+	private final IngresoService ingresoService;
+
 	public DashboardFrame() {
 
 		this.alertaService = new AlertaService();
@@ -40,7 +43,8 @@ public class DashboardFrame extends JFrame {
 		this.inversionController = new InversionController(inversionService);
 		this.gastoRepository = new GastoRepository();
 		this.gastoService = new GastoService(gastoRepository);
-		panelResumen = new PanelResumenFinanciero(inversionService, gastoService);
+		this.ingresoService = new IngresoService();
+		panelResumen = new PanelResumenFinanciero(inversionService, gastoService, ingresoService);
 
 		setTitle("Control Finanzas");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
