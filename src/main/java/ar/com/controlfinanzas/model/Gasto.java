@@ -21,7 +21,7 @@ public class Gasto {
 	private LocalDate fecha;
 	private String descripcion;
 	private BigDecimal monto;
-	private String categoria;
+	private CategoriaGasto categoria;
 
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "UsuarioID", nullable = false)
@@ -30,7 +30,8 @@ public class Gasto {
 	public Gasto() {
 	}
 
-	public Gasto(Integer id, LocalDate fecha, String descripcion, BigDecimal monto, String categoria, Usuario usuario) {
+	public Gasto(Integer id, LocalDate fecha, String descripcion, BigDecimal monto, CategoriaGasto categoria,
+			Usuario usuario) {
 		this.id = id;
 		this.fecha = fecha;
 		this.descripcion = descripcion;
@@ -39,7 +40,7 @@ public class Gasto {
 		this.usuario = usuario;
 	}
 
-	public Gasto(LocalDate fecha, String descripcion, BigDecimal monto, String categoria, Usuario usuario) {
+	public Gasto(LocalDate fecha, String descripcion, BigDecimal monto, CategoriaGasto categoria, Usuario usuario) {
 		super();
 		this.fecha = fecha;
 		this.descripcion = descripcion;
@@ -80,11 +81,11 @@ public class Gasto {
 		this.monto = monto;
 	}
 
-	public String getCategoria() {
+	public CategoriaGasto getCategoria() {
 		return categoria;
 	}
 
-	public void setCategoria(String categoria) {
+	public void setCategoria(CategoriaGasto categoria) {
 		this.categoria = categoria;
 	}
 

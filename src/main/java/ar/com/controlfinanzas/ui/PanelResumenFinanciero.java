@@ -20,6 +20,7 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
 import ar.com.controlfinanzas.app.MainApp;
+import ar.com.controlfinanzas.model.CategoriaGasto;
 import ar.com.controlfinanzas.model.Gasto;
 import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.model.TipoInversion;
@@ -149,7 +150,7 @@ public class PanelResumenFinanciero extends JPanel {
 			List<Gasto> gastos = gastoService.listarPorUsuario(usuarioId);
 
 			DefaultPieDataset datasetGastos = new DefaultPieDataset();
-			Map<String, BigDecimal> sumaPorCategoria = new HashMap<>();
+			Map<CategoriaGasto, BigDecimal> sumaPorCategoria = new HashMap<>();
 
 			for (Gasto g : gastos) {
 
@@ -162,7 +163,7 @@ public class PanelResumenFinanciero extends JPanel {
 				}
 			}
 
-			for (Map.Entry<String, BigDecimal> entry : sumaPorCategoria.entrySet()) {
+			for (Map.Entry<CategoriaGasto, BigDecimal> entry : sumaPorCategoria.entrySet()) {
 				datasetGastos.setValue(entry.getKey(), entry.getValue());
 			}
 

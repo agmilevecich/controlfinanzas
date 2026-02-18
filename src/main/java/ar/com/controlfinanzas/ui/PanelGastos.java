@@ -32,6 +32,7 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
 import ar.com.controlfinanzas.app.MainApp;
+import ar.com.controlfinanzas.model.CategoriaGasto;
 import ar.com.controlfinanzas.model.Gasto;
 import ar.com.controlfinanzas.service.GastoService;
 
@@ -39,7 +40,7 @@ public class PanelGastos extends JPanel {
 
 	private JTextField txtDescripcion;
 	private JTextField txtMonto;
-	private JComboBox<String> cbCategoria;
+	private JComboBox<CategoriaGasto> cbCategoria;
 	private JTable tableGastos;
 	private DefaultTableModel tableModel;
 
@@ -70,7 +71,7 @@ public class PanelGastos extends JPanel {
 
 		txtDescripcion = new JTextField(15);
 		txtMonto = new JTextField(8);
-		cbCategoria = new JComboBox<>(new String[] { "Alimentación", "Transporte", "Hogar", "Ocio", "Otros" });
+		cbCategoria = new JComboBox<>(CategoriaGasto.values());
 
 		JButton btnAgregar = new JButton("Agregar gasto");
 
@@ -127,7 +128,7 @@ public class PanelGastos extends JPanel {
 		try {
 			String descripcion = txtDescripcion.getText().trim();
 			String montoStr = txtMonto.getText().trim();
-			String categoria = (String) cbCategoria.getSelectedItem();
+			CategoriaGasto categoria = (CategoriaGasto) cbCategoria.getSelectedItem();
 
 			if (descripcion.isEmpty() || montoStr.isEmpty()) {
 				JOptionPane.showMessageDialog(this, "Complete todos los campos");
@@ -197,13 +198,13 @@ public class PanelGastos extends JPanel {
 		}
 
 		DefaultPieDataset dataset = new DefaultPieDataset();
-		Map<String, BigDecimal> totales = new HashMap<>();
+		Map<CategoriaGasto, BigDecimal> totales = new HashMap<>();
 
 		for (Gasto g : gastosCache) {
 			totales.put(g.getCategoria(), totales.getOrDefault(g.getCategoria(), BigDecimal.ZERO).add(g.getMonto()));
 		}
 
-		for (Map.Entry<String, BigDecimal> e : totales.entrySet()) {
+		for (Map.Entry<CategoriaGasto, BigDecimal> e : totales.entrySet()) {
 			dataset.setValue(e.getKey(), e.getValue());
 		}
 
