@@ -1,6 +1,7 @@
 package ar.com.controlfinanzas.repository;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 import ar.com.controlfinanzas.model.Gasto;
@@ -73,4 +74,20 @@ public class GastoRepository {
 		}
 	}
 
+	public List<Gasto> listarPorUsuarioYPeriodo(Integer usuarioId, LocalDate fechaInicio, LocalDate fechaFin) {
+		EntityManager em = JPAUtil.getEntityManager();
+
+		try {
+			return em.createQuery("""
+					SELECT g FROM Gasto g
+					WHERE g.usuario.usuarioID = :usuarioId
+					AND g.fecha BETWEEN :inicio AND :fin
+					""", Gasto.class).setParameter("usuarioId", usuarioId).setParameter("inicio", fechaInicio)
+					.setParameter("fin", fechaFin).getResultList();
+
+		} finally {
+			em.close();
+		}
+
+	}
 }

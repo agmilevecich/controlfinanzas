@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.YearMonth;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -110,6 +111,13 @@ public class PanelResumenFinanciero extends JPanel {
 
 			BigDecimal resultadoAcumulado = totalIngresosHistorico.subtract(totalGastosHistorico);
 			BigDecimal resultadoMes = ingresosMes.subtract(gastosMes);
+			BigDecimal totalSupermercado = gastoService.calcularTotalPorCategoria(usuarioId,
+					CategoriaGasto.SUPERMERCADO);
+			BigDecimal supermercadoMes = gastoService.calcularTotalPorCategoriaYMes(usuarioId,
+					CategoriaGasto.SUPERMERCADO, mesActual);
+
+			LinkedHashMap<CategoriaGasto, BigDecimal> ranking = gastoService.rankingCategoriasPorMes(usuarioId,
+					mesActual);
 
 			lblTotalInversiones.setText("Total Inversiones: $" + totalInversiones.setScale(2, RoundingMode.HALF_UP));
 
