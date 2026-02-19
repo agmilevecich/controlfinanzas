@@ -3,8 +3,7 @@ package ar.com.controlfinanzas.model;
 public enum CategoriaGasto {
 
 	SUPERMERCADO("Supermercado"), SERVICIOS("Servicios"), ALQUILER("Alquiler"), TRANSPORTE("Transporte"),
-	SALUD("Salud"), EDUCACION("Educación"), ENTRETENIMIENTO("Entretenimiento"), IMPUESTOS("Impuestos"),
-	INVERSION("Inversión"), OTROS("Otros");
+	SALUD("Salud"), EDUCACION("Educación"), ENTRETENIMIENTO("Entretenimiento"), IMPUESTOS("Impuestos"), OTROS("Otros");
 
 	private final String descripcion;
 

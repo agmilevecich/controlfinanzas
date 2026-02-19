@@ -32,6 +32,7 @@ public class DashboardFrame extends JFrame {
 
 	private final GastoRepository gastoRepository;
 	private final GastoService gastoService;
+	private final PanelResumenGastos panelResumenGastos;
 
 	private final IngresoService ingresoService;
 
@@ -43,6 +44,7 @@ public class DashboardFrame extends JFrame {
 		this.inversionController = new InversionController(inversionService);
 		this.gastoRepository = new GastoRepository();
 		this.gastoService = new GastoService(gastoRepository);
+		this.panelResumenGastos = new PanelResumenGastos(gastoService);
 		this.ingresoService = new IngresoService();
 		panelResumen = new PanelResumenFinanciero(inversionService, gastoService, ingresoService);
 
@@ -72,6 +74,7 @@ public class DashboardFrame extends JFrame {
 		// ===============================
 		JTabbedPane tabs = new JTabbedPane();
 		tabs.addTab("Resumen", panelResumen);
+		tabs.addTab("Resumen Gastos", panelResumenGastos);
 		tabs.addTab("Gastos", panelGastos);
 		tabs.addTab("Inversiones", panelInversiones);
 		tabs.addTab("Vencimientos", panelVencimientos);

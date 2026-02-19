@@ -113,7 +113,7 @@ public class PanelResumenFinanciero extends JPanel {
 			BigDecimal resultadoMes = ingresosMes.subtract(gastosMes);
 			BigDecimal totalSupermercado = gastoService.calcularTotalPorCategoria(usuarioId,
 					CategoriaGasto.SUPERMERCADO);
-			BigDecimal supermercadoMes = gastoService.calcularTotalPorCategoriaYMes(usuarioId,
+			BigDecimal supermercadoMes = gastoService.calcularTotalesPorCategoriaYMes(usuarioId,
 					CategoriaGasto.SUPERMERCADO, mesActual);
 
 			LinkedHashMap<CategoriaGasto, BigDecimal> ranking = gastoService.rankingCategoriasPorMes(usuarioId,

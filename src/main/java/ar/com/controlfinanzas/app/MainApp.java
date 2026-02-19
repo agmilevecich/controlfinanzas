@@ -14,6 +14,9 @@ public class MainApp {
 
 	public static void main(String[] args) {
 
+//		MainApp.class.getClassLoader().getResourceAsStream("logging.properties");
+//		System.setProperty("java.util.logging.config.file", "logging.properties");
+
 		UsuarioService usuarioService = new UsuarioService();
 		List<Usuario> usuarios = usuarioService.listarUsuarios();
 		if (usuarios.isEmpty()) {

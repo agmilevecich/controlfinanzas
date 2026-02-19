@@ -3,6 +3,7 @@ package ar.com.controlfinanzas.service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -72,7 +73,7 @@ public class GastoService {
 		return total;
 	}
 
-	public BigDecimal calcularTotalPorCategoriaYMes(Integer usuarioId, CategoriaGasto categoria, YearMonth mes) {
+	public BigDecimal calcularTotalesPorCategoriaYMes(Integer usuarioId, CategoriaGasto categoria, YearMonth mes) {
 
 		List<Gasto> gastos = repository.listarPorUsuario(usuarioId);
 
@@ -80,14 +81,40 @@ public class GastoService {
 
 		for (Gasto g : gastos) {
 
-			if (g.getCategoria() == categoria && g.getFecha() != null && YearMonth.from(g.getFecha()).equals(mes)
-					&& g.getMonto() != null) {
+			if (g.getCategoria() != null && g.getCategoria().equals(categoria) && g.getFecha() != null
+					&& YearMonth.from(g.getFecha()).equals(mes) && g.getMonto() != null) {
 
 				total = total.add(g.getMonto());
 			}
 		}
 
 		return total;
+	}
+
+	public Map<CategoriaGasto, BigDecimal> calcularTotalesPorCategoriaYMes(Integer usuarioId, YearMonth mes) {
+
+		List<Gasto> gastos = repository.listarPorUsuario(usuarioId);
+
+		Map<CategoriaGasto, BigDecimal> totales = new EnumMap<>(CategoriaGasto.class);
+
+		// inicializar todas en cero
+		for (CategoriaGasto c : CategoriaGasto.values()) {
+			totales.put(c, BigDecimal.ZERO);
+		}
+
+		for (Gasto g : gastos) {
+
+			if (g.getFecha() == null || g.getMonto() == null || g.getCategoria() == null) {
+				continue;
+			}
+
+			if (YearMonth.from(g.getFecha()).equals(mes)) {
+				CategoriaGasto categoria = g.getCategoria();
+				totales.put(categoria, totales.get(categoria).add(g.getMonto()));
+			}
+		}
+
+		return totales;
 	}
 
 	public LinkedHashMap<CategoriaGasto, BigDecimal> rankingCategoriasPorMes(Integer usuarioId, YearMonth mes) {
@@ -130,6 +157,10 @@ public class GastoService {
 
 		return gastos.stream().map(Gasto::getMonto).reduce(BigDecimal.ZERO, BigDecimal::add);
 
+	}
+
+	public List<Gasto> listarPorUsuarioYPeriodo(Integer usuarioId, LocalDate inicio, LocalDate fin) {
+		return repository.listarPorUsuarioYPeriodo(usuarioId, inicio, fin);
 	}
 
 }
