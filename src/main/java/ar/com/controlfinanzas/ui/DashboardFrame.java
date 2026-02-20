@@ -62,7 +62,7 @@ public class DashboardFrame extends JFrame {
 			onInversionesActualizadas();
 		});
 
-		PanelGastos panelGastos = new PanelGastos(gastoService, panelResumen);
+		PanelGastos panelGastos = new PanelGastos(gastoService, panelResumen, panelResumenGastos);
 		panelAlertas = new PanelAlertas();
 
 		PanelInversionesAvanzado panelInversiones = new PanelInversionesAvanzado(inversionController);

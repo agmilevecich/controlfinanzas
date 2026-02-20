@@ -35,15 +35,16 @@ public class PanelResumenGastos extends JPanel {
 	private DefaultPieDataset datasetGastos;
 	private ChartPanel chartPanelGastos;
 
-	public PanelResumenGastos(GastoService gastoService) {
+	// 🔴 datos en memoria (clave)
+	private Map<CategoriaGasto, BigDecimal> totales = new EnumMap<>(CategoriaGasto.class);
 
+	public PanelResumenGastos(GastoService gastoService) {
 		this.gastoService = gastoService;
 
 		setLayout(new BorderLayout());
 
 		model = new DefaultTableModel(new Object[] { "Categoría", "Total" }, 0);
 		tabla = new JTable(model);
-
 		add(new JScrollPane(tabla), BorderLayout.CENTER);
 
 		panelGrafico = new JPanel(new BorderLayout());
@@ -51,58 +52,67 @@ public class PanelResumenGastos extends JPanel {
 
 		datasetGastos = new DefaultPieDataset();
 
-		JFreeChart chart = ChartFactory.createPieChart("Gastos del mes por categoría", datasetGastos, true, true,
-				false);
+		JFreeChart chart = ChartFactory.createPieChart("Gastos por Categoría", datasetGastos, true, true, false);
 
 		chartPanelGastos = new ChartPanel(chart);
+		chartPanelGastos.setPreferredSize(new Dimension(600, 300));
 		panelGrafico.add(chartPanelGastos, BorderLayout.CENTER);
 
 		add(panelGrafico, BorderLayout.SOUTH);
 
-		actualizar();
+		Integer usuarioId = MainApp.getUsuarioActivo().getUsuarioID();
+		refrescar(usuarioId);
 	}
 
-	public void actualizar() {
+	// =========================
+	// CARGA DATOS (BD)
+	// =========================
+	private void cargarDatos(Integer usuarioId) {
 
+		totales.clear();
+
+		YearMonth mesActual = YearMonth.now();
+		LocalDate inicio = mesActual.atDay(1);
+		LocalDate fin = mesActual.atEndOfMonth();
+
+		List<Gasto> gastos = gastoService.listarPorUsuarioYPeriodo(usuarioId, inicio, fin);
+
+		for (Gasto g : gastos) {
+
+			if (g.getCategoria() == null || g.getMonto() == null) {
+				continue;
+			}
+
+			totales.put(g.getCategoria(), totales.getOrDefault(g.getCategoria(), BigDecimal.ZERO).add(g.getMonto()));
+		}
+	}
+
+	// =========================
+	// PINTA UI
+	// =========================
+	private void actualizarGraficos() {
+
+		// TABLA
 		model.setRowCount(0);
-		datasetGastos.clear();
 
-		try {
-
-			Integer usuarioId = MainApp.getUsuarioActivo().getUsuarioID();
-
-			YearMonth mesActual = YearMonth.now();
-
-			LocalDate inicio = mesActual.atDay(1);
-			LocalDate fin = mesActual.atEndOfMonth();
-
-			List<Gasto> gastos = gastoService.listarPorUsuarioYPeriodo(usuarioId, inicio, fin);
-
-			// 👉 SOLO categorías que existen en BD
-			Map<CategoriaGasto, BigDecimal> totales = new EnumMap<>(CategoriaGasto.class);
-
-			for (Gasto g : gastos) {
-
-				if (g.getCategoria() == null || g.getMonto() == null) {
-					continue;
-				}
-
-				totales.put(g.getCategoria(),
-						totales.getOrDefault(g.getCategoria(), BigDecimal.ZERO).add(g.getMonto()));
-			}
-
-			// ===== TABLA + GRÁFICO =====
-			for (Map.Entry<CategoriaGasto, BigDecimal> entry : totales.entrySet()) {
-
-				model.addRow(new Object[] { entry.getKey().name(), entry.getValue() });
-
-				datasetGastos.setValue(entry.getKey().name(), entry.getValue());
-			}
-
-		} catch (Exception e) {
-			e.printStackTrace();
+		for (var entry : totales.entrySet()) {
+			model.addRow(new Object[] { entry.getKey().name(), entry.getValue() });
 		}
 
+		// GRÁFICO
+		datasetGastos.clear();
+
+		for (var entry : totales.entrySet()) {
+			datasetGastos.setValue(entry.getKey().name(), entry.getValue());
+		}
+	}
+
+	// =========================
+	// MÉTODO PÚBLICO
+	// =========================
+	public void refrescar(Integer usuarioId) {
+		cargarDatos(usuarioId);
+		actualizarGraficos();
 		revalidate();
 		repaint();
 	}
