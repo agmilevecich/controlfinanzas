@@ -28,6 +28,7 @@ import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.TipoActivo;
 import ar.com.controlfinanzas.model.TipoInversion;
+import ar.com.controlfinanzas.util.NumeroUtils;
 
 public class PanelInversionesAvanzado extends JPanel {
 
@@ -217,16 +218,15 @@ public class PanelInversionesAvanzado extends JPanel {
 
 			Inversion inv = new Inversion((TipoActivo) cbTipoActivo.getSelectedItem(),
 					(TipoInversion) cbTipoInversion.getSelectedItem(), (Moneda) cbMoneda.getSelectedItem(),
-					txtDescripcion.getText().trim(), new BigDecimal(txtCapital.getText().trim()),
-					new BigDecimal(txtRendimiento.getText().trim()), dpFechaInicio.getDate(),
-					dpFechaVencimiento.getDate());
+					txtDescripcion.getText().trim(), NumeroUtils.parse(txtCapital.getText()),
+					NumeroUtils.parse(txtRendimiento.getText()), dpFechaInicio.getDate(), dpFechaVencimiento.getDate());
 
 			inv.setCantidad(txtCantidad.getText().isEmpty() ? BigDecimal.ZERO : new BigDecimal(txtCantidad.getText()));
 
 			inv.setPrecioUnitario(txtPrecioUnitario.getText().isEmpty() ? BigDecimal.ZERO
 					: new BigDecimal(txtPrecioUnitario.getText()));
 
-			inv.setCryptoTipo(txtCryptoTipo.getText().trim());
+			inv.setCryptoTipo(txtCryptoTipo.getText().trim().toUpperCase());
 			inv.setBroker(txtBroker.getText().trim());
 			inv.setUsuario(MainApp.getUsuarioActivo());
 
