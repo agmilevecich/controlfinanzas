@@ -3,7 +3,6 @@ package ar.com.controlfinanzas.ui;
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
-import java.awt.GridLayout;
 import java.awt.Insets;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -14,6 +13,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
@@ -55,6 +55,9 @@ public class PanelGastos extends JPanel {
 	private PanelResumenGastos panelResumenGastos;
 	private Usuario usuarioActivo = MainApp.getUsuarioActivo();
 
+	private PanelBotones botones = new PanelBotones();
+	private JSplitPane split;
+
 	public PanelGastos(GastoService gastoService, PanelResumenFinanciero panelResumen,
 			PanelResumenGastos panelResumenGastos) {
 		this.gastoService = gastoService;
@@ -78,8 +81,6 @@ public class PanelGastos extends JPanel {
 		txtMonto = new JTextField(8);
 		cbCategoria = new JComboBox<>(CategoriaGasto.values());
 
-		JButton btnAgregar = new JButton("Agregar gasto");
-
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		panelFormulario.add(new JLabel("Descripción:"), gbc);
@@ -101,7 +102,7 @@ public class PanelGastos extends JPanel {
 		gbc.gridx = 0;
 		gbc.gridy = 3;
 		gbc.gridwidth = 2;
-		panelFormulario.add(btnAgregar, gbc);
+		panelFormulario.add(botones, gbc);
 
 		tableModel = new DefaultTableModel(new String[] { "ID", "Fecha", "Descripción", "Monto", "Categoría" }, 0) {
 			@Override
@@ -111,21 +112,26 @@ public class PanelGastos extends JPanel {
 		};
 
 		tableGastos = new JTable(tableModel);
+		tableGastos.removeColumn(tableGastos.getColumnModel().getColumn(0));
 
 		JPanel panelTabla = new JPanel(new BorderLayout());
 		panelTabla.add(panelFormulario, BorderLayout.NORTH);
 		panelTabla.add(new JScrollPane(tableGastos), BorderLayout.CENTER);
 
-		panelGraficos = new JPanel(new GridLayout(2, 1, 5, 5));
+		panelGraficos = new JPanel();
+		panelGraficos.setLayout(new BoxLayout(panelGraficos, BoxLayout.Y_AXIS));
+		JScrollPane scrollGrafico = new JScrollPane(panelGraficos);
 
-		JSplitPane split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelTabla, panelGraficos);
+		split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelTabla, panelGraficos);
 		split.setResizeWeight(0.5);
 		split.setContinuousLayout(true);
 		split.setOneTouchExpandable(true);
 
 		this.add(split, BorderLayout.CENTER);
 
-		btnAgregar.addActionListener(e -> agregarGasto());
+		JButton[] boton = botones.getBotones();
+
+		boton[0].addActionListener(e -> agregarGasto());
 	}
 
 	private void agregarGasto() {

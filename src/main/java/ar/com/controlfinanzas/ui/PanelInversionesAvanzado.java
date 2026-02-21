@@ -14,6 +14,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
@@ -25,6 +26,7 @@ import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.controller.InversionController;
 import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.model.Moneda;
+import ar.com.controlfinanzas.model.TipoActivo;
 import ar.com.controlfinanzas.model.TipoInversion;
 
 public class PanelInversionesAvanzado extends JPanel {
@@ -33,7 +35,7 @@ public class PanelInversionesAvanzado extends JPanel {
 	private DefaultTableModel tablaModel;
 	private final InversionController inversionController;
 
-	private JComboBox<TipoInversion> cbTipo;
+	private JComboBox<TipoInversion> cbTipoInversion;
 	private JComboBox<Moneda> cbMoneda;
 
 	private JTextField txtDescripcion;
@@ -46,9 +48,15 @@ public class PanelInversionesAvanzado extends JPanel {
 
 	private DatePicker dpFechaInicio;
 	private DatePicker dpFechaVencimiento;
+	private JComboBox cbTipoActivo;
+
+	private PanelBotones botones = new PanelBotones();
+	private PanelDistribucion panelDistribucion;
+	private JSplitPane split;
 
 	public PanelInversionesAvanzado(InversionController inversionController) {
 		this.inversionController = inversionController;
+		panelDistribucion = new PanelDistribucion(inversionController);
 		inicializarPanel();
 
 		inversionController.addListener(() -> cargarInversiones());
@@ -66,10 +74,18 @@ public class PanelInversionesAvanzado extends JPanel {
 
 		gbc.gridx = 0;
 		gbc.gridy = 0;
-		panelForm.add(new JLabel("Tipo:"), gbc);
-		cbTipo = new JComboBox<>(TipoInversion.values());
+		panelForm.add(new JLabel("Tipo Activo: "), gbc);
+		cbTipoActivo = new JComboBox<>(TipoActivo.values());
+		cbTipoActivo.addActionListener(e -> filtrarTipoInversion());
 		gbc.gridx = 1;
-		panelForm.add(cbTipo, gbc);
+		panelForm.add(cbTipoActivo, gbc);
+
+		gbc.gridx = 0;
+		gbc.gridy++;
+		panelForm.add(new JLabel("Tipo Inversión:"), gbc);
+		cbTipoInversion = new JComboBox<>();
+		gbc.gridx = 1;
+		panelForm.add(cbTipoInversion, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy++;
@@ -99,69 +115,92 @@ public class PanelInversionesAvanzado extends JPanel {
 		txtRendimiento = new JTextField(5);
 		panelForm.add(txtRendimiento, gbc);
 
-		gbc.gridx = 0;
-		gbc.gridy++;
+		gbc.gridx = 2;
+		gbc.gridy = 0;
 		panelForm.add(new JLabel("Fecha inicio:"), gbc);
-		gbc.gridx = 1;
+		gbc.gridx = 3;
 		DatePickerSettings startSettings = new DatePickerSettings();
 		startSettings.setFirstDayOfWeek(DayOfWeek.SUNDAY);
 		dpFechaInicio = new DatePicker(startSettings);
 		panelForm.add(dpFechaInicio, gbc);
 
-		gbc.gridx = 0;
+		gbc.gridx = 2;
 		gbc.gridy++;
 		panelForm.add(new JLabel("Fecha vencimiento:"), gbc);
-		gbc.gridx = 1;
+		gbc.gridx = 3;
 		DatePickerSettings endSettings = new DatePickerSettings();
 		endSettings.setFirstDayOfWeek(DayOfWeek.SUNDAY);
 		dpFechaVencimiento = new DatePicker(endSettings);
 		panelForm.add(dpFechaVencimiento, gbc);
 
-		gbc.gridx = 0;
+		gbc.gridx = 2;
 		gbc.gridy++;
 		panelForm.add(new JLabel("Cantidad:"), gbc);
-		gbc.gridx = 1;
+		gbc.gridx = 3;
 		txtCantidad = new JTextField(10);
 		panelForm.add(txtCantidad, gbc);
 
-		gbc.gridx = 0;
+		gbc.gridx = 2;
 		gbc.gridy++;
 		panelForm.add(new JLabel("Precio unitario:"), gbc);
-		gbc.gridx = 1;
+		gbc.gridx = 3;
 		txtPrecioUnitario = new JTextField(10);
 		panelForm.add(txtPrecioUnitario, gbc);
 
-		gbc.gridx = 0;
+		gbc.gridx = 2;
 		gbc.gridy++;
 		panelForm.add(new JLabel("Tipo Cripto:"), gbc);
-		gbc.gridx = 1;
+		gbc.gridx = 3;
 		txtCryptoTipo = new JTextField(10);
 		panelForm.add(txtCryptoTipo, gbc);
 
-		gbc.gridx = 0;
+		gbc.gridx = 2;
 		gbc.gridy++;
 		panelForm.add(new JLabel("Broker / Exchange:"), gbc);
-		gbc.gridx = 1;
+		gbc.gridx = 3;
 		txtBroker = new JTextField(15);
 		panelForm.add(txtBroker, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy++;
-		gbc.gridwidth = 2;
-		JButton btnAgregar = new JButton("Agregar inversión");
-		panelForm.add(btnAgregar, gbc);
+		gbc.gridwidth = 4;
+		panelForm.add(botones, gbc);
 
-		btnAgregar.addActionListener(e -> agregarInversion());
+		JButton[] boton = botones.getBotones();
+		boton[0].addActionListener(e -> agregarInversion());
 
 		add(panelForm, BorderLayout.NORTH);
 
-		tablaModel = new DefaultTableModel(new Object[] { "ID", "Tipo", "Moneda", "Descripción", "Capital",
-				"Rendimiento", "Inicio", "Vencimiento", "Cantidad", "Precio", "Cripto", "Broker" }, 0);
+		tablaModel = new DefaultTableModel(
+				new Object[] { "ID", "Tipo Activo", "Tipo Inversión", "Moneda", "Descripción", "Capital", "Rendimiento",
+						"Inicio", "Vencimiento", "Cantidad", "Precio", "Cripto", "Broker" },
+				0);
 
 		tabla = new JTable(tablaModel);
 		tabla.removeColumn(tabla.getColumnModel().getColumn(0)); // ocultamos ID
 
-		add(new JScrollPane(tabla), BorderLayout.CENTER);
+		split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(tabla), panelDistribucion);
+		split.setResizeWeight(0.6);
+		split.setContinuousLayout(true);
+		split.setOneTouchExpandable(true);
+		add(split, BorderLayout.CENTER);
+	}
+
+	private void filtrarTipoInversion() {
+
+		TipoActivo activoSeleccionado = (TipoActivo) cbTipoActivo.getSelectedItem();
+
+		cbTipoInversion.removeAllItems();
+
+		if (activoSeleccionado == null) {
+			return;
+		}
+
+		for (TipoInversion tipo : TipoInversion.values()) {
+			if (tipo.permite(activoSeleccionado)) {
+				cbTipoInversion.addItem(tipo);
+			}
+		}
 	}
 
 	private void agregarInversion() {
@@ -176,7 +215,8 @@ public class PanelInversionesAvanzado extends JPanel {
 				return;
 			}
 
-			Inversion inv = new Inversion((TipoInversion) cbTipo.getSelectedItem(), (Moneda) cbMoneda.getSelectedItem(),
+			Inversion inv = new Inversion((TipoActivo) cbTipoActivo.getSelectedItem(),
+					(TipoInversion) cbTipoInversion.getSelectedItem(), (Moneda) cbMoneda.getSelectedItem(),
 					txtDescripcion.getText().trim(), new BigDecimal(txtCapital.getText().trim()),
 					new BigDecimal(txtRendimiento.getText().trim()), dpFechaInicio.getDate(),
 					dpFechaVencimiento.getDate());
@@ -207,8 +247,8 @@ public class PanelInversionesAvanzado extends JPanel {
 		List<Inversion> inversiones = inversionController.getInversiones();
 
 		for (Inversion inv : inversiones) {
-			tablaModel.addRow(new Object[] { inv.getId(), inv.getTipo(), inv.getMoneda(), inv.getDescripcion(),
-					inv.getCapitalInicial(), inv.getRendimientoEsperado(), inv.getFechaInicio(),
+			tablaModel.addRow(new Object[] { inv.getId(), inv.getTipoActivo(), inv.getTipoInversion(), inv.getMoneda(),
+					inv.getDescripcion(), inv.getCapitalInicial(), inv.getRendimientoEsperado(), inv.getFechaInicio(),
 					inv.getFechaVencimiento(), inv.getCantidad(), inv.getPrecioUnitario(), inv.getCryptoTipo(),
 					inv.getBroker() });
 		}

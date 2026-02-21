@@ -150,7 +150,7 @@ public class PanelVencimientos extends JPanel {
 
 		AlertaVencimiento alerta = new AlertaVencimiento(inv, LocalDate.now());
 
-		return "<html>" + "<b>" + inv.getNombre() + "</b><br>" + "Tipo: " + inv.getTipo() + "<br>" + "Capital: "
+		return "<html>" + "<b>" + inv.getNombre() + "</b><br>" + "Tipo: " + inv.getTipoInversion() + "<br>" + "Capital: "
 				+ inv.getCapitalInicial() + "<br>" + "Vencimiento: " + inv.getFechaVencimiento() + "<br>"
 				+ "Días restantes: " + alerta.getDiasRestantes() + "<br>" + "Estado: " + alerta.getEstado() + "</html>";
 	}

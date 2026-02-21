@@ -23,7 +23,10 @@ public class Inversion {
 	private Long id;
 
 	@Enumerated(EnumType.STRING)
-	private TipoInversion tipo;
+	private TipoActivo tipoActivo;
+
+	@Enumerated(EnumType.STRING)
+	private TipoInversion tipoInversion;
 
 	@Enumerated(EnumType.STRING)
 	private Moneda moneda;
@@ -60,10 +63,12 @@ public class Inversion {
 	public Inversion() {
 	}
 
-	public Inversion(TipoInversion tipo, Moneda moneda, String descripcion, BigDecimal capitalInicial,
-			BigDecimal rendimientoEsperado, LocalDate fechaInicio, LocalDate fechaVencimiento) {
+	public Inversion(TipoActivo tipoActivo, TipoInversion tipoInversion, Moneda moneda, String descripcion,
+			BigDecimal capitalInicial, BigDecimal rendimientoEsperado, LocalDate fechaInicio,
+			LocalDate fechaVencimiento) {
 
-		this.tipo = tipo;
+		this.tipoActivo = tipoActivo;
+		this.tipoInversion = tipoInversion;
 		this.moneda = moneda;
 		this.descripcion = descripcion;
 		this.capitalInicial = capitalInicial;
@@ -107,12 +112,20 @@ public class Inversion {
 		this.id = id;
 	}
 
-	public TipoInversion getTipo() {
-		return tipo;
+	public TipoActivo getTipoActivo() {
+		return tipoActivo;
 	}
 
-	public void setTipo(TipoInversion tipo) {
-		this.tipo = tipo;
+	public void setTipoActivo(TipoActivo tipoActivo) {
+		this.tipoActivo = tipoActivo;
+	}
+
+	public TipoInversion getTipoInversion() {
+		return tipoInversion;
+	}
+
+	public void setTipoInversion(TipoInversion tipoInversion) {
+		this.tipoInversion = tipoInversion;
 	}
 
 	public Moneda getMoneda() {
