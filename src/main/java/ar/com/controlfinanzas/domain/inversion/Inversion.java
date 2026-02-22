@@ -1,6 +1,7 @@
 package ar.com.controlfinanzas.domain.inversion;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +57,11 @@ public class Inversion {
 	@Column(precision = 19, scale = 4)
 	private BigDecimal precioUnitario;
 
+	@Column(precision = 7, scale = 4)
+	private BigDecimal tasaAnual;
+
+	private Integer plazoDias;
+
 	private String broker;
 	private String cryptoTipo;
 
@@ -65,10 +71,6 @@ public class Inversion {
 
 	@OneToMany(mappedBy = "inversion", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<FlujoIngreso> flujos = new ArrayList<>();
-
-	/*
-	 * ====================== CONSTRUCTORES ======================
-	 */
 
 	public Inversion() {
 	}
@@ -90,9 +92,7 @@ public class Inversion {
 		this.precioUnitario = BigDecimal.ZERO;
 	}
 
-	/*
-	 * ====================== MÉTODOS DE NEGOCIO ======================
-	 */
+	/* ================= NEGOCIO ================= */
 
 	public boolean tieneVencimiento() {
 		return fechaVencimiento != null;
@@ -110,14 +110,48 @@ public class Inversion {
 		return capitalInicial != null ? capitalInicial : BigDecimal.ZERO;
 	}
 
+	public boolean tieneTasa() {
+		return tasaAnual != null && tasaAnual.compareTo(BigDecimal.ZERO) > 0;
+	}
+
+	public BigDecimal calcularCapitalProyectado() {
+		if (!tieneTasa()) {
+			return getCapitalTotalCalculado();
+		}
+
+		BigDecimal capital = getCapitalTotalCalculado();
+
+		BigDecimal interes = capital.multiply(tasaAnual).divide(new BigDecimal("100"), 8, RoundingMode.HALF_UP);
+
+		if (plazoDias != null && plazoDias > 0) {
+			interes = interes.multiply(new BigDecimal(plazoDias)).divide(new BigDecimal("365"), 8,
+					RoundingMode.HALF_UP);
+		}
+
+		return capital.add(interes);
+	}
+
+	public BigDecimal calcularIngresoMensual() {
+		if (!tieneTasa()) {
+			return BigDecimal.ZERO;
+		}
+
+		BigDecimal capital = getCapitalTotalCalculado();
+
+		return capital.multiply(tasaAnual).divide(new BigDecimal("100"), 8, RoundingMode.HALF_UP)
+				.divide(new BigDecimal("12"), 8, RoundingMode.HALF_UP);
+	}
+
+	public boolean esGeneradoraDeIngresos() {
+		return tieneTasa();
+	}
+
 	public void agregarFlujo(FlujoIngreso flujo) {
 		flujo.setInversion(this);
 		this.flujos.add(flujo);
 	}
 
-	/*
-	 * ====================== GETTERS & SETTERS ======================
-	 */
+	/* ================= GETTERS ================= */
 
 	public Long getId() {
 		return id;
@@ -205,6 +239,22 @@ public class Inversion {
 
 	public void setPrecioUnitario(BigDecimal precioUnitario) {
 		this.precioUnitario = precioUnitario != null ? precioUnitario : BigDecimal.ZERO;
+	}
+
+	public BigDecimal getTasaAnual() {
+		return tasaAnual;
+	}
+
+	public void setTasaAnual(BigDecimal tasaAnual) {
+		this.tasaAnual = tasaAnual;
+	}
+
+	public Integer getPlazoDias() {
+		return plazoDias;
+	}
+
+	public void setPlazoDias(Integer plazoDias) {
+		this.plazoDias = plazoDias;
 	}
 
 	public String getBroker() {
