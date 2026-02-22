@@ -28,6 +28,8 @@ import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.TipoActivo;
 import ar.com.controlfinanzas.model.TipoInversion;
+import ar.com.controlfinanzas.repository.InversionRepository;
+import ar.com.controlfinanzas.service.PosicionService;
 import ar.com.controlfinanzas.util.NumeroUtils;
 
 public class PanelInversionesAvanzado extends JPanel {
@@ -54,10 +56,15 @@ public class PanelInversionesAvanzado extends JPanel {
 	private PanelBotones botones = new PanelBotones();
 	private PanelDistribucion panelDistribucion;
 	private JSplitPane split;
+	private PanelPosiciones panelPosiciones;
 
 	public PanelInversionesAvanzado(InversionController inversionController) {
 		this.inversionController = inversionController;
 		panelDistribucion = new PanelDistribucion(inversionController);
+
+		panelPosiciones = new PanelPosiciones(new PosicionService(new InversionRepository()));
+		panelPosiciones.refrescar(MainApp.getUsuarioActivo().getUsuarioID());
+
 		inicializarPanel();
 
 		inversionController.addListener(() -> cargarInversiones());
@@ -185,6 +192,7 @@ public class PanelInversionesAvanzado extends JPanel {
 		split.setContinuousLayout(true);
 		split.setOneTouchExpandable(true);
 		add(split, BorderLayout.CENTER);
+		add(panelPosiciones, BorderLayout.SOUTH);
 	}
 
 	private void filtrarTipoInversion() {
@@ -221,17 +229,18 @@ public class PanelInversionesAvanzado extends JPanel {
 					txtDescripcion.getText().trim(), NumeroUtils.parse(txtCapital.getText()),
 					NumeroUtils.parse(txtRendimiento.getText()), dpFechaInicio.getDate(), dpFechaVencimiento.getDate());
 
-			inv.setCantidad(txtCantidad.getText().isEmpty() ? BigDecimal.ZERO : new BigDecimal(txtCantidad.getText()));
+			inv.setCantidad(
+					txtCantidad.getText().isEmpty() ? BigDecimal.ZERO : NumeroUtils.parse(txtCantidad.getText()));
 
 			inv.setPrecioUnitario(txtPrecioUnitario.getText().isEmpty() ? BigDecimal.ZERO
-					: new BigDecimal(txtPrecioUnitario.getText()));
+					: NumeroUtils.parse(txtPrecioUnitario.getText()));
 
 			inv.setCryptoTipo(txtCryptoTipo.getText().trim().toUpperCase());
 			inv.setBroker(txtBroker.getText().trim());
 			inv.setUsuario(MainApp.getUsuarioActivo());
 
 			inversionController.agregarInversion(inv);
-
+			panelPosiciones.refrescar(MainApp.getUsuarioActivo().getUsuarioID());
 			limpiarCampos();
 
 		} catch (Exception e) {
