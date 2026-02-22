@@ -3,8 +3,8 @@ package ar.com.controlfinanzas.alerts;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.EstadoInversion;
-import ar.com.controlfinanzas.model.Inversion;
 
 public class AlertaVencimiento {
 

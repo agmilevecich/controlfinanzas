@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import ar.com.controlfinanzas.model.Inversion;
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 
 public class GeneradorVencimientosPorPeriodo {
 

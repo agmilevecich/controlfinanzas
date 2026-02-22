@@ -3,7 +3,7 @@ package ar.com.controlfinanzas.controller;
 import java.util.ArrayList;
 import java.util.List;
 
-import ar.com.controlfinanzas.model.Inversion;
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.service.InversionService;
 
 public class InversionController {

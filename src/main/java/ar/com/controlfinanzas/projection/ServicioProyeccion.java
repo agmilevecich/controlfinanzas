@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import ar.com.controlfinanzas.model.Inversion;
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 
 public class ServicioProyeccion {
 

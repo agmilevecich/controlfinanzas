@@ -21,9 +21,9 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
 import ar.com.controlfinanzas.app.MainApp;
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.CategoriaGasto;
 import ar.com.controlfinanzas.model.Gasto;
-import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.model.TipoInversion;
 import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.IngresoService;

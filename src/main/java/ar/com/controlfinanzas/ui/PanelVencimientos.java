@@ -18,8 +18,8 @@ import org.jfree.chart.renderer.category.BarRenderer;
 import org.jfree.data.category.DefaultCategoryDataset;
 
 import ar.com.controlfinanzas.alerts.AlertaVencimiento;
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.EstadoInversion;
-import ar.com.controlfinanzas.model.Inversion;
 
 /**
  * Panel que muestra gráficamente los días restantes hasta el vencimiento de

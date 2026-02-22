@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import ar.com.controlfinanzas.model.Inversion;
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.Posicion;
 import ar.com.controlfinanzas.model.TipoActivo;
 import ar.com.controlfinanzas.repository.InversionRepository;

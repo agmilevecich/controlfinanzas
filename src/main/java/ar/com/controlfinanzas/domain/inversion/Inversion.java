@@ -1,8 +1,15 @@
-package ar.com.controlfinanzas.model;
+package ar.com.controlfinanzas.domain.inversion;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
+import ar.com.controlfinanzas.model.Moneda;
+import ar.com.controlfinanzas.model.TipoActivo;
+import ar.com.controlfinanzas.model.TipoInversion;
+import ar.com.controlfinanzas.model.Usuario;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,6 +19,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -42,7 +50,6 @@ public class Inversion {
 	private LocalDate fechaInicio;
 	private LocalDate fechaVencimiento;
 
-	// Campos opcionales / avanzados
 	@Column(precision = 19, scale = 4)
 	private BigDecimal cantidad;
 
@@ -53,8 +60,11 @@ public class Inversion {
 	private String cryptoTipo;
 
 	@ManyToOne(optional = false)
-	@JoinColumn(name = "UsuarioID", nullable = false)
+	@JoinColumn(name = "usuario_id", nullable = false)
 	private Usuario usuario;
+
+	@OneToMany(mappedBy = "inversion", cascade = CascadeType.ALL, orphanRemoval = true)
+	private List<FlujoIngreso> flujos = new ArrayList<>();
 
 	/*
 	 * ====================== CONSTRUCTORES ======================
@@ -97,7 +107,12 @@ public class Inversion {
 				&& precioUnitario.compareTo(BigDecimal.ZERO) > 0) {
 			return cantidad.multiply(precioUnitario);
 		}
-		return capitalInicial;
+		return capitalInicial != null ? capitalInicial : BigDecimal.ZERO;
+	}
+
+	public void agregarFlujo(FlujoIngreso flujo) {
+		flujo.setInversion(this);
+		this.flujos.add(flujo);
 	}
 
 	/*
@@ -206,7 +221,6 @@ public class Inversion {
 
 	public void setCryptoTipo(String cryptoTipo) {
 		this.cryptoTipo = cryptoTipo;
-
 	}
 
 	public Usuario getUsuario() {
@@ -217,4 +231,11 @@ public class Inversion {
 		this.usuario = usuario;
 	}
 
+	public List<FlujoIngreso> getFlujos() {
+		return flujos;
+	}
+
+	public void setFlujos(List<FlujoIngreso> flujos) {
+		this.flujos = flujos;
+	}
 }

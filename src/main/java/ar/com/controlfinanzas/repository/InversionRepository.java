@@ -2,7 +2,7 @@ package ar.com.controlfinanzas.repository;
 
 import java.util.List;
 
-import ar.com.controlfinanzas.model.Inversion;
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.persistence.JPAUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;

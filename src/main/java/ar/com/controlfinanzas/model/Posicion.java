@@ -3,7 +3,7 @@ package ar.com.controlfinanzas.model;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-import ar.com.controlfinanzas.model.Inversion;
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.TipoActivo;
 
 public class Posicion {

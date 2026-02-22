@@ -5,7 +5,7 @@ import java.time.YearMonth;
 import java.util.List;
 
 import ar.com.controlfinanzas.app.MainApp;
-import ar.com.controlfinanzas.model.Inversion;
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.repository.InversionRepository;
 

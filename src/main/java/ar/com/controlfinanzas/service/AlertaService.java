@@ -5,8 +5,8 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.Alerta;
-import ar.com.controlfinanzas.model.Inversion;
 
 public class AlertaService {
 

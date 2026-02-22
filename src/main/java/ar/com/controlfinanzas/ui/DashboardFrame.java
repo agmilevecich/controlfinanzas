@@ -7,7 +7,7 @@ import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
 import ar.com.controlfinanzas.controller.InversionController;
-import ar.com.controlfinanzas.model.Inversion;
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.repository.GastoRepository;
 import ar.com.controlfinanzas.repository.InversionRepository;
 import ar.com.controlfinanzas.service.AlertaService;

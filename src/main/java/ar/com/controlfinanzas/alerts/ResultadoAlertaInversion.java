@@ -1,7 +1,7 @@
 package ar.com.controlfinanzas.alerts;
 
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.EstadoInversion;
-import ar.com.controlfinanzas.model.Inversion;
 
 public class ResultadoAlertaInversion {
 

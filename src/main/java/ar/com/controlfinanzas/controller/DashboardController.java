@@ -4,8 +4,8 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import ar.com.controlfinanzas.app.MainApp;
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.Gasto;
-import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.InversionService;
 

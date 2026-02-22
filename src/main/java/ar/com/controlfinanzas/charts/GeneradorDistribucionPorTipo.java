@@ -1,6 +1,6 @@
 package ar.com.controlfinanzas.charts;
 
-import ar.com.controlfinanzas.model.Inversion;
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.TipoInversion;
 
 import java.math.BigDecimal;

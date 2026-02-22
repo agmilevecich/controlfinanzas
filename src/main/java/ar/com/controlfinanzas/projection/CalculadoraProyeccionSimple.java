@@ -5,8 +5,8 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.Cuenta;
-import ar.com.controlfinanzas.model.Inversion;
 
 public class CalculadoraProyeccionSimple implements CalculadoraProyeccion {
 

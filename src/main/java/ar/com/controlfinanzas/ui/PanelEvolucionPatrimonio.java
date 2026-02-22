@@ -16,8 +16,8 @@ import org.jfree.data.time.Day;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
 
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.Cuenta;
-import ar.com.controlfinanzas.model.Inversion;
 import ar.com.controlfinanzas.projection.CalculadoraProyeccion;
 
 /**

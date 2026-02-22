@@ -14,7 +14,7 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.data.general.DefaultPieDataset;
 
 import ar.com.controlfinanzas.controller.InversionController;
-import ar.com.controlfinanzas.model.Inversion;
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 
 /**
  * Panel que muestra la distribución de las inversiones por tipo de activo

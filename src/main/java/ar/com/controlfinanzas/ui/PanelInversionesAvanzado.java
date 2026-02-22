@@ -24,7 +24,7 @@ import com.github.lgooddatepicker.components.DatePickerSettings;
 
 import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.controller.InversionController;
-import ar.com.controlfinanzas.model.Inversion;
+import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.TipoActivo;
 import ar.com.controlfinanzas.model.TipoInversion;

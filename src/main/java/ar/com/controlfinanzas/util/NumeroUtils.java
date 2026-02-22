@@ -9,7 +9,7 @@ public class NumeroUtils {
 			return BigDecimal.ZERO;
 		}
 
-		texto = texto.trim().replace(".", "").replace(",", ".");
+		texto = texto.trim().replace(",", ".");
 
 		return new BigDecimal(texto);
 	}
