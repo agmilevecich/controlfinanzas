@@ -3,12 +3,12 @@ package ar.com.controlfinanzas.ui;
 import java.awt.BorderLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.util.List;
 
-import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -25,11 +25,15 @@ import com.github.lgooddatepicker.components.DatePickerSettings;
 import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.controller.InversionController;
 import ar.com.controlfinanzas.domain.inversion.Inversion;
+import ar.com.controlfinanzas.model.Alerta;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.TipoActivo;
 import ar.com.controlfinanzas.model.TipoInversion;
 import ar.com.controlfinanzas.repository.InversionRepository;
+import ar.com.controlfinanzas.service.AlertaService;
 import ar.com.controlfinanzas.service.PosicionService;
+import ar.com.controlfinanzas.ui.inversion.PanelIngresosMensuales;
+import ar.com.controlfinanzas.ui.inversion.PanelVencimientos;
 import ar.com.controlfinanzas.util.NumeroUtils;
 
 public class PanelInversionesAvanzado extends JPanel {
@@ -40,6 +44,7 @@ public class PanelInversionesAvanzado extends JPanel {
 
 	private JComboBox<TipoInversion> cbTipoInversion;
 	private JComboBox<Moneda> cbMoneda;
+	private JComboBox<TipoActivo> cbTipoActivo;
 
 	private JTextField txtDescripcion;
 	private JTextField txtCapital;
@@ -51,20 +56,21 @@ public class PanelInversionesAvanzado extends JPanel {
 
 	private DatePicker dpFechaInicio;
 	private DatePicker dpFechaVencimiento;
-	private JComboBox cbTipoActivo;
 
 	private PanelBotones botones = new PanelBotones();
 	private PanelDistribucion panelDistribucion;
-	private JSplitPane split;
 	private PanelPosiciones panelPosiciones;
+	private PanelIngresosMensuales panelIngresoMensuales;
+	private PanelVencimientos panelVencimientos;
 
 	public PanelInversionesAvanzado(InversionController inversionController) {
 		this.inversionController = inversionController;
-		panelDistribucion = new PanelDistribucion(inversionController);
 
+		panelDistribucion = new PanelDistribucion(inversionController);
 		panelPosiciones = new PanelPosiciones(new PosicionService(new InversionRepository()));
 		panelPosiciones.refrescar(MainApp.getUsuarioActivo().getUsuarioID());
-
+		panelIngresoMensuales = new PanelIngresosMensuales();
+		panelVencimientos = new PanelVencimientos();
 		inicializarPanel();
 
 		inversionController.addListener(() -> cargarInversiones());
@@ -82,7 +88,7 @@ public class PanelInversionesAvanzado extends JPanel {
 
 		gbc.gridx = 0;
 		gbc.gridy = 0;
-		panelForm.add(new JLabel("Tipo Activo: "), gbc);
+		panelForm.add(new JLabel("Tipo Activo:"), gbc);
 		cbTipoActivo = new JComboBox<>(TipoActivo.values());
 		cbTipoActivo.addActionListener(e -> filtrarTipoInversion());
 		gbc.gridx = 1;
@@ -174,8 +180,7 @@ public class PanelInversionesAvanzado extends JPanel {
 		gbc.gridwidth = 4;
 		panelForm.add(botones, gbc);
 
-		JButton[] boton = botones.getBotones();
-		boton[0].addActionListener(e -> agregarInversion());
+		botones.getBotones()[0].addActionListener(e -> agregarInversion());
 
 		add(panelForm, BorderLayout.NORTH);
 
@@ -185,45 +190,43 @@ public class PanelInversionesAvanzado extends JPanel {
 				0);
 
 		tabla = new JTable(tablaModel);
-		tabla.removeColumn(tabla.getColumnModel().getColumn(0)); // ocultamos ID
+		tabla.removeColumn(tabla.getColumnModel().getColumn(0));
 
-		split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(tabla), panelDistribucion);
-		split.setResizeWeight(0.6);
-		split.setContinuousLayout(true);
-		split.setOneTouchExpandable(true);
-		add(split, BorderLayout.CENTER);
-		add(panelPosiciones, BorderLayout.SOUTH);
+		JSplitPane splitHorizontal = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, new JScrollPane(tabla),
+				panelDistribucion);
+		splitHorizontal.setResizeWeight(0.6);
+		splitHorizontal.setContinuousLayout(true);
+		splitHorizontal.setOneTouchExpandable(true);
+
+		JPanel panelSur = new JPanel(new GridLayout(1, 3));
+		panelSur.add(panelPosiciones);
+		panelSur.add(panelIngresoMensuales);
+		panelSur.add(panelVencimientos);
+
+		JSplitPane splitVertical = new JSplitPane(JSplitPane.VERTICAL_SPLIT, splitHorizontal, panelSur);
+		splitVertical.setResizeWeight(0.7);
+		splitVertical.setContinuousLayout(true);
+		splitVertical.setOneTouchExpandable(true);
+
+		add(splitVertical, BorderLayout.CENTER);
 	}
 
 	private void filtrarTipoInversion() {
-
-		TipoActivo activoSeleccionado = (TipoActivo) cbTipoActivo.getSelectedItem();
-
+		TipoActivo activo = (TipoActivo) cbTipoActivo.getSelectedItem();
 		cbTipoInversion.removeAllItems();
-
-		if (activoSeleccionado == null) {
+		if (activo == null) {
 			return;
 		}
 
-		for (TipoInversion tipo : TipoInversion.values()) {
-			if (tipo.permite(activoSeleccionado)) {
-				cbTipoInversion.addItem(tipo);
+		for (TipoInversion t : TipoInversion.values()) {
+			if (t.permite(activo)) {
+				cbTipoInversion.addItem(t);
 			}
 		}
 	}
 
 	private void agregarInversion() {
 		try {
-
-			if (txtDescripcion.getText().trim().isEmpty() || txtCapital.getText().trim().isEmpty()
-					|| txtRendimiento.getText().trim().isEmpty() || dpFechaInicio.getDate() == null
-					|| dpFechaVencimiento.getDate() == null) {
-
-				JOptionPane.showMessageDialog(this, "Complete todos los campos obligatorios", "Error",
-						JOptionPane.ERROR_MESSAGE);
-				return;
-			}
-
 			Inversion inv = new Inversion((TipoActivo) cbTipoActivo.getSelectedItem(),
 					(TipoInversion) cbTipoInversion.getSelectedItem(), (Moneda) cbMoneda.getSelectedItem(),
 					txtDescripcion.getText().trim(), NumeroUtils.parse(txtCapital.getText()),
@@ -231,10 +234,8 @@ public class PanelInversionesAvanzado extends JPanel {
 
 			inv.setCantidad(
 					txtCantidad.getText().isEmpty() ? BigDecimal.ZERO : NumeroUtils.parse(txtCantidad.getText()));
-
 			inv.setPrecioUnitario(txtPrecioUnitario.getText().isEmpty() ? BigDecimal.ZERO
 					: NumeroUtils.parse(txtPrecioUnitario.getText()));
-
 			inv.setCryptoTipo(txtCryptoTipo.getText().trim().toUpperCase());
 			inv.setBroker(txtBroker.getText().trim());
 			inv.setUsuario(MainApp.getUsuarioActivo());
@@ -245,14 +246,12 @@ public class PanelInversionesAvanzado extends JPanel {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			JOptionPane.showMessageDialog(this, "Error al guardar inversión", "Error", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(this, "Error al guardar inversión");
 		}
 	}
 
 	private void cargarInversiones() {
-
 		tablaModel.setRowCount(0);
-
 		List<Inversion> inversiones = inversionController.getInversiones();
 
 		for (Inversion inv : inversiones) {
@@ -261,6 +260,11 @@ public class PanelInversionesAvanzado extends JPanel {
 					inv.getFechaVencimiento(), inv.getCantidad(), inv.getPrecioUnitario(), inv.getCryptoTipo(),
 					inv.getBroker() });
 		}
+
+		panelIngresoMensuales.refrescar(inversiones);
+		AlertaService alertaService = new AlertaService();
+
+		List<Alerta> alertas = alertaService.generarAlertasInversiones(inversionController.getInversiones());
 	}
 
 	private void limpiarCampos() {

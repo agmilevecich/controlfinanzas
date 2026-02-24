@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import ar.com.controlfinanzas.domain.inversion.Inversion;
+import ar.com.controlfinanzas.domain.inversion.VencimientoProjection;
 import ar.com.controlfinanzas.model.Posicion;
 import ar.com.controlfinanzas.model.TipoActivo;
 import ar.com.controlfinanzas.repository.InversionRepository;
@@ -51,4 +52,14 @@ public class PosicionService {
 
 		return "SIN_DESCRIPCION";
 	}
+
+	public List<VencimientoProjection> obtenerVencimientos(List<Inversion> inversiones) {
+
+		return inversiones.stream().filter(i -> i.getFechaVencimiento() != null)
+				.map(i -> new VencimientoProjection(i.getDescripcion(), i.getFechaVencimiento(),
+						i.getCapitalTotalCalculado(), i.calcularInteresAlVencimiento(),
+						i.calcularCapitalFinalEstimado()))
+				.sorted(java.util.Comparator.comparing(VencimientoProjection::getFecha)).toList();
+	}
+
 }

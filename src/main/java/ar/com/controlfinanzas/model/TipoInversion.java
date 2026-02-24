@@ -27,4 +27,21 @@ public enum TipoInversion {
 	public Set<TipoActivo> getActivosPermitidos() {
 		return activosPermitidos;
 	}
+
+	public FrecuenciaIngreso frecuenciaSugerida() {
+		return switch (this) {
+
+		case LENDING -> FrecuenciaIngreso.MENSUAL;
+
+		case STAKING -> FrecuenciaIngreso.DIARIO;
+
+		case PLAZO_FIJO_TRADICIONAL, PLAZO_FIJO_UVA -> FrecuenciaIngreso.AL_VENCIMIENTO;
+
+		case OBLIGACION_NEGOCIABLE -> FrecuenciaIngreso.TRIMESTRAL; // típico cupon
+
+		case COMPRA_DIRECTA, FONDO_COMUN -> FrecuenciaIngreso.ANUAL;
+
+		default -> FrecuenciaIngreso.MENSUAL;
+		};
+	}
 }

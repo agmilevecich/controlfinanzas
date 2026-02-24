@@ -29,13 +29,13 @@ import ar.com.controlfinanzas.model.EstadoInversion;
  * Ahora incluye método actualizarInversiones() para refrescar dinámicamente el
  * gráfico sin errores.
  */
-public class PanelVencimientos extends JPanel {
+public class PanelVencimientosGraficos extends JPanel {
 
 	private List<Inversion> inversiones;
 	private DefaultCategoryDataset dataset;
 	private ChartPanel chartPanel;
 
-	public PanelVencimientos(List<Inversion> inversiones) {
+	public PanelVencimientosGraficos(List<Inversion> inversiones) {
 		this.inversiones = inversiones;
 		inicializarPanel();
 	}

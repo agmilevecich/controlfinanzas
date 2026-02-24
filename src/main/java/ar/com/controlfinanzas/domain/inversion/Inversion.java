@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import ar.com.controlfinanzas.model.FrecuenciaIngreso;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.TipoActivo;
 import ar.com.controlfinanzas.model.TipoInversion;
@@ -39,6 +40,9 @@ public class Inversion {
 
 	@Enumerated(EnumType.STRING)
 	private Moneda moneda;
+
+	@Enumerated(EnumType.STRING)
+	private FrecuenciaIngreso frecuenciaIngreso;
 
 	private String descripcion;
 
@@ -82,6 +86,7 @@ public class Inversion {
 		this.tipoActivo = tipoActivo;
 		this.tipoInversion = tipoInversion;
 		this.moneda = moneda;
+		this.setFrecuenciaIngreso(getTipoInversion().frecuenciaSugerida());
 		this.descripcion = descripcion;
 		this.capitalInicial = capitalInicial;
 		this.rendimientoEsperado = rendimientoEsperado;
@@ -151,6 +156,102 @@ public class Inversion {
 		this.flujos.add(flujo);
 	}
 
+	public BigDecimal calcularIngresoMensualEstimado() {
+
+		if (tasaAnual == null || frecuenciaIngreso == null) {
+			return BigDecimal.ZERO;
+		}
+
+		if (frecuenciaIngreso == FrecuenciaIngreso.AL_VENCIMIENTO) {
+			return BigDecimal.ZERO;
+		}
+
+		BigDecimal capital = getCapitalTotalCalculado();
+
+		if (capital == null || capital.compareTo(BigDecimal.ZERO) <= 0) {
+			return BigDecimal.ZERO;
+		}
+
+		int periodos = frecuenciaIngreso.periodosPorAnio();
+
+		if (periodos == 0) {
+			return BigDecimal.ZERO;
+		}
+
+		// tasa periodo = tasa anual / periodos
+		BigDecimal tasaPeriodo = tasaAnual.divide(BigDecimal.valueOf(periodos), 8, java.math.RoundingMode.HALF_UP)
+				.divide(BigDecimal.valueOf(100), 8, java.math.RoundingMode.HALF_UP);
+
+		BigDecimal ingresoPeriodo = capital.multiply(tasaPeriodo);
+
+		// convertir a mensual
+		BigDecimal ingresoMensual = ingresoPeriodo.multiply(BigDecimal.valueOf(12)).divide(BigDecimal.valueOf(periodos),
+				8, java.math.RoundingMode.HALF_UP);
+
+		return ingresoMensual;
+	}
+
+	public BigDecimal calcularGananciaAlVencimiento() {
+
+		if (tasaAnual == null || getCapitalTotalCalculado() == null) {
+			return BigDecimal.ZERO;
+		}
+
+		if (frecuenciaIngreso != FrecuenciaIngreso.AL_VENCIMIENTO) {
+			return BigDecimal.ZERO;
+		}
+
+		if (fechaInicio == null || fechaVencimiento == null) {
+			return BigDecimal.ZERO;
+		}
+
+		long dias = java.time.temporal.ChronoUnit.DAYS.between(fechaInicio, fechaVencimiento);
+
+		if (dias <= 0) {
+			return BigDecimal.ZERO;
+		}
+
+		BigDecimal capital = getCapitalTotalCalculado();
+
+		BigDecimal tasa = tasaAnual.divide(BigDecimal.valueOf(100), 8, java.math.RoundingMode.HALF_UP);
+
+		BigDecimal interes = capital.multiply(tasa).multiply(BigDecimal.valueOf(dias)).divide(BigDecimal.valueOf(365),
+				8, java.math.RoundingMode.HALF_UP);
+
+		return interes;
+	}
+
+	public BigDecimal calcularInteresAlVencimiento() {
+
+		if (tasaAnual == null || fechaInicio == null || fechaVencimiento == null) {
+			return BigDecimal.ZERO;
+		}
+
+		BigDecimal capital = getCapitalTotalCalculado();
+
+		if (capital == null || capital.compareTo(BigDecimal.ZERO) <= 0) {
+			return BigDecimal.ZERO;
+		}
+
+		long dias = java.time.temporal.ChronoUnit.DAYS.between(fechaInicio, fechaVencimiento);
+
+		if (dias <= 0) {
+			return BigDecimal.ZERO;
+		}
+
+		// tasa diaria = tasa anual / 365
+		BigDecimal tasaDiaria = tasaAnual.divide(BigDecimal.valueOf(365), 10, java.math.RoundingMode.HALF_UP)
+				.divide(BigDecimal.valueOf(100), 10, java.math.RoundingMode.HALF_UP);
+
+		BigDecimal interes = capital.multiply(tasaDiaria).multiply(BigDecimal.valueOf(dias));
+
+		return interes;
+	}
+
+	public BigDecimal calcularCapitalFinalEstimado() {
+		return getCapitalTotalCalculado().add(calcularInteresAlVencimiento());
+	}
+
 	/* ================= GETTERS ================= */
 
 	public Long getId() {
@@ -175,6 +276,9 @@ public class Inversion {
 
 	public void setTipoInversion(TipoInversion tipoInversion) {
 		this.tipoInversion = tipoInversion;
+		if (tipoInversion != null) {
+			this.frecuenciaIngreso = tipoInversion.frecuenciaSugerida();
+		}
 	}
 
 	public Moneda getMoneda() {
@@ -183,6 +287,14 @@ public class Inversion {
 
 	public void setMoneda(Moneda moneda) {
 		this.moneda = moneda;
+	}
+
+	public FrecuenciaIngreso getFrecuenciaIngreso() {
+		return frecuenciaIngreso;
+	}
+
+	public void setFrecuenciaIngreso(FrecuenciaIngreso frecuenciaIngreso) {
+		this.frecuenciaIngreso = frecuenciaIngreso;
 	}
 
 	public String getDescripcion() {
@@ -288,4 +400,5 @@ public class Inversion {
 	public void setFlujos(List<FlujoIngreso> flujos) {
 		this.flujos = flujos;
 	}
+
 }

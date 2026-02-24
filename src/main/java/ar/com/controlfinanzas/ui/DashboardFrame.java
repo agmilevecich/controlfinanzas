@@ -22,7 +22,7 @@ public class DashboardFrame extends JFrame {
 	// Paneles que necesitan refresco
 	private PanelAlertas panelAlertas;
 	private PanelResumenFinanciero panelResumen;
-	private PanelVencimientos panelVencimientos;
+	private PanelVencimientosGraficos panelVencimientos;
 
 	// Servicios
 	private final AlertaService alertaService;
@@ -67,7 +67,7 @@ public class DashboardFrame extends JFrame {
 
 		PanelInversionesAvanzado panelInversiones = new PanelInversionesAvanzado(inversionController);
 
-		panelVencimientos = new PanelVencimientos(List.of());
+		panelVencimientos = new PanelVencimientosGraficos(List.of());
 
 		// ===============================
 		// Tabs

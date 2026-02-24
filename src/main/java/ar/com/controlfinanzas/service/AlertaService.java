@@ -14,6 +14,9 @@ public class AlertaService {
 
 	public List<Alerta> generarAlertasInversiones(List<Inversion> inversiones) {
 
+		AlertaInversionService clasificador = new AlertaInversionService();
+		List<Inversion> proximas = clasificador.proximasAVencer(inversiones);
+
 		List<Alerta> alertas = new ArrayList<>();
 		LocalDate hoy = LocalDate.now();
 

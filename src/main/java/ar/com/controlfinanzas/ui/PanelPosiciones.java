@@ -1,7 +1,6 @@
 package ar.com.controlfinanzas.ui;
 
 import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -25,7 +24,6 @@ public class PanelPosiciones extends JPanel {
 		this.service = service;
 
 		setLayout(new BorderLayout());
-		setPreferredSize(new Dimension(1100, 150));
 
 		model = new DefaultTableModel(new Object[] { "Activo", "Tipo", "Cantidad", "Capital", "Precio Promedio" }, 0) {
 			@Override
