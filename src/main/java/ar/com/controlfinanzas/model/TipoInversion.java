@@ -29,19 +29,25 @@ public enum TipoInversion {
 	}
 
 	public FrecuenciaIngreso frecuenciaSugerida() {
-		return switch (this) {
+		switch (this) {
 
-		case LENDING -> FrecuenciaIngreso.MENSUAL;
+		case LENDING:
+			return FrecuenciaIngreso.MENSUAL;
 
-		case STAKING -> FrecuenciaIngreso.DIARIO;
+		case STAKING:
+			return FrecuenciaIngreso.DIARIO;
 
-		case PLAZO_FIJO_TRADICIONAL, PLAZO_FIJO_UVA -> FrecuenciaIngreso.AL_VENCIMIENTO;
+		case PLAZO_FIJO_TRADICIONAL, PLAZO_FIJO_UVA:
+			return FrecuenciaIngreso.AL_VENCIMIENTO;
 
-		case OBLIGACION_NEGOCIABLE -> FrecuenciaIngreso.TRIMESTRAL; // típico cupon
+		case OBLIGACION_NEGOCIABLE:
+			return FrecuenciaIngreso.TRIMESTRAL; // típico cupon
 
-		case COMPRA_DIRECTA, FONDO_COMUN -> FrecuenciaIngreso.ANUAL;
+		case COMPRA_DIRECTA, FONDO_COMUN:
+			return FrecuenciaIngreso.ANUAL;
 
-		default -> FrecuenciaIngreso.MENSUAL;
-		};
+		default:
+			return FrecuenciaIngreso.MENSUAL;
+		}
 	}
 }

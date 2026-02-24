@@ -20,7 +20,7 @@ public class AlertaService {
 		List<Alerta> alertas = new ArrayList<>();
 		LocalDate hoy = LocalDate.now();
 
-		for (Inversion inv : inversiones) {
+		for (Inversion inv : proximas) {
 
 			if (inv.getFechaVencimiento() == null) {
 				continue;

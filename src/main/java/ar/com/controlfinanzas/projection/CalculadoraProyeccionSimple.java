@@ -29,8 +29,7 @@ public class CalculadoraProyeccionSimple implements CalculadoraProyeccion {
 		BigDecimal proporcion = BigDecimal.valueOf(diasTranscurridos).divide(BigDecimal.valueOf(diasTotales), 6,
 				RoundingMode.HALF_UP);
 
-		BigDecimal rendimiento = inversion.getCapitalInicial().multiply(inversion.getRendimientoEsperado())
-				.multiply(proporcion);
+		BigDecimal rendimiento = inversion.getCapitalInicial().multiply(inversion.getTasaAnual()).multiply(proporcion);
 
 		return inversion.getCapitalInicial().add(rendimiento);
 	}

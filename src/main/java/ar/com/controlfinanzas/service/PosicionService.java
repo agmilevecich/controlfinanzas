@@ -1,65 +1,89 @@
 package ar.com.controlfinanzas.service;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import ar.com.controlfinanzas.domain.inversion.Inversion;
-import ar.com.controlfinanzas.domain.inversion.VencimientoProjection;
 import ar.com.controlfinanzas.model.Posicion;
 import ar.com.controlfinanzas.model.TipoActivo;
 import ar.com.controlfinanzas.repository.InversionRepository;
 
 public class PosicionService {
 
-	private final InversionRepository repository;
+	private String activo;
+	private TipoActivo tipo;
+	private BigDecimal cantidad;
+	private BigDecimal capital;
+	private BigDecimal precioPromedio;
 
-	public PosicionService(InversionRepository repository) {
-		this.repository = repository;
+	private final InversionRepository inversionRepository;
+
+	public PosicionService() {
+		inversionRepository = new InversionRepository();
+	}
+
+	public String getActivo() {
+		return activo;
+	}
+
+	public void setActivo(String activo) {
+		this.activo = activo;
+	}
+
+	public TipoActivo getTipo() {
+		return tipo;
+	}
+
+	public void setTipo(TipoActivo tipo) {
+		this.tipo = tipo;
+	}
+
+	public BigDecimal getCantidad() {
+		return cantidad;
+	}
+
+	public void setCantidad(BigDecimal cantidad) {
+		this.cantidad = cantidad;
+	}
+
+	public BigDecimal getCapital() {
+		return capital;
+	}
+
+	public void setCapital(BigDecimal capital) {
+		this.capital = capital;
+	}
+
+	public BigDecimal getPrecioPromedio() {
+		return precioPromedio;
+	}
+
+	public void setPrecioPromedio(BigDecimal precioPromedio) {
+		this.precioPromedio = precioPromedio;
 	}
 
 	public List<Posicion> calcular(Integer usuarioId) {
 
-		List<Inversion> inversiones = repository.listarPorUsuario(usuarioId);
+		List<Inversion> inversiones = inversionRepository.listarPorUsuario(usuarioId);
 
-		Map<String, Posicion> mapa = new HashMap<>();
+		Map<String, Posicion> mapa = new LinkedHashMap<>();
 
 		for (Inversion inv : inversiones) {
 
-			String clave = generarClave(inv);
+			String clave = inv.getDescripcion();
+			TipoActivo tipo = inv.getTipoActivo();
 
-			mapa.computeIfAbsent(clave, k -> new Posicion(k, inv.getTipoActivo())).agregar(inv);
+			Posicion pos = mapa.computeIfAbsent(clave, k -> new Posicion(clave, tipo));
+
+			BigDecimal cantidad = inv.getCantidad() != null ? inv.getCantidad() : BigDecimal.ZERO;
+			BigDecimal capital = inv.getCapitalTotalCalculado();
+
+			pos.agregar(inv);
 		}
 
 		return new ArrayList<>(mapa.values());
 	}
-
-	private String generarClave(Inversion inv) {
-
-		if (inv.getTipoActivo() == TipoActivo.CRIPTO) {
-
-			if (inv.getCryptoTipo() != null && !inv.getCryptoTipo().isBlank()) {
-				return inv.getCryptoTipo().toUpperCase();
-			}
-
-			return "CRIPTO";
-		}
-
-		if (inv.getDescripcion() != null && !inv.getDescripcion().isBlank()) {
-			return inv.getDescripcion().toUpperCase();
-		}
-
-		return "SIN_DESCRIPCION";
-	}
-
-	public List<VencimientoProjection> obtenerVencimientos(List<Inversion> inversiones) {
-
-		return inversiones.stream().filter(i -> i.getFechaVencimiento() != null)
-				.map(i -> new VencimientoProjection(i.getDescripcion(), i.getFechaVencimiento(),
-						i.getCapitalTotalCalculado(), i.calcularInteresAlVencimiento(),
-						i.calcularCapitalFinalEstimado()))
-				.sorted(java.util.Comparator.comparing(VencimientoProjection::getFecha)).toList();
-	}
-
 }

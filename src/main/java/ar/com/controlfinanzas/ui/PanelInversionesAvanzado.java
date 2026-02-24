@@ -29,7 +29,6 @@ import ar.com.controlfinanzas.model.Alerta;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.TipoActivo;
 import ar.com.controlfinanzas.model.TipoInversion;
-import ar.com.controlfinanzas.repository.InversionRepository;
 import ar.com.controlfinanzas.service.AlertaService;
 import ar.com.controlfinanzas.service.PosicionService;
 import ar.com.controlfinanzas.ui.inversion.PanelIngresosMensuales;
@@ -67,7 +66,7 @@ public class PanelInversionesAvanzado extends JPanel {
 		this.inversionController = inversionController;
 
 		panelDistribucion = new PanelDistribucion(inversionController);
-		panelPosiciones = new PanelPosiciones(new PosicionService(new InversionRepository()));
+		panelPosiciones = new PanelPosiciones(new PosicionService());
 		panelPosiciones.refrescar(MainApp.getUsuarioActivo().getUsuarioID());
 		panelIngresoMensuales = new PanelIngresosMensuales();
 		panelVencimientos = new PanelVencimientos();
@@ -90,7 +89,9 @@ public class PanelInversionesAvanzado extends JPanel {
 		gbc.gridy = 0;
 		panelForm.add(new JLabel("Tipo Activo:"), gbc);
 		cbTipoActivo = new JComboBox<>(TipoActivo.values());
-		cbTipoActivo.addActionListener(e -> filtrarTipoInversion());
+		cbTipoActivo.addActionListener(e -> {
+			filtrarTipoInversion();
+		});
 		gbc.gridx = 1;
 		panelForm.add(cbTipoActivo, gbc);
 
@@ -226,21 +227,33 @@ public class PanelInversionesAvanzado extends JPanel {
 	}
 
 	private void agregarInversion() {
+
 		try {
-			Inversion inv = new Inversion((TipoActivo) cbTipoActivo.getSelectedItem(),
-					(TipoInversion) cbTipoInversion.getSelectedItem(), (Moneda) cbMoneda.getSelectedItem(),
-					txtDescripcion.getText().trim(), NumeroUtils.parse(txtCapital.getText()),
+
+			if (!validarDatos()) {
+				return;
+			}
+
+			TipoActivo tipoActivo = (TipoActivo) cbTipoActivo.getSelectedItem();
+
+			BigDecimal capital = txtCapital.getText().isEmpty() ? BigDecimal.ZERO
+					: NumeroUtils.parse(txtCapital.getText());
+
+			Inversion inv = new Inversion(tipoActivo, (TipoInversion) cbTipoInversion.getSelectedItem(),
+					(Moneda) cbMoneda.getSelectedItem(), txtDescripcion.getText().trim(), capital,
 					NumeroUtils.parse(txtRendimiento.getText()), dpFechaInicio.getDate(), dpFechaVencimiento.getDate());
 
-			inv.setCantidad(
-					txtCantidad.getText().isEmpty() ? BigDecimal.ZERO : NumeroUtils.parse(txtCantidad.getText()));
-			inv.setPrecioUnitario(txtPrecioUnitario.getText().isEmpty() ? BigDecimal.ZERO
-					: NumeroUtils.parse(txtPrecioUnitario.getText()));
+			if (!usaMonto(tipoActivo)) {
+				inv.setCantidad(NumeroUtils.parse(txtCantidad.getText()));
+				inv.setPrecioUnitario(NumeroUtils.parse(txtPrecioUnitario.getText()));
+			}
+
 			inv.setCryptoTipo(txtCryptoTipo.getText().trim().toUpperCase());
 			inv.setBroker(txtBroker.getText().trim());
 			inv.setUsuario(MainApp.getUsuarioActivo());
 
 			inversionController.agregarInversion(inv);
+
 			panelPosiciones.refrescar(MainApp.getUsuarioActivo().getUsuarioID());
 			limpiarCampos();
 
@@ -256,7 +269,7 @@ public class PanelInversionesAvanzado extends JPanel {
 
 		for (Inversion inv : inversiones) {
 			tablaModel.addRow(new Object[] { inv.getId(), inv.getTipoActivo(), inv.getTipoInversion(), inv.getMoneda(),
-					inv.getDescripcion(), inv.getCapitalInicial(), inv.getRendimientoEsperado(), inv.getFechaInicio(),
+					inv.getDescripcion(), inv.getCapitalInicial(), inv.getTasaAnual(), inv.getFechaInicio(),
 					inv.getFechaVencimiento(), inv.getCantidad(), inv.getPrecioUnitario(), inv.getCryptoTipo(),
 					inv.getBroker() });
 		}
@@ -265,6 +278,7 @@ public class PanelInversionesAvanzado extends JPanel {
 		AlertaService alertaService = new AlertaService();
 
 		List<Alerta> alertas = alertaService.generarAlertasInversiones(inversionController.getInversiones());
+		panelVencimientos.refrescar(inversiones.stream().filter(i -> i.getFechaVencimiento() != null).toList());
 	}
 
 	private void limpiarCampos() {
@@ -278,4 +292,50 @@ public class PanelInversionesAvanzado extends JPanel {
 		dpFechaInicio.clear();
 		dpFechaVencimiento.clear();
 	}
+
+	private boolean usaMonto(TipoActivo tipo) {
+		return tipo == TipoActivo.EFECTIVO || tipo == TipoActivo.DEUDA_CORTO_PLAZO;
+	}
+
+	private boolean validarDatos() {
+
+		TipoActivo tipo = (TipoActivo) cbTipoActivo.getSelectedItem();
+
+		if (tipo == null) {
+			JOptionPane.showMessageDialog(this, "Seleccione tipo activo");
+			return false;
+		}
+
+		if (txtDescripcion.getText().trim().isEmpty()) {
+			JOptionPane.showMessageDialog(this, "Ingrese descripción");
+			return false;
+		}
+
+		if (txtRendimiento.getText().trim().isEmpty()) {
+			JOptionPane.showMessageDialog(this, "Ingrese rendimiento");
+			return false;
+		}
+
+		if (dpFechaInicio.getDate() == null) {
+			JOptionPane.showMessageDialog(this, "Ingrese fecha inicio");
+			return false;
+		}
+
+		boolean monto = usaMonto(tipo);
+
+		if (monto) {
+			if (txtCapital.getText().trim().isEmpty()) {
+				JOptionPane.showMessageDialog(this, "Ingrese capital inicial");
+				return false;
+			}
+		} else {
+			if (txtCantidad.getText().trim().isEmpty() || txtPrecioUnitario.getText().trim().isEmpty()) {
+				JOptionPane.showMessageDialog(this, "Ingrese cantidad y precio");
+				return false;
+			}
+		}
+
+		return true;
+	}
+
 }

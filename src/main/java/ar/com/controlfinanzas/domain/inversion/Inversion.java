@@ -49,9 +49,6 @@ public class Inversion {
 	@Column(precision = 19, scale = 4)
 	private BigDecimal capitalInicial;
 
-	@Column(precision = 19, scale = 4)
-	private BigDecimal rendimientoEsperado;
-
 	private LocalDate fechaInicio;
 	private LocalDate fechaVencimiento;
 
@@ -80,18 +77,17 @@ public class Inversion {
 	}
 
 	public Inversion(TipoActivo tipoActivo, TipoInversion tipoInversion, Moneda moneda, String descripcion,
-			BigDecimal capitalInicial, BigDecimal rendimientoEsperado, LocalDate fechaInicio,
-			LocalDate fechaVencimiento) {
+			BigDecimal capitalInicial, BigDecimal tasaAnual, LocalDate fechaInicio, LocalDate fechaVencimiento) {
 
 		this.tipoActivo = tipoActivo;
 		this.tipoInversion = tipoInversion;
 		this.moneda = moneda;
 		this.setFrecuenciaIngreso(getTipoInversion().frecuenciaSugerida());
 		this.descripcion = descripcion;
+		this.tasaAnual = tasaAnual;
 		this.capitalInicial = capitalInicial;
-		this.rendimientoEsperado = rendimientoEsperado;
-		this.fechaInicio = fechaInicio;
-		this.fechaVencimiento = fechaVencimiento;
+		setFechaInicio(fechaInicio);
+		setFechaVencimiento(fechaVencimiento);
 
 		this.cantidad = BigDecimal.ZERO;
 		this.precioUnitario = BigDecimal.ZERO;
@@ -313,20 +309,13 @@ public class Inversion {
 		this.capitalInicial = capitalInicial;
 	}
 
-	public BigDecimal getRendimientoEsperado() {
-		return rendimientoEsperado;
-	}
-
-	public void setRendimientoEsperado(BigDecimal rendimientoEsperado) {
-		this.rendimientoEsperado = rendimientoEsperado;
-	}
-
 	public LocalDate getFechaInicio() {
 		return fechaInicio;
 	}
 
 	public void setFechaInicio(LocalDate fechaInicio) {
 		this.fechaInicio = fechaInicio;
+		recalcularPlazo();
 	}
 
 	public LocalDate getFechaVencimiento() {
@@ -335,6 +324,7 @@ public class Inversion {
 
 	public void setFechaVencimiento(LocalDate fechaVencimiento) {
 		this.fechaVencimiento = fechaVencimiento;
+		recalcularPlazo();
 	}
 
 	public BigDecimal getCantidad() {
@@ -363,10 +353,6 @@ public class Inversion {
 
 	public Integer getPlazoDias() {
 		return plazoDias;
-	}
-
-	public void setPlazoDias(Integer plazoDias) {
-		this.plazoDias = plazoDias;
 	}
 
 	public String getBroker() {
@@ -399,6 +385,27 @@ public class Inversion {
 
 	public void setFlujos(List<FlujoIngreso> flujos) {
 		this.flujos = flujos;
+	}
+
+	private void recalcularPlazo() {
+
+		if (fechaInicio != null && fechaVencimiento != null) {
+			long dias = java.time.temporal.ChronoUnit.DAYS.between(fechaInicio, fechaVencimiento);
+			this.plazoDias = dias > 0 ? (int) dias : 0;
+		}
+	}
+
+	public BigDecimal obtenerCapital() {
+
+		if (capitalInicial != null && capitalInicial.compareTo(BigDecimal.ZERO) > 0) {
+			return capitalInicial;
+		}
+
+		if (cantidad != null && precioUnitario != null) {
+			return cantidad.multiply(precioUnitario);
+		}
+
+		return BigDecimal.ZERO;
 	}
 
 }
