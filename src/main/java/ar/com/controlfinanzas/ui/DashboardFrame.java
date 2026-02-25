@@ -9,7 +9,8 @@ import javax.swing.JTabbedPane;
 import ar.com.controlfinanzas.controller.InversionController;
 import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.repository.GastoRepository;
-import ar.com.controlfinanzas.repository.InversionRepository;
+import ar.com.controlfinanzas.repository.InversionRepositoryJPA;
+import ar.com.controlfinanzas.repository.interfaces.InversionRepository;
 import ar.com.controlfinanzas.service.AlertaService;
 import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.IngresoService;
@@ -42,7 +43,7 @@ public class DashboardFrame extends JFrame {
 	public DashboardFrame() {
 
 		this.alertaService = new AlertaService();
-		this.inversionRepository = new InversionRepository();
+		this.inversionRepository = new InversionRepositoryJPA();
 		this.inversionService = new InversionService(inversionRepository);
 		this.inversionController = new InversionController(inversionService);
 		this.gastoRepository = new GastoRepository();

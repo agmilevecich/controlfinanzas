@@ -35,9 +35,9 @@ public class PanelVencimiento extends JPanel {
 				.filter(i -> !i.getFechaVencimiento().isBefore(LocalDate.now()))
 				.sorted(Comparator.comparing(Inversion::getFechaVencimiento)).forEach(i -> {
 
-					BigDecimal capital = i.getCapitalInicial(); // ← antes getMonto
+					BigDecimal capital = i.getCapitalTotalCalculado();
 					BigDecimal interes = i.calcularInteresAlVencimiento();
-					BigDecimal total = capital.add(interes);
+					BigDecimal total = i.calcularCapitalFinalEstimado();
 
 					String texto = String.format("%s — vence %s — Capital: %.2f — Interés: %.2f — Total: %.2f",
 							i.getNombre(), i.getFechaVencimiento(), capital, interes, total);

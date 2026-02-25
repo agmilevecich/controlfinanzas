@@ -7,7 +7,7 @@ import java.util.List;
 import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.Usuario;
-import ar.com.controlfinanzas.repository.InversionRepository;
+import ar.com.controlfinanzas.repository.interfaces.InversionRepository;
 
 public class InversionService {
 

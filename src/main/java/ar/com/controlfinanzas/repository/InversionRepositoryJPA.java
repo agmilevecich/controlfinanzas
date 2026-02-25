@@ -4,11 +4,13 @@ import java.util.List;
 
 import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.persistence.JPAUtil;
+import ar.com.controlfinanzas.repository.interfaces.InversionRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 
-public class InversionRepository {
+public class InversionRepositoryJPA implements InversionRepository {
 
+	@Override
 	public Inversion guardar(Inversion inversion) {
 		EntityManager em = JPAUtil.getEntityManager();
 		try {
@@ -26,6 +28,7 @@ public class InversionRepository {
 		}
 	}
 
+	@Override
 	public List<Inversion> listarPorUsuario(Integer usuarioId) {
 		EntityManager em = JPAUtil.getEntityManager();
 
@@ -38,6 +41,7 @@ public class InversionRepository {
 		}
 	}
 
+	@Override
 	public void eliminar(Long id) {
 		EntityManager em = JPAUtil.getEntityManager();
 		EntityTransaction tx = em.getTransaction();

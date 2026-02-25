@@ -11,6 +11,10 @@ import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.TipoActivo;
 import ar.com.controlfinanzas.model.TipoInversion;
 import ar.com.controlfinanzas.model.Usuario;
+import ar.com.controlfinanzas.valuacion.ValuadorIndexado;
+import ar.com.controlfinanzas.valuacion.ValuadorInversion;
+import ar.com.controlfinanzas.valuacion.ValuadorMonto;
+import ar.com.controlfinanzas.valuacion.ValuadorPrecio;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -104,11 +108,7 @@ public class Inversion {
 	}
 
 	public BigDecimal getCapitalTotalCalculado() {
-		if (cantidad != null && precioUnitario != null && cantidad.compareTo(BigDecimal.ZERO) > 0
-				&& precioUnitario.compareTo(BigDecimal.ZERO) > 0) {
-			return cantidad.multiply(precioUnitario);
-		}
-		return capitalInicial != null ? capitalInicial : BigDecimal.ZERO;
+		return getValuador().calcularCapitalActual(this);
 	}
 
 	public boolean tieneTasa() {
@@ -396,16 +396,24 @@ public class Inversion {
 	}
 
 	public BigDecimal obtenerCapital() {
+		return getCapitalTotalCalculado();
+	}
 
-		if (capitalInicial != null && capitalInicial.compareTo(BigDecimal.ZERO) > 0) {
-			return capitalInicial;
+	public ValuadorInversion getValuador() {
+
+		// 1️⃣ Inversiones por precio (mercado)
+		if (tipoActivo == TipoActivo.ACCION || tipoActivo == TipoActivo.CRIPTO || tipoActivo == TipoActivo.FONDO) {
+
+			return new ValuadorPrecio();
 		}
 
-		if (cantidad != null && precioUnitario != null) {
-			return cantidad.multiply(precioUnitario);
+		// 2️⃣ Indexadas (UVA)
+		if (tipoInversion == TipoInversion.PLAZO_FIJO_UVA) {
+			return new ValuadorIndexado();
 		}
 
-		return BigDecimal.ZERO;
+		// 3️⃣ Todo lo demás → monto / tasa
+		return new ValuadorMonto();
 	}
 
 }
