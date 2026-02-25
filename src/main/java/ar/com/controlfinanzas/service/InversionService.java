@@ -63,4 +63,8 @@ public class InversionService {
 		return total;
 	}
 
+	public List<Inversion> obtenerConVencimiento() {
+		return obtenerTodas().stream().filter(i -> i.getFechaVencimiento() != null).toList();
+	}
+
 }

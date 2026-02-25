@@ -14,6 +14,7 @@ import ar.com.controlfinanzas.service.AlertaService;
 import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.IngresoService;
 import ar.com.controlfinanzas.service.InversionService;
+import ar.com.controlfinanzas.ui.inversion.PanelVencimiento;
 
 public class DashboardFrame extends JFrame {
 
@@ -22,7 +23,7 @@ public class DashboardFrame extends JFrame {
 	// Paneles que necesitan refresco
 	private PanelAlertas panelAlertas;
 	private PanelResumenFinanciero panelResumen;
-	private PanelVencimientosGraficos panelVencimientos;
+	private PanelVencimientosGraficos panelVencimientosGraficos;
 
 	// Servicios
 	private final AlertaService alertaService;
@@ -35,6 +36,8 @@ public class DashboardFrame extends JFrame {
 	private final PanelResumenGastos panelResumenGastos;
 
 	private final IngresoService ingresoService;
+
+	private PanelVencimiento panelVencimiento;
 
 	public DashboardFrame() {
 
@@ -58,16 +61,16 @@ public class DashboardFrame extends JFrame {
 		// Paneles
 		// ===============================
 
+		PanelGastos panelGastos = new PanelGastos(gastoService, panelResumen, panelResumenGastos);
+		panelAlertas = new PanelAlertas();
+		panelVencimiento = new PanelVencimiento();
+		panelVencimientosGraficos = new PanelVencimientosGraficos(List.of());
+
+		PanelInversionesAvanzado panelInversiones = new PanelInversionesAvanzado(inversionController, panelVencimiento);
+
 		inversionController.addListener(() -> {
 			onInversionesActualizadas();
 		});
-
-		PanelGastos panelGastos = new PanelGastos(gastoService, panelResumen, panelResumenGastos);
-		panelAlertas = new PanelAlertas();
-
-		PanelInversionesAvanzado panelInversiones = new PanelInversionesAvanzado(inversionController);
-
-		panelVencimientos = new PanelVencimientosGraficos(List.of());
 
 		// ===============================
 		// Tabs
@@ -77,7 +80,7 @@ public class DashboardFrame extends JFrame {
 		tabs.addTab("Resumen Gastos", panelResumenGastos);
 		tabs.addTab("Gastos", panelGastos);
 		tabs.addTab("Inversiones", panelInversiones);
-		tabs.addTab("Vencimientos", panelVencimientos);
+		tabs.addTab("Vencimientos", panelVencimientosGraficos);
 		tabs.addTab("Alertas", panelAlertas);
 
 		add(tabs, BorderLayout.CENTER);
@@ -116,7 +119,8 @@ public class DashboardFrame extends JFrame {
 	}
 
 	private void actualizarVencimientos() {
-		panelVencimientos.actualizarInversiones(inversiones);
+		panelVencimiento.refrescar(inversiones);
+		panelVencimientosGraficos.actualizarInversiones(inversiones);
 	}
 
 	// ==================================================

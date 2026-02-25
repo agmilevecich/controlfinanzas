@@ -32,7 +32,7 @@ import ar.com.controlfinanzas.model.TipoInversion;
 import ar.com.controlfinanzas.service.AlertaService;
 import ar.com.controlfinanzas.service.PosicionService;
 import ar.com.controlfinanzas.ui.inversion.PanelIngresosMensuales;
-import ar.com.controlfinanzas.ui.inversion.PanelVencimientos;
+import ar.com.controlfinanzas.ui.inversion.PanelVencimiento;
 import ar.com.controlfinanzas.util.NumeroUtils;
 
 public class PanelInversionesAvanzado extends JPanel {
@@ -60,16 +60,16 @@ public class PanelInversionesAvanzado extends JPanel {
 	private PanelDistribucion panelDistribucion;
 	private PanelPosiciones panelPosiciones;
 	private PanelIngresosMensuales panelIngresoMensuales;
-	private PanelVencimientos panelVencimientos;
+	private PanelVencimiento panelVencimiento;
 
-	public PanelInversionesAvanzado(InversionController inversionController) {
+	public PanelInversionesAvanzado(InversionController inversionController, PanelVencimiento panelVencimiento) {
 		this.inversionController = inversionController;
 
 		panelDistribucion = new PanelDistribucion(inversionController);
 		panelPosiciones = new PanelPosiciones(new PosicionService());
 		panelPosiciones.refrescar(MainApp.getUsuarioActivo().getUsuarioID());
 		panelIngresoMensuales = new PanelIngresosMensuales();
-		panelVencimientos = new PanelVencimientos();
+		this.panelVencimiento = panelVencimiento;
 		inicializarPanel();
 
 		inversionController.addListener(() -> cargarInversiones());
@@ -202,7 +202,7 @@ public class PanelInversionesAvanzado extends JPanel {
 		JPanel panelSur = new JPanel(new GridLayout(1, 3));
 		panelSur.add(panelPosiciones);
 		panelSur.add(panelIngresoMensuales);
-		panelSur.add(panelVencimientos);
+		panelSur.add(panelVencimiento);
 
 		JSplitPane splitVertical = new JSplitPane(JSplitPane.VERTICAL_SPLIT, splitHorizontal, panelSur);
 		splitVertical.setResizeWeight(0.7);
@@ -278,7 +278,6 @@ public class PanelInversionesAvanzado extends JPanel {
 		AlertaService alertaService = new AlertaService();
 
 		List<Alerta> alertas = alertaService.generarAlertasInversiones(inversionController.getInversiones());
-		panelVencimientos.refrescar(inversiones.stream().filter(i -> i.getFechaVencimiento() != null).toList());
 	}
 
 	private void limpiarCampos() {
