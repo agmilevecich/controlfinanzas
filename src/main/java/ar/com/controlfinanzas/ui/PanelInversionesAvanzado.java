@@ -68,6 +68,7 @@ public class PanelInversionesAvanzado extends JPanel {
 	private PanelPosiciones panelPosiciones;
 	private PanelIngresosMensuales panelIngresoMensuales;
 	private PanelVencimiento panelVencimiento;
+	private JSplitPane spFormGeneral;
 
 	private Usuario usuario;
 
@@ -90,6 +91,11 @@ public class PanelInversionesAvanzado extends JPanel {
 	private void inicializarPanel() {
 
 		setLayout(new BorderLayout());
+
+		spFormGeneral = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+		spFormGeneral.setResizeWeight(0.05);
+		spFormGeneral.setContinuousLayout(true);
+		spFormGeneral.setOneTouchExpandable(true);
 
 		JPanel panelForm = new JPanel(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints();
@@ -194,7 +200,7 @@ public class PanelInversionesAvanzado extends JPanel {
 
 		botones.getBotones()[0].addActionListener(e -> agregarInversion());
 
-		add(panelForm, BorderLayout.NORTH);
+		spFormGeneral.add(panelForm);
 
 		tablaModel = new DefaultTableModel(
 				new Object[] { "ID", "Tipo Activo", "Tipo Inversión", "Moneda", "Descripción", "Capital", "Rendimiento",
@@ -220,7 +226,9 @@ public class PanelInversionesAvanzado extends JPanel {
 		splitVertical.setContinuousLayout(true);
 		splitVertical.setOneTouchExpandable(true);
 
-		add(splitVertical, BorderLayout.CENTER);
+		spFormGeneral.add(splitVertical);
+
+		add(spFormGeneral, BorderLayout.CENTER);
 	}
 
 	private void filtrarTipoInversion() {
