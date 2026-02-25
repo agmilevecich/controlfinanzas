@@ -13,7 +13,7 @@
 
             <!-- H2 Database -->
             <property name="jakarta.persistence.jdbc.driver" value="org.h2.Driver"/>
-            <property name="jakarta.persistence.jdbc.url" value="jdbc:h2:tcp://localhost/C:/Users/milev/controlfinanzas"/>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:h2:~/controlfinanzas;AUTO_SERVER=TRUE"/>
             <property name="jakarta.persistence.jdbc.user" value="sa"/>
             <property name="jakarta.persistence.jdbc.password" value=""/>
 
