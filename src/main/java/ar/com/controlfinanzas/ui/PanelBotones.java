@@ -1,6 +1,6 @@
 package ar.com.controlfinanzas.ui;
 
-import java.awt.FlowLayout;
+import java.awt.GridLayout;
 
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -13,7 +13,7 @@ public class PanelBotones extends JPanel {
 		String[] texto = new String[] { "Agregar", "Modificar", "Eliminar", "Cancelar" };
 		botones = new JButton[texto.length];
 
-		setLayout(new FlowLayout());
+		setLayout(new GridLayout(1, texto.length, 5, 10));
 
 		for (int i = 0; i < botones.length; i++) {
 			botones[i] = new JButton(texto[i]);

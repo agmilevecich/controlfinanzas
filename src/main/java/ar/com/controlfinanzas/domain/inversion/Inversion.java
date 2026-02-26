@@ -36,6 +36,9 @@ public class Inversion {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
+	@Column(name = "TICKER")
+	private String ticker;
+
 	@Enumerated(EnumType.STRING)
 	private TipoActivo tipoActivo;
 
@@ -256,6 +259,14 @@ public class Inversion {
 
 	public void setId(Long id) {
 		this.id = id;
+	}
+
+	public String getTicker() {
+		return ticker;
+	}
+
+	public void setTicker(String ticker) {
+		this.ticker = ticker;
 	}
 
 	public TipoActivo getTipoActivo() {
