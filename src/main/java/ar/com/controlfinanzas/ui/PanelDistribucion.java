@@ -42,10 +42,10 @@ public class PanelDistribucion extends JPanel {
 
 		// Agrupar capital por tipo de activo
 		Map<String, BigDecimal> capitalPorActivo = inversiones.stream()
-				.collect(Collectors.groupingBy(inv -> inv.getTipoActivo().name(),
-						Collectors.mapping(
-								inv -> inv.getCapitalInicial() != null ? inv.getCapitalInicial() : BigDecimal.ZERO,
-								Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
+				.collect(Collectors.groupingBy(inv -> inv.getTipoActivo().name(), Collectors.mapping(inv -> {
+					BigDecimal capital = inv.getCapitalTotalCalculado();
+					return capital != null ? capital : BigDecimal.ZERO;
+				}, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
 
 		// Dataset
 		DefaultPieDataset dataset = new DefaultPieDataset();

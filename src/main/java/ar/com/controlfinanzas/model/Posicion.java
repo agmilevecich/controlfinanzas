@@ -14,6 +14,8 @@ public class Posicion {
 	private TipoActivo tipoActivo;
 
 	private BigDecimal cantidadTotal = BigDecimal.ZERO;
+	private BigDecimal capitalInvertido = BigDecimal.ZERO;
+	private BigDecimal valorActual = BigDecimal.ZERO;
 	private BigDecimal capitalTotal = BigDecimal.ZERO;
 
 	private final List<Inversion> inversiones = new ArrayList<>();
@@ -23,27 +25,79 @@ public class Posicion {
 		this.tipoActivo = tipoActivo;
 	}
 
-	// Agrega una inversión y actualiza totales usando el valuador correcto
+	// ===============================
+	// AGREGA INVERSION
+	// ===============================
 	public void agregar(Inversion inv) {
+
 		ValuadorInversion valuador = inv.getValuador();
 
-		BigDecimal cantidad = inv.getCantidad() != null ? inv.getCantidad() : BigDecimal.ZERO;
-		BigDecimal capital = valuador.calcularCapitalActual(inv);
+		BigDecimal invertido = inv.getCapitalTotalCalculado();
+		BigDecimal actual = valuador.calcularCapitalActual(inv);
 
+		capitalInvertido = capitalInvertido.add(invertido);
+		capitalTotal = capitalTotal.add(invertido);
+		valorActual = valorActual.add(actual);
+
+		BigDecimal cantidad = inv.getCantidad() != null ? inv.getCantidad() : BigDecimal.ZERO;
 		cantidadTotal = cantidadTotal.add(cantidad);
-		capitalTotal = capitalTotal.add(capital);
 
 		inversiones.add(inv);
 	}
+
+	// ===============================
+	// CALCULOS
+	// ===============================
 
 	public BigDecimal getPrecioPromedio() {
 		if (cantidadTotal.compareTo(BigDecimal.ZERO) == 0) {
 			return BigDecimal.ZERO;
 		}
-		return capitalTotal.divide(cantidadTotal, 8, RoundingMode.HALF_UP);
+		return capitalInvertido.divide(cantidadTotal, 8, RoundingMode.HALF_UP);
 	}
 
-	// Getters
+	public BigDecimal getPnL() {
+		return valorActual.subtract(capitalInvertido);
+	}
+
+	public BigDecimal getPnLPorcentaje() {
+
+		if (capitalInvertido.compareTo(BigDecimal.ZERO) == 0) {
+			return BigDecimal.ZERO;
+		}
+
+		return getPnL().divide(capitalInvertido, 8, RoundingMode.HALF_UP).multiply(new BigDecimal("100"));
+	}
+
+	public BigDecimal getValorActual() {
+		return valorActual;
+	}
+
+	public BigDecimal getCapitalInvertido() {
+		return capitalInvertido;
+	}
+
+	public BigDecimal getIngresoMensual() {
+
+		BigDecimal total = BigDecimal.ZERO;
+
+		for (Inversion inv : inversiones) {
+
+			ValuadorInversion valuador = inv.getValuador();
+			BigDecimal ingreso = valuador.calcularIngresoMensual(inv);
+
+			if (ingreso != null) {
+				total = total.add(ingreso);
+			}
+		}
+
+		return total;
+	}
+
+	// ===============================
+	// GETTERS
+	// ===============================
+
 	public String getClave() {
 		return clave;
 	}
@@ -56,12 +110,11 @@ public class Posicion {
 		return cantidadTotal;
 	}
 
-	public BigDecimal getCapitalTotal() {
-		return capitalTotal;
-	}
-
-	// Getter de inversiones para PanelIngresoMensuales y PanelVencimiento
 	public List<Inversion> getInversiones() {
 		return inversiones;
+	}
+
+	public BigDecimal getCapitalTotal() {
+		return capitalTotal;
 	}
 }

@@ -29,6 +29,7 @@ import ar.com.controlfinanzas.model.Alerta;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.TipoActivo;
 import ar.com.controlfinanzas.model.TipoInversion;
+import ar.com.controlfinanzas.repository.InversionRepositoryJPA;
 import ar.com.controlfinanzas.service.AlertaService;
 import ar.com.controlfinanzas.service.PosicionService;
 import ar.com.controlfinanzas.ui.inversion.PanelIngresosMensuales;
@@ -66,7 +67,7 @@ public class PanelInversionesAvanzado extends JPanel {
 		this.inversionController = inversionController;
 
 		panelDistribucion = new PanelDistribucion(inversionController);
-		panelPosiciones = new PanelPosiciones(new PosicionService());
+		panelPosiciones = new PanelPosiciones(new PosicionService(new InversionRepositoryJPA()));
 		panelPosiciones.refrescar(MainApp.getUsuarioActivo().getUsuarioID());
 		panelIngresoMensuales = new PanelIngresosMensuales();
 		this.panelVencimiento = panelVencimiento;
@@ -235,15 +236,16 @@ public class PanelInversionesAvanzado extends JPanel {
 			}
 
 			TipoActivo tipoActivo = (TipoActivo) cbTipoActivo.getSelectedItem();
+			TipoInversion tipoInversion = (TipoInversion) cbTipoInversion.getSelectedItem();
 
 			BigDecimal capital = txtCapital.getText().isEmpty() ? BigDecimal.ZERO
 					: NumeroUtils.parse(txtCapital.getText());
 
-			Inversion inv = new Inversion(tipoActivo, (TipoInversion) cbTipoInversion.getSelectedItem(),
-					(Moneda) cbMoneda.getSelectedItem(), txtDescripcion.getText().trim(), capital,
-					NumeroUtils.parse(txtRendimiento.getText()), dpFechaInicio.getDate(), dpFechaVencimiento.getDate());
+			Inversion inv = new Inversion(tipoActivo, tipoInversion, (Moneda) cbMoneda.getSelectedItem(),
+					txtDescripcion.getText().trim(), capital, NumeroUtils.parse(txtRendimiento.getText()),
+					dpFechaInicio.getDate(), dpFechaVencimiento.getDate());
 
-			if (!usaMonto(tipoActivo)) {
+			if (usaCantidadPrecio(tipoInversion)) {
 				inv.setCantidad(NumeroUtils.parse(txtCantidad.getText()));
 				inv.setPrecioUnitario(NumeroUtils.parse(txtPrecioUnitario.getText()));
 			}
@@ -292,13 +294,13 @@ public class PanelInversionesAvanzado extends JPanel {
 		dpFechaVencimiento.clear();
 	}
 
-	private boolean usaMonto(TipoActivo tipo) {
-		return tipo == TipoActivo.EFECTIVO || tipo == TipoActivo.DEUDA_CORTO_PLAZO;
+	private boolean usaCantidadPrecio(TipoInversion tipo) {
+		return tipo.usaCantidadPrecio();
 	}
 
 	private boolean validarDatos() {
 
-		TipoActivo tipo = (TipoActivo) cbTipoActivo.getSelectedItem();
+		TipoInversion tipo = (TipoInversion) cbTipoInversion.getSelectedItem();
 
 		if (tipo == null) {
 			JOptionPane.showMessageDialog(this, "Seleccione tipo activo");
@@ -320,9 +322,9 @@ public class PanelInversionesAvanzado extends JPanel {
 			return false;
 		}
 
-		boolean monto = usaMonto(tipo);
+		boolean monto = usaCantidadPrecio(tipo);
 
-		if (monto) {
+		if (!monto) {
 			if (txtCapital.getText().trim().isEmpty()) {
 				JOptionPane.showMessageDialog(this, "Ingrese capital inicial");
 				return false;

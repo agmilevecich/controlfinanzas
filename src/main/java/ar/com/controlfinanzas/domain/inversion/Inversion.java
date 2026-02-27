@@ -11,10 +11,8 @@ import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.TipoActivo;
 import ar.com.controlfinanzas.model.TipoInversion;
 import ar.com.controlfinanzas.model.Usuario;
-import ar.com.controlfinanzas.valuacion.ValuadorIndexado;
+import ar.com.controlfinanzas.valuacion.ValuadorFactory;
 import ar.com.controlfinanzas.valuacion.ValuadorInversion;
-import ar.com.controlfinanzas.valuacion.ValuadorMonto;
-import ar.com.controlfinanzas.valuacion.ValuadorPrecio;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -411,20 +409,7 @@ public class Inversion {
 	}
 
 	public ValuadorInversion getValuador() {
-
-		// 1️⃣ Inversiones por precio (mercado)
-		if (tipoActivo == TipoActivo.ACCION || tipoActivo == TipoActivo.CRIPTO || tipoActivo == TipoActivo.FONDO) {
-
-			return new ValuadorPrecio();
-		}
-
-		// 2️⃣ Indexadas (UVA)
-		if (tipoInversion == TipoInversion.PLAZO_FIJO_UVA) {
-			return new ValuadorIndexado();
-		}
-
-		// 3️⃣ Todo lo demás → monto / tasa
-		return new ValuadorMonto();
+		return ValuadorFactory.crear(this);
 	}
 
 }

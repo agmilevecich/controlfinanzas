@@ -5,7 +5,7 @@ import java.util.Set;
 public enum TipoInversion {
 
 	// Bancarias
-	PLAZO_FIJO_TRADICIONAL(TipoActivo.EFECTIVO), PLAZO_FIJO_UVA(TipoActivo.EFECTIVO),
+	PLAZO_FIJO_TRADICIONAL(TipoActivo.EFECTIVO), PLAZO_FIJO_UVA(TipoActivo.UVA),
 
 	// Mercado
 	COMPRA_DIRECTA(TipoActivo.ACCION, TipoActivo.BONO, TipoActivo.CRIPTO), OBLIGACION_NEGOCIABLE(TipoActivo.BONO),
@@ -50,4 +50,9 @@ public enum TipoInversion {
 			return FrecuenciaIngreso.MENSUAL;
 		}
 	}
+
+	public boolean usaCantidadPrecio() {
+		return activosPermitidos.stream().anyMatch(activo -> activo != TipoActivo.EFECTIVO);
+	}
+
 }

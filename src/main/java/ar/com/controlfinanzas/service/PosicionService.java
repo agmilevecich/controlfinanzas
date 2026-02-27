@@ -8,15 +8,32 @@ import java.util.Map;
 import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.Posicion;
 import ar.com.controlfinanzas.model.TipoActivo;
-import ar.com.controlfinanzas.repository.InversionRepositoryJPA;
 import ar.com.controlfinanzas.repository.interfaces.InversionRepository;
 
 public class PosicionService {
 
 	private final InversionRepository inversionRepository;
 
-	public PosicionService() {
-		inversionRepository = new InversionRepositoryJPA();
+	public PosicionService(InversionRepository inversionRepository) {
+		this.inversionRepository = inversionRepository;
+	}
+
+	public List<Posicion> obtenerPosiciones(Integer usuarioId) {
+
+		List<Inversion> inversiones = inversionRepository.listarPorUsuario(usuarioId);
+
+		Map<String, Posicion> mapa = new LinkedHashMap<>();
+
+		for (Inversion inv : inversiones) {
+
+			String clave = inv.getDescripcion();
+
+			Posicion pos = mapa.computeIfAbsent(clave, k -> new Posicion(k, inv.getTipoActivo()));
+
+			pos.agregar(inv);
+		}
+
+		return new ArrayList<>(mapa.values());
 	}
 
 	public List<Posicion> calcular(Integer usuarioId) {

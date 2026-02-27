@@ -1,13 +1,17 @@
 package ar.com.controlfinanzas.ui;
 
 import java.awt.BorderLayout;
+import java.math.BigDecimal;
 import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
+import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.controller.InversionController;
 import ar.com.controlfinanzas.domain.inversion.Inversion;
+import ar.com.controlfinanzas.model.Posicion;
+import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.repository.GastoRepository;
 import ar.com.controlfinanzas.repository.InversionRepositoryJPA;
 import ar.com.controlfinanzas.repository.interfaces.InversionRepository;
@@ -15,13 +19,23 @@ import ar.com.controlfinanzas.service.AlertaService;
 import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.IngresoService;
 import ar.com.controlfinanzas.service.InversionService;
+import ar.com.controlfinanzas.service.PosicionService;
+import ar.com.controlfinanzas.service.ResumenService;
+import ar.com.controlfinanzas.ui.dashboard.PanelResumen;
+import ar.com.controlfinanzas.ui.inversion.PanelCartera;
 import ar.com.controlfinanzas.ui.inversion.PanelVencimiento;
 
 public class DashboardFrame extends JFrame {
 
 	private List<Inversion> inversiones;
 
-	// Paneles que necesitan refresco
+	// NUEVO
+	private List<Posicion> posiciones;
+	private PanelCartera panelCartera;
+	private PanelResumen panelResumenKPIs;
+	private Usuario usuarioActivo = MainApp.getUsuarioActivo();
+
+	// Paneles existentes
 	private PanelAlertas panelAlertas;
 	private PanelResumenFinanciero panelResumen;
 	private PanelVencimientosGraficos panelVencimientosGraficos;
@@ -69,6 +83,10 @@ public class DashboardFrame extends JFrame {
 
 		PanelInversionesAvanzado panelInversiones = new PanelInversionesAvanzado(inversionController, panelVencimiento);
 
+		// NUEVOS
+		panelCartera = new PanelCartera();
+		panelResumenKPIs = new PanelResumen();
+
 		inversionController.addListener(() -> {
 			onInversionesActualizadas();
 		});
@@ -81,25 +99,51 @@ public class DashboardFrame extends JFrame {
 		tabs.addTab("Resumen Gastos", panelResumenGastos);
 		tabs.addTab("Gastos", panelGastos);
 		tabs.addTab("Inversiones", panelInversiones);
+		tabs.addTab("Cartera", panelCartera); // NUEVO
+		tabs.addTab("KPIs", panelResumenKPIs); // NUEVO
 		tabs.addTab("Vencimientos", panelVencimientosGraficos);
 		tabs.addTab("Alertas", panelAlertas);
 
 		add(tabs, BorderLayout.CENTER);
 
-		// ===============================
-		// Carga inicial
-		// ===============================
 		refrescarEstadoFinanciero();
 	}
 
 	// ==================================================
-	// MÉTODO CENTRAL (orquestador real)
+	// MÉTODO CENTRAL
 	// ==================================================
 	public void refrescarEstadoFinanciero() {
+
 		cargarInversiones();
+		cargarPosiciones(); // NUEVO
 		actualizarAlertas();
 		actualizarVencimientos();
 		actualizarResumen();
+		actualizarKPIs(); // NUEVO
+	}
+
+	private void cargarPosiciones() {
+		PosicionService posicionService = new PosicionService(new InversionRepositoryJPA());
+
+		posiciones = posicionService.obtenerPosiciones(usuarioActivo.getUsuarioID());
+
+		panelCartera.refrescar(posiciones);
+	}
+
+	private void actualizarKPIs() {
+
+		if (posiciones == null) {
+			return;
+		}
+
+		ResumenService resumenService = new ResumenService();
+
+		BigDecimal patrimonio = resumenService.calcularPatrimonio(posiciones);
+		BigDecimal invertido = resumenService.calcularTotalInvertido(posiciones);
+		BigDecimal pnl = resumenService.calcularPnLTotal(posiciones);
+		BigDecimal ingreso = resumenService.calcularIngresoMensual(posiciones);
+
+		panelResumenKPIs.refrescar(patrimonio, invertido, pnl, ingreso);
 	}
 
 	private void actualizarResumen() {
@@ -124,9 +168,6 @@ public class DashboardFrame extends JFrame {
 		panelVencimientosGraficos.actualizarInversiones(inversiones);
 	}
 
-	// ==================================================
-	// API PARA OTROS PANELES
-	// ==================================================
 	public List<Inversion> getInversiones() {
 		return inversiones;
 	}

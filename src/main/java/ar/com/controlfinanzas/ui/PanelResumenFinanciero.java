@@ -138,9 +138,11 @@ public class PanelResumenFinanciero extends JPanel {
 
 			for (Inversion inv : inversiones) {
 
-				BigDecimal capital = inv.getCapitalInicial() != null ? inv.getCapitalInicial() : BigDecimal.ZERO;
+				BigDecimal capital = inv.getCapitalTotalCalculado() != null ? inv.getCapitalTotalCalculado()
+						: BigDecimal.ZERO;
 
-				sumaPorTipo.put(inv.getTipoInversion(), sumaPorTipo.getOrDefault(inv.getTipoInversion(), BigDecimal.ZERO).add(capital));
+				sumaPorTipo.put(inv.getTipoInversion(),
+						sumaPorTipo.getOrDefault(inv.getTipoInversion(), BigDecimal.ZERO).add(capital));
 			}
 
 			for (Map.Entry<TipoInversion, BigDecimal> entry : sumaPorTipo.entrySet()) {
