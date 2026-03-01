@@ -35,6 +35,7 @@ import ar.com.controlfinanzas.service.PosicionService;
 import ar.com.controlfinanzas.ui.inversion.PanelIngresosMensuales;
 import ar.com.controlfinanzas.ui.inversion.PanelVencimiento;
 import ar.com.controlfinanzas.util.NumeroUtils;
+import ar.com.controlfinanzas.valuacion.EstrategiaValuacion;
 
 public class PanelInversionesAvanzado extends JPanel {
 
@@ -245,9 +246,14 @@ public class PanelInversionesAvanzado extends JPanel {
 					txtDescripcion.getText().trim(), capital, NumeroUtils.parse(txtRendimiento.getText()),
 					dpFechaInicio.getDate(), dpFechaVencimiento.getDate());
 
-			if (usaCantidadPrecio(tipoInversion)) {
+			EstrategiaValuacion estrategia = tipoInversion.getEstrategia();
+			if (estrategia == EstrategiaValuacion.INDEXADO || estrategia == EstrategiaValuacion.MERCADO) {
 				inv.setCantidad(NumeroUtils.parse(txtCantidad.getText()));
 				inv.setPrecioUnitario(NumeroUtils.parse(txtPrecioUnitario.getText()));
+			}
+
+			if (estrategia == EstrategiaValuacion.MONTO) {
+				inv.setCapitalInicial(NumeroUtils.parse(txtCapital.getText()));
 			}
 
 			inv.setCryptoTipo(txtCryptoTipo.getText().trim().toUpperCase());
@@ -259,7 +265,9 @@ public class PanelInversionesAvanzado extends JPanel {
 			panelPosiciones.refrescar(MainApp.getUsuarioActivo().getUsuarioID());
 			limpiarCampos();
 
-		} catch (Exception e) {
+		} catch (
+
+		Exception e) {
 			e.printStackTrace();
 			JOptionPane.showMessageDialog(this, "Error al guardar inversión");
 		}
@@ -294,16 +302,12 @@ public class PanelInversionesAvanzado extends JPanel {
 		dpFechaVencimiento.clear();
 	}
 
-	private boolean usaCantidadPrecio(TipoInversion tipo) {
-		return tipo.usaCantidadPrecio();
-	}
-
 	private boolean validarDatos() {
 
 		TipoInversion tipo = (TipoInversion) cbTipoInversion.getSelectedItem();
 
 		if (tipo == null) {
-			JOptionPane.showMessageDialog(this, "Seleccione tipo activo");
+			JOptionPane.showMessageDialog(this, "Seleccione tipo inversión");
 			return false;
 		}
 
@@ -312,31 +316,41 @@ public class PanelInversionesAvanzado extends JPanel {
 			return false;
 		}
 
-		if (txtRendimiento.getText().trim().isEmpty()) {
-			JOptionPane.showMessageDialog(this, "Ingrese rendimiento");
-			return false;
-		}
-
 		if (dpFechaInicio.getDate() == null) {
 			JOptionPane.showMessageDialog(this, "Ingrese fecha inicio");
 			return false;
 		}
 
-		boolean monto = usaCantidadPrecio(tipo);
+		EstrategiaValuacion estrategia = tipo.getEstrategia();
 
-		if (!monto) {
+		switch (estrategia) {
+
+		case MONTO:
 			if (txtCapital.getText().trim().isEmpty()) {
 				JOptionPane.showMessageDialog(this, "Ingrese capital inicial");
 				return false;
 			}
-		} else {
-			if (txtCantidad.getText().trim().isEmpty() || txtPrecioUnitario.getText().trim().isEmpty()) {
-				JOptionPane.showMessageDialog(this, "Ingrese cantidad y precio");
+			if (txtRendimiento.getText().trim().isEmpty()) {
+				JOptionPane.showMessageDialog(this, "Ingrese rendimiento");
 				return false;
 			}
+			break;
+
+		case MERCADO:
+			if (txtCantidad.getText().trim().isEmpty()) {
+				JOptionPane.showMessageDialog(this, "Ingrese cantidad");
+				return false;
+			}
+			break;
+
+		case INDEXADO:
+			if (txtCantidad.getText().trim().isEmpty() || txtPrecioUnitario.getText().trim().isEmpty()) {
+				JOptionPane.showMessageDialog(this, "Ingrese cantidad y precio unitario");
+				return false;
+			}
+			break;
 		}
 
 		return true;
 	}
-
 }

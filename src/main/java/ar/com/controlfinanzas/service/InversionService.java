@@ -33,7 +33,7 @@ public class InversionService {
 	public BigDecimal calcularCapitalTotal(Integer usuarioId) {
 
 		return repository.listarPorUsuario(usuarioId).stream()
-				.map(inv -> inv.getCapitalInicial() != null ? inv.getCapitalInicial() : BigDecimal.ZERO)
+				.map(inv -> inv.getCapitalTotalCalculado() != null ? inv.getCapitalTotalCalculado() : BigDecimal.ZERO)
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
@@ -41,7 +41,7 @@ public class InversionService {
 
 		return repository.listarPorUsuario(usuarioId).stream()
 				.filter(inv -> inv.getFechaInicio() != null && YearMonth.from(inv.getFechaInicio()).equals(mes))
-				.map(inv -> inv.getCapitalInicial() != null ? inv.getCapitalInicial() : BigDecimal.ZERO)
+				.map(inv -> inv.getCapitalTotalCalculado() != null ? inv.getCapitalTotalCalculado() : BigDecimal.ZERO)
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 

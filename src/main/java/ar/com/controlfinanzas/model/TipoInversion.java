@@ -1,58 +1,34 @@
 package ar.com.controlfinanzas.model;
 
-import java.util.Set;
+import ar.com.controlfinanzas.valuacion.EstrategiaValuacion;
 
 public enum TipoInversion {
 
-	// Bancarias
-	PLAZO_FIJO_TRADICIONAL(TipoActivo.EFECTIVO), PLAZO_FIJO_UVA(TipoActivo.UVA),
+	ACCION(TipoActivo.ACCION, EstrategiaValuacion.MERCADO, FrecuenciaIngreso.NINGUNA),
+	CRIPTO(TipoActivo.CRIPTO, EstrategiaValuacion.MERCADO, FrecuenciaIngreso.NINGUNA),
+	FONDO_COMUN(TipoActivo.FONDO, EstrategiaValuacion.MERCADO, FrecuenciaIngreso.ANUAL),
+	PLAZO_FIJO_TRADICIONAL(TipoActivo.EFECTIVO, EstrategiaValuacion.MONTO, FrecuenciaIngreso.MENSUAL),
+	PLAZO_FIJO_UVA(TipoActivo.EFECTIVO, EstrategiaValuacion.INDEXADO, FrecuenciaIngreso.AL_VENCIMIENTO);
 
-	// Mercado
-	COMPRA_DIRECTA(TipoActivo.ACCION, TipoActivo.BONO, TipoActivo.CRIPTO), OBLIGACION_NEGOCIABLE(TipoActivo.BONO),
-	FONDO_COMUN(TipoActivo.FONDO),
+	private final TipoActivo tipoActivo;
+	private final EstrategiaValuacion estrategia;
+	private final FrecuenciaIngreso frecuenciaSugerida;
 
-	// Cripto
-	STAKING(TipoActivo.CRIPTO), LENDING(TipoActivo.CRIPTO);
+	TipoInversion(TipoActivo tipoActivo, EstrategiaValuacion estrategia, FrecuenciaIngreso frecuenciaSugerida) {
+		this.tipoActivo = tipoActivo;
+		this.estrategia = estrategia;
+		this.frecuenciaSugerida = frecuenciaSugerida;
+	}
 
-	private final Set<TipoActivo> activosPermitidos;
-
-	TipoInversion(TipoActivo... activos) {
-		this.activosPermitidos = Set.of(activos);
+	public EstrategiaValuacion getEstrategia() {
+		return estrategia;
 	}
 
 	public boolean permite(TipoActivo activo) {
-		return activosPermitidos.contains(activo);
-	}
-
-	public Set<TipoActivo> getActivosPermitidos() {
-		return activosPermitidos;
+		return this.tipoActivo == activo;
 	}
 
 	public FrecuenciaIngreso frecuenciaSugerida() {
-		switch (this) {
-
-		case LENDING:
-			return FrecuenciaIngreso.MENSUAL;
-
-		case STAKING:
-			return FrecuenciaIngreso.DIARIO;
-
-		case PLAZO_FIJO_TRADICIONAL, PLAZO_FIJO_UVA:
-			return FrecuenciaIngreso.AL_VENCIMIENTO;
-
-		case OBLIGACION_NEGOCIABLE:
-			return FrecuenciaIngreso.TRIMESTRAL; // típico cupon
-
-		case COMPRA_DIRECTA, FONDO_COMUN:
-			return FrecuenciaIngreso.ANUAL;
-
-		default:
-			return FrecuenciaIngreso.MENSUAL;
-		}
+		return frecuenciaSugerida;
 	}
-
-	public boolean usaCantidadPrecio() {
-		return activosPermitidos.stream().anyMatch(activo -> activo != TipoActivo.EFECTIVO);
-	}
-
 }

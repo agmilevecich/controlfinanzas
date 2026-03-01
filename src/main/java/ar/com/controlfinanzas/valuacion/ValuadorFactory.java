@@ -1,26 +1,22 @@
 package ar.com.controlfinanzas.valuacion;
 
 import ar.com.controlfinanzas.domain.inversion.Inversion;
-import ar.com.controlfinanzas.model.TipoActivo;
-import ar.com.controlfinanzas.model.TipoInversion;
 
 public class ValuadorFactory {
 
 	public static ValuadorInversion crear(Inversion inv) {
 
-		// Mercado (precio dinámico)
-		if (inv.getTipoActivo() == TipoActivo.ACCION || inv.getTipoActivo() == TipoActivo.CRIPTO
-				|| inv.getTipoActivo() == TipoActivo.FONDO) {
+		EstrategiaValuacion estrategia = inv.getTipoInversion().getEstrategia();
 
+		switch (estrategia) {
+		case MERCADO:
 			return new ValuadorMercado();
-		}
-
-		// Indexado (UVA)
-		if (inv.getTipoInversion() == TipoInversion.PLAZO_FIJO_UVA) {
+		case INDEXADO:
 			return new ValuadorIndexado();
+		case MONTO:
+			return new ValuadorMonto();
+		default:
+			throw new IllegalArgumentException("Estrategia no soportada");
 		}
-
-		// Default → monto / tasa
-		return new ValuadorMonto();
 	}
 }
