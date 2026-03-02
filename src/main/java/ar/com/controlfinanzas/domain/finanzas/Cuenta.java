@@ -1,5 +1,6 @@
 package ar.com.controlfinanzas.domain.finanzas;
 
+import java.util.Objects;
 import java.util.UUID;
 
 import ar.com.controlfinanzas.model.Moneda;
@@ -43,4 +44,25 @@ public class Cuenta {
 	public void desactivar() {
 		this.activa = false;
 	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(id);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj) {
+			return true;
+		}
+		if (obj == null) {
+			return false;
+		}
+		if (getClass() != obj.getClass()) {
+			return false;
+		}
+		Cuenta other = (Cuenta) obj;
+		return Objects.equals(id, other.id);
+	}
+
 }
