@@ -48,7 +48,7 @@ public class PanelDistribucion extends JPanel {
 				}, Collectors.reducing(BigDecimal.ZERO, BigDecimal::add))));
 
 		// Dataset
-		DefaultPieDataset dataset = new DefaultPieDataset();
+		DefaultPieDataset<String> dataset = new DefaultPieDataset<>();
 		capitalPorActivo.forEach((tipo, capital) -> dataset.setValue(tipo, capital.doubleValue()));
 
 		// Chart

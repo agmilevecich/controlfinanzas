@@ -31,6 +31,11 @@ import ar.com.controlfinanzas.model.EstadoInversion;
  */
 public class PanelVencimientosGraficos extends JPanel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private List<Inversion> inversiones;
 	private DefaultCategoryDataset dataset;
 	private ChartPanel chartPanel;
@@ -150,8 +155,8 @@ public class PanelVencimientosGraficos extends JPanel {
 
 		AlertaVencimiento alerta = new AlertaVencimiento(inv, LocalDate.now());
 
-		return "<html>" + "<b>" + inv.getNombre() + "</b><br>" + "Tipo: " + inv.getTipoInversion() + "<br>" + "Capital: "
-				+ inv.getCapitalInicial() + "<br>" + "Vencimiento: " + inv.getFechaVencimiento() + "<br>"
+		return "<html>" + "<b>" + inv.getNombre() + "</b><br>" + "Tipo: " + inv.getTipoInversion() + "<br>"
+				+ "Capital: " + inv.getCapitalInicial() + "<br>" + "Vencimiento: " + inv.getFechaVencimiento() + "<br>"
 				+ "Días restantes: " + alerta.getDiasRestantes() + "<br>" + "Estado: " + alerta.getEstado() + "</html>";
 	}
 

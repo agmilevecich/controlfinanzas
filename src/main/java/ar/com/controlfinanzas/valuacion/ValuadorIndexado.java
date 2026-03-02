@@ -21,8 +21,8 @@ public class ValuadorIndexado implements ValuadorInversion {
 			return inv.getCapitalInicial().multiply(indice);
 		}
 
-		if (inv.getCantidad() != null && inv.getPrecioUnitario() != null) {
-			return inv.getCantidad().multiply(inv.getPrecioUnitario()).multiply(indice);
+		if (inv.getCantidad() != null && inv.getPrecioCompra() != null) {
+			return inv.getCantidad().multiply(inv.getPrecioCompra()).multiply(indice);
 		}
 
 		return BigDecimal.ZERO;

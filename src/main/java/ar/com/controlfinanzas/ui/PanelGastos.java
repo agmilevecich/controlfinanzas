@@ -211,6 +211,7 @@ public class PanelGastos extends JPanel {
 			return;
 		}
 
+		@SuppressWarnings("rawtypes")
 		DefaultPieDataset dataset = new DefaultPieDataset();
 		Map<CategoriaGasto, BigDecimal> totales = new HashMap<>();
 

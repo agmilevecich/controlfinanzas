@@ -10,6 +10,7 @@ import ar.com.controlfinanzas.model.EstadoInversion;
 
 public class AlertaInversionService {
 
+	@SuppressWarnings("unused")
 	private int diasUmbral = 7; // configurable después
 
 	public List<Inversion> proximasAVencer(List<Inversion> inversiones) {

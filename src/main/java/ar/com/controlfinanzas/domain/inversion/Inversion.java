@@ -60,8 +60,8 @@ public class Inversion {
 	@Column(precision = 19, scale = 4)
 	private BigDecimal cantidad;
 
-	@Column(precision = 19, scale = 4)
-	private BigDecimal precioUnitario;
+	@Column(name = "precioUnitario", precision = 19, scale = 4)
+	private BigDecimal precioCompra;
 
 	@Column(precision = 7, scale = 4)
 	private BigDecimal tasaAnual;
@@ -95,7 +95,7 @@ public class Inversion {
 		setFechaVencimiento(fechaVencimiento);
 
 		this.cantidad = BigDecimal.ZERO;
-		this.precioUnitario = BigDecimal.ZERO;
+		this.precioCompra = BigDecimal.ZERO;
 	}
 
 	/* ================= NEGOCIO ================= */
@@ -344,12 +344,12 @@ public class Inversion {
 		this.cantidad = cantidad != null ? cantidad : BigDecimal.ZERO;
 	}
 
-	public BigDecimal getPrecioUnitario() {
-		return precioUnitario;
+	public BigDecimal getPrecioCompra() {
+		return precioCompra;
 	}
 
-	public void setPrecioUnitario(BigDecimal precioUnitario) {
-		this.precioUnitario = precioUnitario != null ? precioUnitario : BigDecimal.ZERO;
+	public void setPrecioCompra(BigDecimal precioUnitario) {
+		this.precioCompra = precioUnitario != null ? precioUnitario : BigDecimal.ZERO;
 	}
 
 	public BigDecimal getTasaAnual() {

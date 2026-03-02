@@ -15,6 +15,11 @@ import ar.com.controlfinanzas.domain.inversion.Inversion;
 
 public class PanelVencimiento extends JPanel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private DefaultListModel<String> modelo;
 	private JList<String> lista;
 

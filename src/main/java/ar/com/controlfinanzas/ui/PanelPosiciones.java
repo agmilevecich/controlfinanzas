@@ -14,6 +14,11 @@ import ar.com.controlfinanzas.service.PosicionService;
 
 public class PanelPosiciones extends JPanel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private JTable tabla;
 	private DefaultTableModel model;
 
@@ -26,6 +31,11 @@ public class PanelPosiciones extends JPanel {
 		setLayout(new BorderLayout());
 
 		model = new DefaultTableModel(new Object[] { "Activo", "Tipo", "Cantidad", "Capital", "Precio Promedio" }, 0) {
+			/**
+			 * 
+			 */
+			private static final long serialVersionUID = 1L;
+
 			@Override
 			public boolean isCellEditable(int r, int c) {
 				return false;

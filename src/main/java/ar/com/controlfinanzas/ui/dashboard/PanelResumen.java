@@ -8,6 +8,11 @@ import javax.swing.JPanel;
 
 public class PanelResumen extends JPanel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private JLabel lblPatrimonio = new JLabel();
 	private JLabel lblInvertido = new JLabel();
 	private JLabel lblPnL = new JLabel();

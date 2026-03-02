@@ -7,7 +7,7 @@ import ar.com.controlfinanzas.domain.inversion.Inversion;
 public class ValuadorPrecio implements ValuadorInversion {
 	@Override
 	public BigDecimal calcularCapitalActual(Inversion inv) {
-		return inv.getCantidad().multiply(inv.getPrecioUnitario());
+		return inv.getCantidad().multiply(inv.getPrecioCompra());
 	}
 
 	@Override

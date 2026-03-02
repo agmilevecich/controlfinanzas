@@ -12,6 +12,7 @@ import ar.com.controlfinanzas.service.InversionService;
 public class DashboardController {
 
 	private final GastoService gastoService;
+	@SuppressWarnings("unused")
 	private final InversionService inversionService;
 
 	private List<Gasto> gastos;

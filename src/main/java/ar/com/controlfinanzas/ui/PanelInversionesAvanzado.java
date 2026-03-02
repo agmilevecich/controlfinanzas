@@ -39,6 +39,11 @@ import ar.com.controlfinanzas.valuacion.EstrategiaValuacion;
 
 public class PanelInversionesAvanzado extends JPanel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private JTable tabla;
 	private DefaultTableModel tablaModel;
 	private final InversionController inversionController;
@@ -249,7 +254,7 @@ public class PanelInversionesAvanzado extends JPanel {
 			EstrategiaValuacion estrategia = tipoInversion.getEstrategia();
 			if (estrategia == EstrategiaValuacion.INDEXADO || estrategia == EstrategiaValuacion.MERCADO) {
 				inv.setCantidad(NumeroUtils.parse(txtCantidad.getText()));
-				inv.setPrecioUnitario(NumeroUtils.parse(txtPrecioUnitario.getText()));
+				inv.setPrecioCompra(NumeroUtils.parse(txtPrecioUnitario.getText()));
 			}
 
 			if (estrategia == EstrategiaValuacion.MONTO) {
@@ -280,13 +285,14 @@ public class PanelInversionesAvanzado extends JPanel {
 		for (Inversion inv : inversiones) {
 			tablaModel.addRow(new Object[] { inv.getId(), inv.getTipoActivo(), inv.getTipoInversion(), inv.getMoneda(),
 					inv.getDescripcion(), inv.getCapitalInicial(), inv.getTasaAnual(), inv.getFechaInicio(),
-					inv.getFechaVencimiento(), inv.getCantidad(), inv.getPrecioUnitario(), inv.getCryptoTipo(),
+					inv.getFechaVencimiento(), inv.getCantidad(), inv.getPrecioCompra(), inv.getCryptoTipo(),
 					inv.getBroker() });
 		}
 
 		panelIngresoMensuales.refrescar(inversiones);
 		AlertaService alertaService = new AlertaService();
 
+		@SuppressWarnings("unused")
 		List<Alerta> alertas = alertaService.generarAlertasInversiones(inversionController.getInversiones());
 	}
 

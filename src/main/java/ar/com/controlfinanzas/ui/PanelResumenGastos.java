@@ -26,13 +26,18 @@ import ar.com.controlfinanzas.service.GastoService;
 
 public class PanelResumenGastos extends JPanel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private final GastoService gastoService;
 
 	private JTable tabla;
 	private DefaultTableModel model;
 	private JPanel panelGrafico;
 
-	private DefaultPieDataset datasetGastos;
+	private DefaultPieDataset<String> datasetGastos;
 	private ChartPanel chartPanelGastos;
 
 	// 🔴 datos en memoria (clave)

@@ -13,16 +13,26 @@ public class ValuadorMercado implements ValuadorInversion {
 	@Override
 	public BigDecimal calcularCapitalActual(Inversion inv) {
 
-		if (inv.getCantidad() == null) {
-			return BigDecimal.ZERO;
-		}
-		if (inv.getTicker() == null) {
+		if (inv.getCantidad() == null || inv.getCantidad().compareTo(BigDecimal.ZERO) <= 0) {
 			return BigDecimal.ZERO;
 		}
 
-		BigDecimal precio = cotizaciones.obtenerPrecio(inv.getTicker());
+		// 1️⃣ Si tiene ticker → intentar precio de mercado
+		if (inv.getTicker() != null && !inv.getTicker().isBlank()) {
 
-		return inv.getCantidad().multiply(precio);
+			BigDecimal precioMercado = cotizaciones.obtenerPrecio(inv.getTicker());
+
+			if (precioMercado != null && precioMercado.compareTo(BigDecimal.ZERO) > 0) {
+				return inv.getCantidad().multiply(precioMercado);
+			}
+		}
+
+		// 2️⃣ Fallback → usar precio de compra
+		if (inv.getPrecioCompra() != null && inv.getPrecioCompra().compareTo(BigDecimal.ZERO) > 0) {
+			return inv.getCantidad().multiply(inv.getPrecioCompra());
+		}
+
+		return BigDecimal.ZERO;
 	}
 
 	@Override

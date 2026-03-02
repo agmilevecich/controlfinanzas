@@ -31,6 +31,11 @@ import ar.com.controlfinanzas.service.InversionService;
 
 public class PanelResumenFinanciero extends JPanel {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
 	private final InversionService inversionService;
 	private final GastoService gastoService;
 	private final IngresoService ingresoService;
