@@ -22,6 +22,44 @@ public class Movimiento {
 	public Movimiento(Cuenta cuentaOrigen, Cuenta cuentaDestino, BigDecimal monto, Moneda moneda, TipoMovimiento tipo,
 			LocalDate fecha, FormaPago formaPago, String descripcion) {
 
+		if (monto == null || monto.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalArgumentException("El monto debe ser mayor a cero");
+		}
+
+		if (tipo == null) {
+			throw new IllegalArgumentException("El tipo de movimiento es obligatorio");
+		}
+
+		if (tipo == TipoMovimiento.INGRESO) {
+			if (cuentaDestino == null) {
+				throw new IllegalArgumentException("Un ingreso debe tener cuenta destino");
+			}
+			if (!cuentaDestino.getMoneda().equals(moneda)) {
+				throw new IllegalArgumentException("La moneda del movimiento no coincide con la cuenta destino");
+			}
+		}
+
+		if (tipo == TipoMovimiento.GASTO) {
+			if (cuentaOrigen == null) {
+				throw new IllegalArgumentException("Un gasto debe tener cuenta origen");
+			}
+			if (!cuentaOrigen.getMoneda().equals(moneda)) {
+				throw new IllegalArgumentException("La moneda del movimiento no coincide con la cuenta origen");
+			}
+		}
+
+		if (tipo == TipoMovimiento.TRANSFERENCIA) {
+			if (cuentaOrigen == null || cuentaDestino == null) {
+				throw new IllegalArgumentException("Una transferencia debe tener cuenta origen y destino");
+			}
+			if (!cuentaOrigen.getMoneda().equals(cuentaDestino.getMoneda())) {
+				throw new IllegalArgumentException("No se permiten transferencias entre cuentas de distinta moneda");
+			}
+			if (!cuentaOrigen.getMoneda().equals(moneda)) {
+				throw new IllegalArgumentException("La moneda del movimiento no coincide con las cuentas");
+			}
+		}
+
 		this.id = UUID.randomUUID();
 		this.cuentaOrigen = cuentaOrigen;
 		this.cuentaDestino = cuentaDestino;
