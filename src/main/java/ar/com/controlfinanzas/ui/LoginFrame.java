@@ -1,6 +1,8 @@
 package ar.com.controlfinanzas.ui;
 
 import java.awt.FlowLayout;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -13,6 +15,8 @@ import ar.com.controlfinanzas.service.UsuarioService;
 
 public class LoginFrame extends JFrame {
 
+	private static final long serialVersionUID = 1L;
+
 	private JTextField tfNombre;
 	private JButton btnLogin;
 	private UsuarioService usuarioService;
@@ -22,10 +26,21 @@ public class LoginFrame extends JFrame {
 
 		setTitle("Login");
 		setSize(300, 150);
+		setLocationRelativeTo(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setLayout(new FlowLayout());
 
 		tfNombre = new JTextField(15);
+		tfNombre.addKeyListener(new KeyAdapter() {
+
+			@Override
+			public void keyReleased(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					login();
+				}
+
+			}
+		});
 		btnLogin = new JButton("Entrar");
 
 		btnLogin.addActionListener(e -> login());

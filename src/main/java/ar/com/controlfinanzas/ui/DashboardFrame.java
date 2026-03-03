@@ -9,18 +9,24 @@ import javax.swing.JTabbedPane;
 
 import ar.com.controlfinanzas.controller.InversionController;
 import ar.com.controlfinanzas.domain.inversion.Inversion;
+import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Posicion;
 import ar.com.controlfinanzas.model.Usuario;
+import ar.com.controlfinanzas.persistence.JPAUtil;
 import ar.com.controlfinanzas.repository.GastoRepository;
 import ar.com.controlfinanzas.repository.InversionRepositoryJPA;
 import ar.com.controlfinanzas.repository.interfaces.InversionRepository;
 import ar.com.controlfinanzas.service.AlertaService;
+import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.IngresoService;
 import ar.com.controlfinanzas.service.InversionService;
+import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.service.PosicionService;
 import ar.com.controlfinanzas.service.ResumenService;
 import ar.com.controlfinanzas.service.UsuarioService;
+import ar.com.controlfinanzas.ui.dashboard.PanelCuentas;
+import ar.com.controlfinanzas.ui.dashboard.PanelMovimientos;
 import ar.com.controlfinanzas.ui.dashboard.PanelResumen;
 import ar.com.controlfinanzas.ui.inversion.PanelCartera;
 import ar.com.controlfinanzas.ui.inversion.PanelVencimiento;
@@ -38,6 +44,12 @@ public class DashboardFrame extends JFrame {
 	private PanelAlertas panelAlertas;
 	private PanelResumenFinanciero panelResumen;
 	private PanelVencimientosGraficos panelVencimientosGraficos;
+
+	// Panel y servicio de cuentas
+	private PanelCuentas panelCuentas;
+	private PanelMovimientos panelMovimientos;
+	private CuentaService cuentaService;
+	private MovimientoService movimientoService;
 
 	// Servicios
 	private final AlertaService alertaService;
@@ -72,6 +84,23 @@ public class DashboardFrame extends JFrame {
 		this.usuariService = usuarioService;
 		panelResumen = new PanelResumenFinanciero(inversionService, gastoService, ingresoService, usuario);
 
+		// NUEVOS: servicio y paneles de cuentas y movimientos
+		this.cuentaService = new CuentaService(JPAUtil.getEntityManager());
+		this.movimientoService = new MovimientoService(JPAUtil.getEntityManager());
+
+		List<Cuenta> cuentas = cuentaService.getCuentasUsuario(usuario);
+		Cuenta primeraCuenta = cuentas.isEmpty() ? null : cuentas.get(0);
+
+		this.panelCuentas = new PanelCuentas(usuario, cuentaService, movimientoService);
+		this.panelMovimientos = new PanelMovimientos(primeraCuenta, movimientoService);
+
+		// Listener para actualizar movimientos al seleccionar otra cuenta
+		panelCuentas.setCuentaSeleccionadaListener(cuenta -> panelMovimientos.actualizarCuenta(cuenta));
+
+		// Configuramos el callback para refrescar PanelCuentas cuando se agregue un
+		// movimiento
+		panelMovimientos.setActualizarPanelCuentasCallback(() -> panelCuentas.cargarCuentas());
+
 		setTitle("Control Finanzas");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		setSize(1100, 700);
@@ -81,7 +110,6 @@ public class DashboardFrame extends JFrame {
 		// ===============================
 		// Paneles
 		// ===============================
-
 		PanelGastos panelGastos = new PanelGastos(gastoService, panelResumen, panelResumenGastos, usuario);
 		panelAlertas = new PanelAlertas();
 		panelVencimiento = new PanelVencimiento();
@@ -90,13 +118,10 @@ public class DashboardFrame extends JFrame {
 		PanelInversionesAvanzado panelInversiones = new PanelInversionesAvanzado(inversionController, panelVencimiento,
 				usuario);
 
-		// NUEVOS
 		panelCartera = new PanelCartera();
 		panelResumenKPIs = new PanelResumen();
 
-		inversionController.addListener(() -> {
-			onInversionesActualizadas();
-		});
+		inversionController.addListener(this::onInversionesActualizadas);
 
 		// ===============================
 		// Tabs
@@ -106,10 +131,12 @@ public class DashboardFrame extends JFrame {
 		tabs.addTab("Resumen Gastos", panelResumenGastos);
 		tabs.addTab("Gastos", panelGastos);
 		tabs.addTab("Inversiones", panelInversiones);
-		tabs.addTab("Cartera", panelCartera); // NUEVO
-		tabs.addTab("KPIs", panelResumenKPIs); // NUEVO
+		tabs.addTab("Cartera", panelCartera);
+		tabs.addTab("KPIs", panelResumenKPIs);
 		tabs.addTab("Vencimientos", panelVencimientosGraficos);
 		tabs.addTab("Alertas", panelAlertas);
+		tabs.addTab("Cuentas", panelCuentas);
+		tabs.addTab("Movimientos", panelMovimientos);
 
 		add(tabs, BorderLayout.CENTER);
 
@@ -120,31 +147,26 @@ public class DashboardFrame extends JFrame {
 	// MÉTODO CENTRAL
 	// ==================================================
 	public void refrescarEstadoFinanciero() {
-
 		cargarInversiones();
-		cargarPosiciones(); // NUEVO
+		cargarPosiciones();
 		actualizarAlertas();
 		actualizarVencimientos();
 		actualizarResumen();
-		actualizarKPIs(); // NUEVO
+		actualizarKPIs();
 	}
 
 	private void cargarPosiciones() {
 		PosicionService posicionService = new PosicionService(new InversionRepositoryJPA());
-
 		posiciones = posicionService.obtenerPosiciones(usuario.getUsuarioID());
-
 		panelCartera.refrescar(posiciones);
 	}
 
 	private void actualizarKPIs() {
-
 		if (posiciones == null) {
 			return;
 		}
 
 		ResumenService resumenService = new ResumenService();
-
 		BigDecimal patrimonio = resumenService.calcularPatrimonio(posiciones);
 		BigDecimal invertido = resumenService.calcularTotalInvertido(posiciones);
 		BigDecimal pnl = resumenService.calcularPnLTotal(posiciones);
