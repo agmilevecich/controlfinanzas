@@ -19,9 +19,9 @@ import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
 import org.jfree.data.general.DefaultPieDataset;
 
-import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.model.CategoriaGasto;
 import ar.com.controlfinanzas.model.Gasto;
+import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.GastoService;
 
 public class PanelResumenGastos extends JPanel {
@@ -43,8 +43,11 @@ public class PanelResumenGastos extends JPanel {
 	// 🔴 datos en memoria (clave)
 	private Map<CategoriaGasto, BigDecimal> totales = new EnumMap<>(CategoriaGasto.class);
 
-	public PanelResumenGastos(GastoService gastoService) {
+	private Usuario usuario;
+
+	public PanelResumenGastos(GastoService gastoService, Usuario usuario) {
 		this.gastoService = gastoService;
+		this.usuario = usuario;
 
 		setLayout(new BorderLayout());
 
@@ -65,8 +68,7 @@ public class PanelResumenGastos extends JPanel {
 
 		add(panelGrafico, BorderLayout.SOUTH);
 
-		Integer usuarioId = MainApp.getUsuarioActivo().getUsuarioID();
-		refrescar(usuarioId);
+		refrescar(usuario.getUsuarioID());
 	}
 
 	// =========================

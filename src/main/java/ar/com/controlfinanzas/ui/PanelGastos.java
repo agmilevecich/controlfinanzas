@@ -31,7 +31,6 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
-import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.model.CategoriaGasto;
 import ar.com.controlfinanzas.model.Gasto;
 import ar.com.controlfinanzas.model.Usuario;
@@ -53,16 +52,17 @@ public class PanelGastos extends JPanel {
 	// 🔥 NUEVO: cache en memoria
 	private List<Gasto> gastosCache;
 	private PanelResumenGastos panelResumenGastos;
-	private Usuario usuarioActivo = MainApp.getUsuarioActivo();
 
 	private PanelBotones botones = new PanelBotones();
 	private JSplitPane split;
+	private Usuario usuario;
 
 	public PanelGastos(GastoService gastoService, PanelResumenFinanciero panelResumen,
-			PanelResumenGastos panelResumenGastos) {
+			PanelResumenGastos panelResumenGastos, Usuario usuario) {
 		this.gastoService = gastoService;
 		this.panelResumen = panelResumen;
 		this.panelResumenGastos = panelResumenGastos;
+		this.usuario = usuario;
 		inicializarPanel();
 		cargarGastos(); // 1 sola consulta
 		actualizarGraficos(); // usa cache
@@ -153,7 +153,7 @@ public class PanelGastos extends JPanel {
 			gasto.setDescripcion(descripcion);
 			gasto.setMonto(monto);
 			gasto.setCategoria(categoria);
-			gasto.setUsuario(usuarioActivo);
+			gasto.setUsuario(usuario);
 
 			gastoService.guardar(gasto);
 
@@ -182,7 +182,7 @@ public class PanelGastos extends JPanel {
 	private void cargarGastos() {
 		tableModel.setRowCount(0);
 		try {
-			gastosCache = gastoService.listarPorUsuario(usuarioActivo.getUsuarioID());
+			gastosCache = gastoService.listarPorUsuario(usuario.getUsuarioID());
 
 			for (Gasto g : gastosCache) {
 				tableModel.addRow(new Object[] { g.getId(), g.getFecha(), g.getDescripcion(),
@@ -201,7 +201,7 @@ public class PanelGastos extends JPanel {
 		panelGraficos.revalidate();
 		panelGraficos.repaint();
 		if (panelResumenGastos != null) {
-			panelResumenGastos.refrescar(usuarioActivo.getUsuarioID());
+			panelResumenGastos.refrescar(usuario.getUsuarioID());
 		}
 	}
 

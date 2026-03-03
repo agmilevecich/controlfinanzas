@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.YearMonth;
 import java.util.List;
 
-import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.repository.interfaces.InversionRepository;
@@ -12,9 +11,11 @@ import ar.com.controlfinanzas.repository.interfaces.InversionRepository;
 public class InversionService {
 
 	private final InversionRepository repository;
+	private Usuario usuario;
 
-	public InversionService(InversionRepository inversionRepositoty) {
+	public InversionService(InversionRepository inversionRepositoty, Usuario usuario) {
 		this.repository = inversionRepositoty;
+		this.usuario = usuario;
 	}
 
 	public Inversion crearInversion(Inversion inversion) {
@@ -23,7 +24,7 @@ public class InversionService {
 	}
 
 	public List<Inversion> obtenerTodas() {
-		return repository.listarPorUsuario(MainApp.getUsuarioActivo().getUsuarioID());
+		return repository.listarPorUsuario(usuario.getUsuarioID());
 	}
 
 	public void eliminarInversion(Long id) {

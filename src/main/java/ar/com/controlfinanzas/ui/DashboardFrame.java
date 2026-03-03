@@ -7,7 +7,6 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
-import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.controller.InversionController;
 import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.Posicion;
@@ -21,6 +20,7 @@ import ar.com.controlfinanzas.service.IngresoService;
 import ar.com.controlfinanzas.service.InversionService;
 import ar.com.controlfinanzas.service.PosicionService;
 import ar.com.controlfinanzas.service.ResumenService;
+import ar.com.controlfinanzas.service.UsuarioService;
 import ar.com.controlfinanzas.ui.dashboard.PanelResumen;
 import ar.com.controlfinanzas.ui.inversion.PanelCartera;
 import ar.com.controlfinanzas.ui.inversion.PanelVencimiento;
@@ -33,7 +33,6 @@ public class DashboardFrame extends JFrame {
 	private List<Posicion> posiciones;
 	private PanelCartera panelCartera;
 	private PanelResumen panelResumenKPIs;
-	private Usuario usuarioActivo = MainApp.getUsuarioActivo();
 
 	// Paneles existentes
 	private PanelAlertas panelAlertas;
@@ -54,17 +53,24 @@ public class DashboardFrame extends JFrame {
 
 	private PanelVencimiento panelVencimiento;
 
-	public DashboardFrame() {
+	private Usuario usuario;
 
+	private UsuarioService usuariService;
+
+	public DashboardFrame(Usuario usuario, UsuarioService usuarioService) {
+
+		this.usuario = usuario;
 		this.alertaService = new AlertaService();
 		this.inversionRepository = new InversionRepositoryJPA();
-		this.inversionService = new InversionService(inversionRepository);
+		this.inversionService = new InversionService(inversionRepository, usuario);
 		this.inversionController = new InversionController(inversionService);
 		this.gastoRepository = new GastoRepository();
-		this.gastoService = new GastoService(gastoRepository);
-		this.panelResumenGastos = new PanelResumenGastos(gastoService);
+		this.gastoService = new GastoService(gastoRepository, usuario);
+		this.panelResumenGastos = new PanelResumenGastos(gastoService, usuario);
 		this.ingresoService = new IngresoService();
-		panelResumen = new PanelResumenFinanciero(inversionService, gastoService, ingresoService);
+
+		this.usuariService = usuarioService;
+		panelResumen = new PanelResumenFinanciero(inversionService, gastoService, ingresoService, usuario);
 
 		setTitle("Control Finanzas");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -76,12 +82,13 @@ public class DashboardFrame extends JFrame {
 		// Paneles
 		// ===============================
 
-		PanelGastos panelGastos = new PanelGastos(gastoService, panelResumen, panelResumenGastos);
+		PanelGastos panelGastos = new PanelGastos(gastoService, panelResumen, panelResumenGastos, usuario);
 		panelAlertas = new PanelAlertas();
 		panelVencimiento = new PanelVencimiento();
 		panelVencimientosGraficos = new PanelVencimientosGraficos(List.of());
 
-		PanelInversionesAvanzado panelInversiones = new PanelInversionesAvanzado(inversionController, panelVencimiento);
+		PanelInversionesAvanzado panelInversiones = new PanelInversionesAvanzado(inversionController, panelVencimiento,
+				usuario);
 
 		// NUEVOS
 		panelCartera = new PanelCartera();
@@ -125,7 +132,7 @@ public class DashboardFrame extends JFrame {
 	private void cargarPosiciones() {
 		PosicionService posicionService = new PosicionService(new InversionRepositoryJPA());
 
-		posiciones = posicionService.obtenerPosiciones(usuarioActivo.getUsuarioID());
+		posiciones = posicionService.obtenerPosiciones(usuario.getUsuarioID());
 
 		panelCartera.refrescar(posiciones);
 	}

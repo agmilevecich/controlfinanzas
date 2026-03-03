@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.model.CategoriaGasto;
 import ar.com.controlfinanzas.model.Gasto;
 import ar.com.controlfinanzas.model.Usuario;
@@ -19,9 +18,11 @@ import ar.com.controlfinanzas.repository.GastoRepository;
 public class GastoService {
 
 	private final GastoRepository repository;
+	private Usuario usuario;
 
-	public GastoService(GastoRepository repository) {
+	public GastoService(GastoRepository repository, Usuario usuario) {
 		this.repository = repository;
+		this.usuario = usuario;
 	}
 
 	public List<Gasto> listarPorUsuario(Integer usuarioId) {
@@ -37,7 +38,7 @@ public class GastoService {
 	}
 
 	public BigDecimal calcularTotalGastos() {
-		List<Gasto> gastos = repository.listarPorUsuario(MainApp.getUsuarioActivo().getUsuarioID());
+		List<Gasto> gastos = repository.listarPorUsuario(usuario.getUsuarioID());
 
 		return gastos.stream().map(g -> g.getMonto() != null ? g.getMonto() : BigDecimal.ZERO).reduce(BigDecimal.ZERO,
 				BigDecimal::add);

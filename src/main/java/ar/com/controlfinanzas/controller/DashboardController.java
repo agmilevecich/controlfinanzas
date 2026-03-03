@@ -3,9 +3,9 @@ package ar.com.controlfinanzas.controller;
 import java.math.BigDecimal;
 import java.util.List;
 
-import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.Gasto;
+import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.InversionService;
 
@@ -21,17 +21,17 @@ public class DashboardController {
 	private BigDecimal totalGastos = BigDecimal.ZERO;
 	private BigDecimal capitalTotalInvertido = BigDecimal.ZERO;
 	private BigDecimal patrimonioNeto = BigDecimal.ZERO;
+	private Usuario usuario;
 
-	public DashboardController(GastoService gastoService, InversionService inversionService) {
+	public DashboardController(GastoService gastoService, InversionService inversionService, Usuario usuario) {
 		this.gastoService = gastoService;
 		this.inversionService = inversionService;
+		this.usuario = usuario;
 	}
 
 	public void refrescarDatos() throws Exception {
 
-		Integer usuarioId = MainApp.getUsuarioActivo().getUsuarioID();
-
-		gastos = gastoService.listarPorUsuario(usuarioId);
+		gastos = gastoService.listarPorUsuario(usuario.getUsuarioID());
 //		inversiones = inversionService.listarPorUsuario(usuarioId);
 
 		totalGastos = gastoService.calcularTotalGastos();

@@ -22,13 +22,13 @@ import javax.swing.table.DefaultTableModel;
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
 
-import ar.com.controlfinanzas.app.MainApp;
 import ar.com.controlfinanzas.controller.InversionController;
 import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.Alerta;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.TipoActivo;
 import ar.com.controlfinanzas.model.TipoInversion;
+import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.repository.InversionRepositoryJPA;
 import ar.com.controlfinanzas.service.AlertaService;
 import ar.com.controlfinanzas.service.PosicionService;
@@ -69,12 +69,16 @@ public class PanelInversionesAvanzado extends JPanel {
 	private PanelIngresosMensuales panelIngresoMensuales;
 	private PanelVencimiento panelVencimiento;
 
-	public PanelInversionesAvanzado(InversionController inversionController, PanelVencimiento panelVencimiento) {
+	private Usuario usuario;
+
+	public PanelInversionesAvanzado(InversionController inversionController, PanelVencimiento panelVencimiento,
+			Usuario usuario) {
 		this.inversionController = inversionController;
+		this.usuario = usuario;
 
 		panelDistribucion = new PanelDistribucion(inversionController);
 		panelPosiciones = new PanelPosiciones(new PosicionService(new InversionRepositoryJPA()));
-		panelPosiciones.refrescar(MainApp.getUsuarioActivo().getUsuarioID());
+		panelPosiciones.refrescar(usuario.getUsuarioID());
 		panelIngresoMensuales = new PanelIngresosMensuales();
 		this.panelVencimiento = panelVencimiento;
 		inicializarPanel();
@@ -263,11 +267,11 @@ public class PanelInversionesAvanzado extends JPanel {
 
 			inv.setCryptoTipo(txtCryptoTipo.getText().trim().toUpperCase());
 			inv.setBroker(txtBroker.getText().trim());
-			inv.setUsuario(MainApp.getUsuarioActivo());
+			inv.setUsuario(usuario);
 
 			inversionController.agregarInversion(inv);
 
-			panelPosiciones.refrescar(MainApp.getUsuarioActivo().getUsuarioID());
+			panelPosiciones.refrescar(usuario.getUsuarioID());
 			limpiarCampos();
 
 		} catch (

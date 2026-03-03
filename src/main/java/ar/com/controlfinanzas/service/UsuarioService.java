@@ -1,31 +1,30 @@
 package ar.com.controlfinanzas.service;
 
-import java.util.List;
-
 import ar.com.controlfinanzas.model.Usuario;
-import ar.com.controlfinanzas.repository.UsuarioRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
 
 public class UsuarioService {
 
-	private final UsuarioRepository usuarioRepository;
+	private EntityManager em;
 
-	public UsuarioService() {
-		this.usuarioRepository = new UsuarioRepository();
+	public UsuarioService(EntityManager em) {
+		this.em = em;
 	}
 
-	public void guardarUsuario(Usuario usuario) {
-		usuarioRepository.guardar(usuario);
-	}
+	public Usuario buscarOCrearUsuario(String nombre) {
+		TypedQuery<Usuario> query = em.createQuery("SELECT u FROM Usuario u WHERE u.nombre = :nombre", Usuario.class);
+		query.setParameter("nombre", nombre);
 
-	public Usuario obtenerUsuario(Integer id) {
-		return usuarioRepository.buscarPorId(id);
-	}
-
-	public List<Usuario> listarUsuarios() {
-		return usuarioRepository.listarTodos();
-	}
-
-	public void eliminarUsuario(Usuario usuario) {
-		usuarioRepository.eliminar(usuario);
+		Usuario usuario;
+		try {
+			usuario = query.getSingleResult();
+		} catch (Exception e) {
+			usuario = new Usuario(nombre);
+			em.getTransaction().begin();
+			em.persist(usuario);
+			em.getTransaction().commit();
+		}
+		return usuario;
 	}
 }
