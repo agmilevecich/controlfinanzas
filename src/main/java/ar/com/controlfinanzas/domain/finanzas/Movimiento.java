@@ -19,7 +19,7 @@ public class Movimiento {
 	private FormaPago formaPago;
 	private String descripcion;
 
-	public Movimiento(Cuenta cuentaOrigen, Cuenta cuentaDestino, BigDecimal monto, Moneda moneda, TipoMovimiento tipo,
+	private Movimiento(Cuenta cuentaOrigen, Cuenta cuentaDestino, BigDecimal monto, Moneda moneda, TipoMovimiento tipo,
 			LocalDate fecha, FormaPago formaPago, String descripcion) {
 
 		if (monto == null || monto.compareTo(BigDecimal.ZERO) <= 0) {
@@ -69,6 +69,25 @@ public class Movimiento {
 		this.fecha = fecha;
 		this.formaPago = formaPago;
 		this.descripcion = descripcion;
+	}
+
+	public static Movimiento crearIngreso(Cuenta destino, BigDecimal monto, FormaPago formaPago, String descripcion) {
+
+		return new Movimiento(null, destino, monto, destino.getMoneda(), TipoMovimiento.INGRESO, LocalDate.now(),
+				formaPago, descripcion);
+	}
+
+	public static Movimiento crearGasto(Cuenta origen, BigDecimal monto, FormaPago formaPago, String descripcion) {
+
+		return new Movimiento(origen, null, monto, origen.getMoneda(), TipoMovimiento.GASTO, LocalDate.now(), formaPago,
+				descripcion);
+	}
+
+	public static Movimiento crearTransferencia(Cuenta origen, Cuenta destino, BigDecimal monto, FormaPago formaPago,
+			String descripcion) {
+
+		return new Movimiento(origen, destino, monto, origen.getMoneda(), TipoMovimiento.TRANSFERENCIA, LocalDate.now(),
+				formaPago, descripcion);
 	}
 
 	public UUID getId() {
