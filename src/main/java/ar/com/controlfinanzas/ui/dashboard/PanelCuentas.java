@@ -6,7 +6,6 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import javax.swing.DefaultListModel;
-import javax.swing.JButton;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -19,6 +18,7 @@ import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.MovimientoService;
+import ar.com.controlfinanzas.ui.PanelBotones;
 
 public class PanelCuentas extends JPanel {
 
@@ -28,6 +28,7 @@ public class PanelCuentas extends JPanel {
 	private JList<Cuenta> listaCuentas;
 	private DefaultListModel<Cuenta> modeloCuentas;
 	private Consumer<Cuenta> cuentaSeleccionadaListener;
+	private PanelBotones botones = new PanelBotones();
 
 	public PanelCuentas(Usuario usuario, CuentaService cuentaService, MovimientoService movimientoService) {
 		this.usuario = usuario;
@@ -51,9 +52,9 @@ public class PanelCuentas extends JPanel {
 		});
 
 		// Botón para crear nueva cuenta
-		JButton btnCrear = new JButton("Crear Cuenta");
-		btnCrear.addActionListener(e -> crearCuentaDialog());
-		add(btnCrear, BorderLayout.SOUTH);
+		botones.getBotones()[0].setText("Crear Cuenta");
+		botones.getBotones()[0].addActionListener(e -> crearCuentaDialog());
+		add(botones, BorderLayout.SOUTH);
 
 		cargarCuentas();
 	}
@@ -91,7 +92,7 @@ public class PanelCuentas extends JPanel {
 
 		for (Cuenta c : cuentas) {
 			// calcular saldo actual con movimientoService
-			c.setCapitalInicial(movimientoService.calcularSaldo(c));
+			c.getSaldo();
 			modeloCuentas.addElement(c); // toString() de Cuenta mostrará nombre + moneda + saldo
 		}
 

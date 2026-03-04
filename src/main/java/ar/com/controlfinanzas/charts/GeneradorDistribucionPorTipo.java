@@ -17,7 +17,7 @@ public class GeneradorDistribucionPorTipo {
         for (Inversion inv : inversiones) {
             acumulado.merge(
                     inv.getTipoInversion(),
-                    inv.getCapitalInicial(),
+                    inv.getSaldo(),
                     BigDecimal::add
             );
         }

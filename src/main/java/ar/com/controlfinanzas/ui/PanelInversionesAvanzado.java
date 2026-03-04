@@ -68,7 +68,6 @@ public class PanelInversionesAvanzado extends JPanel {
 	private PanelPosiciones panelPosiciones;
 	private PanelIngresosMensuales panelIngresoMensuales;
 	private PanelVencimiento panelVencimiento;
-	private JSplitPane spFormGeneral;
 
 	private Usuario usuario;
 
@@ -91,11 +90,6 @@ public class PanelInversionesAvanzado extends JPanel {
 	private void inicializarPanel() {
 
 		setLayout(new BorderLayout());
-
-		spFormGeneral = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-		spFormGeneral.setResizeWeight(0.05);
-		spFormGeneral.setContinuousLayout(true);
-		spFormGeneral.setOneTouchExpandable(true);
 
 		JPanel panelForm = new JPanel(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints();
@@ -200,7 +194,7 @@ public class PanelInversionesAvanzado extends JPanel {
 
 		botones.getBotones()[0].addActionListener(e -> agregarInversion());
 
-		spFormGeneral.add(panelForm);
+		add(panelForm, BorderLayout.NORTH);
 
 		tablaModel = new DefaultTableModel(
 				new Object[] { "ID", "Tipo Activo", "Tipo Inversión", "Moneda", "Descripción", "Capital", "Rendimiento",
@@ -226,9 +220,7 @@ public class PanelInversionesAvanzado extends JPanel {
 		splitVertical.setContinuousLayout(true);
 		splitVertical.setOneTouchExpandable(true);
 
-		spFormGeneral.add(splitVertical);
-
-		add(spFormGeneral, BorderLayout.CENTER);
+		add(splitVertical, BorderLayout.CENTER);
 	}
 
 	private void filtrarTipoInversion() {
@@ -270,7 +262,7 @@ public class PanelInversionesAvanzado extends JPanel {
 			}
 
 			if (estrategia == EstrategiaValuacion.MONTO) {
-				inv.setCapitalInicial(NumeroUtils.parse(txtCapital.getText()));
+				inv.setSaldo(NumeroUtils.parse(txtCapital.getText()));
 			}
 
 			inv.setCryptoTipo(txtCryptoTipo.getText().trim().toUpperCase());
@@ -296,7 +288,7 @@ public class PanelInversionesAvanzado extends JPanel {
 
 		for (Inversion inv : inversiones) {
 			tablaModel.addRow(new Object[] { inv.getId(), inv.getTipoActivo(), inv.getTipoInversion(), inv.getMoneda(),
-					inv.getDescripcion(), inv.getCapitalInicial(), inv.getTasaAnual(), inv.getFechaInicio(),
+					inv.getDescripcion(), inv.getSaldo(), inv.getTasaAnual(), inv.getFechaInicio(),
 					inv.getFechaVencimiento(), inv.getCantidad(), inv.getPrecioCompra(), inv.getCryptoTipo(),
 					inv.getBroker() });
 		}

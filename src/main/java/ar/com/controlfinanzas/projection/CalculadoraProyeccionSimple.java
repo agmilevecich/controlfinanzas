@@ -23,15 +23,15 @@ public class CalculadoraProyeccionSimple implements CalculadoraProyeccion {
 		long diasTranscurridos = ChronoUnit.DAYS.between(inversion.getFechaInicio(), fechaObjetivo);
 
 		if (diasTotales <= 0) {
-			return inversion.getCapitalInicial();
+			return inversion.getSaldo();
 		}
 
 		BigDecimal proporcion = BigDecimal.valueOf(diasTranscurridos).divide(BigDecimal.valueOf(diasTotales), 6,
 				RoundingMode.HALF_UP);
 
-		BigDecimal rendimiento = inversion.getCapitalInicial().multiply(inversion.getTasaAnual()).multiply(proporcion);
+		BigDecimal rendimiento = inversion.getSaldo().multiply(inversion.getTasaAnual()).multiply(proporcion);
 
-		return inversion.getCapitalInicial().add(rendimiento);
+		return inversion.getSaldo().add(rendimiento);
 	}
 
 	@Override
@@ -41,7 +41,7 @@ public class CalculadoraProyeccionSimple implements CalculadoraProyeccion {
 		}
 
 		long dias = java.time.temporal.ChronoUnit.DAYS.between(cuenta.getFechaInicio(), fechaObjetivo);
-		double capitalFinal = cuenta.getCapitalInicial().doubleValue() * Math.pow(1 + cuenta.getInteresDiario(), dias);
+		double capitalFinal = cuenta.getSaldo().doubleValue() * Math.pow(1 + cuenta.getInteresDiario(), dias);
 		return BigDecimal.valueOf(capitalFinal);
 	}
 

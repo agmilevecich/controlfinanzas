@@ -11,6 +11,9 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
 import ar.com.controlfinanzas.model.Usuario;
+import ar.com.controlfinanzas.persistence.JPAUtil;
+import ar.com.controlfinanzas.service.CuentaService;
+import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.service.UsuarioService;
 
 public class LoginFrame extends JFrame {
@@ -20,10 +23,11 @@ public class LoginFrame extends JFrame {
 	private JTextField tfNombre;
 	private JButton btnLogin;
 	private UsuarioService usuarioService;
+	private CuentaService cuentaService = new CuentaService(JPAUtil.getEntityManager());
+	private MovimientoService movimientoService = new MovimientoService(JPAUtil.getEntityManager());
 
 	public LoginFrame(UsuarioService usuarioService) {
 		this.usuarioService = usuarioService;
-
 		setTitle("Login");
 		setSize(300, 150);
 		setLocationRelativeTo(null);
@@ -61,7 +65,7 @@ public class LoginFrame extends JFrame {
 		Usuario usuario = usuarioService.buscarOCrearUsuario(nombre);
 
 		// Abre dashboard
-		DashboardFrame dashboard = new DashboardFrame(usuario, usuarioService);
+		DashboardFrame dashboard = new DashboardFrame(usuario, usuarioService, cuentaService, movimientoService);
 		dashboard.setVisible(true);
 
 		this.dispose(); // cierra login

@@ -4,9 +4,11 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -22,43 +24,37 @@ public class Movimiento {
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
 
-	private BigDecimal monto;
-	private String descripcion;
 	private LocalDate fecha;
 
-	@Enumerated(EnumType.STRING)
-	private TipoMovimiento tipo; // INGRESO o EGRESO
+	@Column(precision = 19, scale = 4)
+	private BigDecimal monto;
 
-	@ManyToOne
+	@Enumerated(EnumType.STRING)
+	private TipoMovimiento tipo;
+
+	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "cuenta_id", nullable = false)
 	private Cuenta cuenta;
 
-	public Movimiento() {
+	protected Movimiento() {
 	}
 
-	public Movimiento(BigDecimal monto, String descripcion, LocalDate fecha, TipoMovimiento tipo, Cuenta cuenta) {
-		this.monto = monto;
-		this.descripcion = descripcion;
+	public Movimiento(LocalDate fecha, BigDecimal monto, TipoMovimiento tipo) {
 		this.fecha = fecha;
+		this.monto = monto;
 		this.tipo = tipo;
-		this.cuenta = cuenta;
 	}
 
-	// Getters y setters
 	public Long getId() {
 		return id;
 	}
 
-	public BigDecimal getMonto() {
-		return monto;
-	}
-
-	public String getDescripcion() {
-		return descripcion;
-	}
-
 	public LocalDate getFecha() {
 		return fecha;
+	}
+
+	public BigDecimal getMonto() {
+		return monto;
 	}
 
 	public TipoMovimiento getTipo() {
@@ -67,22 +63,6 @@ public class Movimiento {
 
 	public Cuenta getCuenta() {
 		return cuenta;
-	}
-
-	public void setMonto(BigDecimal monto) {
-		this.monto = monto;
-	}
-
-	public void setDescripcion(String descripcion) {
-		this.descripcion = descripcion;
-	}
-
-	public void setFecha(LocalDate fecha) {
-		this.fecha = fecha;
-	}
-
-	public void setTipo(TipoMovimiento tipo) {
-		this.tipo = tipo;
 	}
 
 	public void setCuenta(Cuenta cuenta) {

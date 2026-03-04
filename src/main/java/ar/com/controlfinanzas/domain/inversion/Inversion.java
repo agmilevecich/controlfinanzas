@@ -52,7 +52,7 @@ public class Inversion {
 	private String descripcion;
 
 	@Column(precision = 19, scale = 4)
-	private BigDecimal capitalInicial;
+	private BigDecimal saldo;
 
 	private LocalDate fechaInicio;
 	private LocalDate fechaVencimiento;
@@ -90,7 +90,7 @@ public class Inversion {
 		this.setFrecuenciaIngreso(getTipoInversion().frecuenciaSugerida());
 		this.descripcion = descripcion;
 		this.tasaAnual = tasaAnual;
-		this.capitalInicial = capitalInicial;
+		this.saldo = capitalInicial;
 		setFechaInicio(fechaInicio);
 		setFechaVencimiento(fechaVencimiento);
 
@@ -310,12 +310,12 @@ public class Inversion {
 		this.descripcion = descripcion;
 	}
 
-	public BigDecimal getCapitalInicial() {
-		return capitalInicial;
+	public BigDecimal getSaldo() {
+		return saldo;
 	}
 
-	public void setCapitalInicial(BigDecimal capitalInicial) {
-		this.capitalInicial = capitalInicial;
+	public void setSaldo(BigDecimal saldo) {
+		this.saldo = saldo;
 	}
 
 	public LocalDate getFechaInicio() {

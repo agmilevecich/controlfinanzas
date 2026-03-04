@@ -71,8 +71,7 @@ public class PanelMovimientos extends JPanel {
 		BigDecimal saldo = BigDecimal.ZERO;
 
 		for (Movimiento m : movimientos) {
-			modeloMovimientos
-					.addElement(m.getFecha() + " | " + m.getTipo() + " | " + m.getMonto() + " | " + m.getDescripcion());
+			modeloMovimientos.addElement(m.getFecha() + " | " + m.getTipo() + " | " + m.getMonto() + " | ");
 
 			switch (m.getTipo()) {
 			case INGRESO -> saldo = saldo.add(m.getMonto());
@@ -109,8 +108,10 @@ public class PanelMovimientos extends JPanel {
 
 		String descripcion = JOptionPane.showInputDialog(this, "Descripción:");
 
-		movimientoService.registrarMovimiento(cuentaSeleccionada,
-				new Movimiento(monto, descripcion, LocalDate.now(), tipo, cuentaSeleccionada));
+		Movimiento mov = new Movimiento(LocalDate.now(), monto, tipo);
+		mov.setCuenta(cuentaSeleccionada);
+
+		movimientoService.registrarMovimiento(cuentaSeleccionada, mov);
 
 		cargarMovimientos();
 

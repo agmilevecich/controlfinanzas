@@ -17,8 +17,8 @@ public class ValuadorIndexado implements ValuadorInversion {
 
 		BigDecimal indice = cotizaciones.obtenerIndice(ticker);
 
-		if (inv.getCapitalInicial() != null && inv.getCapitalInicial().compareTo(BigDecimal.ZERO) > 0) {
-			return inv.getCapitalInicial().multiply(indice);
+		if (inv.getSaldo() != null && inv.getSaldo().compareTo(BigDecimal.ZERO) > 0) {
+			return inv.getSaldo().multiply(indice);
 		}
 
 		if (inv.getCantidad() != null && inv.getPrecioCompra() != null) {
@@ -38,8 +38,8 @@ public class ValuadorIndexado implements ValuadorInversion {
 
 		BigDecimal indice = cotizaciones.obtenerIndice("UVA");
 
-		if (inv.getCapitalInicial() != null) {
-			return inv.getCapitalInicial().multiply(indice);
+		if (inv.getSaldo() != null) {
+			return inv.getSaldo().multiply(indice);
 		}
 
 		return BigDecimal.ZERO;
