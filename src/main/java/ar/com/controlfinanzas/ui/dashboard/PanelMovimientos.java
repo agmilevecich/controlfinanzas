@@ -18,6 +18,7 @@ import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.util.NumeroUtils;
+import jakarta.persistence.EntityManager;
 
 public class PanelMovimientos extends JPanel {
 
@@ -29,6 +30,7 @@ public class PanelMovimientos extends JPanel {
 
 	// Callback para actualizar PanelCuentas
 	private Runnable actualizarPanelCuentasCallback;
+	private EntityManager em;
 
 	public PanelMovimientos(Cuenta cuenta, MovimientoService movimientoService) {
 		this.cuentaSeleccionada = cuenta;
@@ -80,6 +82,7 @@ public class PanelMovimientos extends JPanel {
 			}
 		}
 		lblSaldo.setText("Saldo: " + NumeroUtils.formatearMonedaARS(saldo));
+
 	}
 
 	private void crearMovimientoDialog() {
@@ -112,8 +115,8 @@ public class PanelMovimientos extends JPanel {
 		Movimiento mov = new Movimiento(LocalDate.now(), monto, tipo);
 		mov.setCuenta(cuentaSeleccionada);
 
-		movimientoService.registrarMovimiento(cuentaSeleccionada, mov);
-
+		Movimiento movimientoActualizado = movimientoService.registrarMovimiento(cuentaSeleccionada, mov);
+		cuentaSeleccionada.getMovimientos().add(movimientoActualizado);
 		cargarMovimientos();
 
 		// Actualizar PanelCuentas para reflejar saldo nuevo

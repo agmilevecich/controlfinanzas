@@ -15,7 +15,7 @@ public class MainApp {
 
 		// Abrir LoginFrame
 		SwingUtilities.invokeLater(() -> {
-			LoginFrame login = new LoginFrame(usuarioService);
+			LoginFrame login = new LoginFrame(usuarioService, em);
 			login.setVisible(true);
 		});
 

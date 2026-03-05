@@ -71,7 +71,6 @@ public class DashboardFrame extends JFrame {
 		this.usuario = usuario;
 		this.usuarioService = usuarioService;
 		this.cuentaService = cuentaService;
-		this.movimientoService = movimientoService;
 
 		this.alertaService = new AlertaService();
 		this.inversionRepository = new InversionRepositoryJPA();

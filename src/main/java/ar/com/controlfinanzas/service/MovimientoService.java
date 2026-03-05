@@ -3,6 +3,8 @@ package ar.com.controlfinanzas.service;
 import java.math.BigDecimal;
 import java.util.List;
 
+import javax.swing.JOptionPane;
+
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Movimiento;
 import jakarta.persistence.EntityManager;
@@ -22,7 +24,7 @@ public class MovimientoService {
 		em.getTransaction().begin();
 		em.persist(movimiento);
 		em.getTransaction().commit();
-
+		
 		return movimiento;
 	}
 

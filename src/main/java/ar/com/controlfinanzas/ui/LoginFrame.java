@@ -11,10 +11,10 @@ import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
 import ar.com.controlfinanzas.model.Usuario;
-import ar.com.controlfinanzas.persistence.JPAUtil;
 import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.service.UsuarioService;
+import jakarta.persistence.EntityManager;
 
 public class LoginFrame extends JFrame {
 
@@ -23,12 +23,14 @@ public class LoginFrame extends JFrame {
 	private JTextField tfNombre;
 	private JButton btnLogin;
 	private UsuarioService usuarioService;
-	private CuentaService cuentaService = new CuentaService(JPAUtil.getEntityManager());
-	private MovimientoService movimientoService = new MovimientoService(JPAUtil.getEntityManager());
+	private CuentaService cuentaService;
+	private MovimientoService movimientoService;
 
-	public LoginFrame(UsuarioService usuarioService) {
+	public LoginFrame(UsuarioService usuarioService, EntityManager em) {
 		this.usuarioService = usuarioService;
-		setTitle("Login");
+		this.cuentaService = new CuentaService(em);
+		this.movimientoService = new MovimientoService(em);
+		this.setTitle("Login");
 		setSize(300, 150);
 		setLocationRelativeTo(null);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

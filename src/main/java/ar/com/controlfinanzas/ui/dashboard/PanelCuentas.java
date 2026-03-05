@@ -87,17 +87,21 @@ public class PanelCuentas extends JPanel {
 	}
 
 	public void cargarCuentas() {
+		// Guardar la cuenta actualmente seleccionada
+		Cuenta seleccionadaAntes = listaCuentas.getSelectedValue();
+
 		modeloCuentas.clear();
 		List<Cuenta> cuentas = cuentaService.getCuentasUsuario(usuario);
 
 		for (Cuenta c : cuentas) {
-			// calcular saldo actual con movimientoService
-			c.getSaldo();
-			modeloCuentas.addElement(c); // toString() de Cuenta mostrará nombre + moneda + saldo
+			modeloCuentas.addElement(c); // toString() mostrará nombre + saldo
 		}
 
-		if (!cuentas.isEmpty()) {
-			listaCuentas.setSelectedIndex(0);
+		// Volver a seleccionar la cuenta que estaba antes
+		if (seleccionadaAntes != null && cuentas.contains(seleccionadaAntes)) {
+			listaCuentas.setSelectedValue(seleccionadaAntes, true);
+		} else if (!cuentas.isEmpty()) {
+			listaCuentas.setSelectedIndex(0); // fallback
 		}
 	}
 
