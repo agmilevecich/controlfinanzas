@@ -71,14 +71,15 @@ public class PanelMovimientos extends JPanel {
 		BigDecimal saldo = BigDecimal.ZERO;
 
 		for (Movimiento m : movimientos) {
-			modeloMovimientos.addElement(m.getFecha() + " | " + m.getTipo() + " | " + m.getMonto() + " | ");
+			modeloMovimientos.addElement(
+					m.getFecha() + " | " + m.getTipo() + " | " + NumeroUtils.formatearMonedaARS(m.getMonto()) + " | ");
 
 			switch (m.getTipo()) {
 			case INGRESO -> saldo = saldo.add(m.getMonto());
 			case GASTO, TRANSFERENCIA -> saldo = saldo.subtract(m.getMonto());
 			}
 		}
-		lblSaldo.setText("Saldo: " + saldo);
+		lblSaldo.setText("Saldo: " + NumeroUtils.formatearMonedaARS(saldo));
 	}
 
 	private void crearMovimientoDialog() {

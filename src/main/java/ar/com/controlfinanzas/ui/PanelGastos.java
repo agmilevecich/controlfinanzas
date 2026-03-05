@@ -1,6 +1,7 @@
 package ar.com.controlfinanzas.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -34,7 +35,9 @@ import org.jfree.data.general.DefaultPieDataset;
 import ar.com.controlfinanzas.model.CategoriaGasto;
 import ar.com.controlfinanzas.model.Gasto;
 import ar.com.controlfinanzas.model.Usuario;
+import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.GastoService;
+import ar.com.controlfinanzas.service.MovimientoService;
 
 public class PanelGastos extends JPanel {
 
@@ -49,27 +52,29 @@ public class PanelGastos extends JPanel {
 	private final GastoService gastoService;
 	private PanelResumenFinanciero panelResumen;
 
-	// 🔥 NUEVO: cache en memoria
 	private List<Gasto> gastosCache;
 	private PanelResumenGastos panelResumenGastos;
 
 	private PanelBotones botones = new PanelBotones();
 	private JSplitPane split;
 	private Usuario usuario;
+	private CuentaService cuentaService;
+	private MovimientoService movimientoService;
 
-	public PanelGastos(GastoService gastoService, PanelResumenFinanciero panelResumen,
-			PanelResumenGastos panelResumenGastos, Usuario usuario) {
+	public PanelGastos(GastoService gastoService, CuentaService cuentaServce, MovimientoService movimientoService,
+			PanelResumenFinanciero panelResumen, PanelResumenGastos panelResumenGastos, Usuario usuario) {
 		this.gastoService = gastoService;
+		this.cuentaService = cuentaServce;
+		this.movimientoService = movimientoService;
 		this.panelResumen = panelResumen;
 		this.panelResumenGastos = panelResumenGastos;
 		this.usuario = usuario;
 		inicializarPanel();
-		cargarGastos(); // 1 sola consulta
-		actualizarGraficos(); // usa cache
+		cargarGastos();
+		actualizarGraficos();
 	}
 
 	private void inicializarPanel() {
-
 		this.setLayout(new BorderLayout());
 
 		JPanel panelFormulario = new JPanel(new GridBagLayout());
@@ -110,7 +115,6 @@ public class PanelGastos extends JPanel {
 				return false;
 			}
 		};
-
 		tableGastos = new JTable(tableModel);
 		tableGastos.removeColumn(tableGastos.getColumnModel().getColumn(0));
 
@@ -122,7 +126,7 @@ public class PanelGastos extends JPanel {
 		panelGraficos.setLayout(new BoxLayout(panelGraficos, BoxLayout.Y_AXIS));
 		JScrollPane scrollGrafico = new JScrollPane(panelGraficos);
 
-		split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelTabla, panelGraficos);
+		split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelTabla, scrollGrafico);
 		split.setResizeWeight(0.5);
 		split.setContinuousLayout(true);
 		split.setOneTouchExpandable(true);
@@ -130,12 +134,10 @@ public class PanelGastos extends JPanel {
 		this.add(split, BorderLayout.CENTER);
 
 		JButton[] boton = botones.getBotones();
-
 		boton[0].addActionListener(e -> agregarGasto());
 	}
 
 	private void agregarGasto() {
-
 		try {
 			String descripcion = txtDescripcion.getText().trim();
 			String montoStr = txtMonto.getText().trim();
@@ -158,8 +160,6 @@ public class PanelGastos extends JPanel {
 			gastoService.guardar(gasto);
 
 			limpiarFormulario();
-
-			// 🔥 refrescamos cache UNA sola vez
 			cargarGastos();
 			actualizarGraficos();
 
@@ -183,12 +183,10 @@ public class PanelGastos extends JPanel {
 		tableModel.setRowCount(0);
 		try {
 			gastosCache = gastoService.listarPorUsuario(usuario.getUsuarioID());
-
 			for (Gasto g : gastosCache) {
 				tableModel.addRow(new Object[] { g.getId(), g.getFecha(), g.getDescripcion(),
 						g.getMonto().setScale(2, RoundingMode.HALF_UP), g.getCategoria() });
 			}
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -206,50 +204,46 @@ public class PanelGastos extends JPanel {
 	}
 
 	private void actualizarGraficoPie() {
-
 		if (gastosCache == null || gastosCache.isEmpty()) {
 			return;
 		}
 
-		@SuppressWarnings("rawtypes")
 		DefaultPieDataset dataset = new DefaultPieDataset();
 		Map<CategoriaGasto, BigDecimal> totales = new HashMap<>();
-
 		for (Gasto g : gastosCache) {
 			totales.put(g.getCategoria(), totales.getOrDefault(g.getCategoria(), BigDecimal.ZERO).add(g.getMonto()));
 		}
-
 		for (Map.Entry<CategoriaGasto, BigDecimal> e : totales.entrySet()) {
 			dataset.setValue(e.getKey(), e.getValue());
 		}
 
 		JFreeChart chart = ChartFactory.createPieChart("Gastos por Categoría", dataset, true, true, false);
-
-		panelGraficos.add(new ChartPanel(chart));
+		ChartPanel chartPanel = new ChartPanel(chart);
+		chartPanel.setPreferredSize(new Dimension(400, 300)); // <-- tamaño controlado
+		chartPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 300));
+		panelGraficos.add(chartPanel);
 	}
 
 	private void actualizarGraficoBarras() {
-
 		if (gastosCache == null || gastosCache.isEmpty()) {
 			return;
 		}
 
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 		Map<Integer, BigDecimal> totales = new HashMap<>();
-
 		for (Gasto g : gastosCache) {
 			int mes = g.getFecha().getMonthValue();
 			totales.put(mes, totales.getOrDefault(mes, BigDecimal.ZERO).add(g.getMonto()));
 		}
-
 		for (Map.Entry<Integer, BigDecimal> e : totales.entrySet()) {
 			String nombreMes = java.time.Month.of(e.getKey()).getDisplayName(TextStyle.SHORT, Locale.getDefault());
-
 			dataset.addValue(e.getValue(), "Gastos", nombreMes);
 		}
 
 		JFreeChart chart = ChartFactory.createBarChart("Gastos Mensuales", "Mes", "Monto", dataset);
-
-		panelGraficos.add(new ChartPanel(chart));
+		ChartPanel chartPanel = new ChartPanel(chart);
+		chartPanel.setPreferredSize(new Dimension(400, 300)); // <-- tamaño controlado
+		chartPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 300));
+		panelGraficos.add(chartPanel);
 	}
 }

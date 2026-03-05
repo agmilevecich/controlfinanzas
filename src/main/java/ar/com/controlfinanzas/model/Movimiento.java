@@ -32,6 +32,9 @@ public class Movimiento {
 	@Enumerated(EnumType.STRING)
 	private TipoMovimiento tipo;
 
+	@Enumerated(EnumType.STRING)
+	private FormaPago formaPago;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "cuenta_id", nullable = false)
 	private Cuenta cuenta;
@@ -68,4 +71,17 @@ public class Movimiento {
 	public void setCuenta(Cuenta cuenta) {
 		this.cuenta = cuenta;
 	}
+
+	public FormaPago getFormaPago() {
+		return formaPago;
+	}
+
+	public void setFormaPago(FormaPago formaPago) {
+		this.formaPago = formaPago;
+	}
+
+	public void setDescripcion(String string) {
+
+	}
+
 }

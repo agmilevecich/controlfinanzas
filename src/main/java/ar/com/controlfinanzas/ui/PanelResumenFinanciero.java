@@ -3,7 +3,6 @@ package ar.com.controlfinanzas.ui;
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.YearMonth;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -28,6 +27,7 @@ import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.IngresoService;
 import ar.com.controlfinanzas.service.InversionService;
+import ar.com.controlfinanzas.util.NumeroUtils;
 
 public class PanelResumenFinanciero extends JPanel {
 
@@ -126,13 +126,17 @@ public class PanelResumenFinanciero extends JPanel {
 			LinkedHashMap<CategoriaGasto, BigDecimal> ranking = gastoService
 					.rankingCategoriasPorMes(usuario.getUsuarioID(), mesActual);
 
-			lblTotalInversiones.setText("Total Inversiones: $" + totalInversiones.setScale(2, RoundingMode.HALF_UP));
+			lblTotalInversiones.setText("Total Inversiones: $"
+					+ NumeroUtils.formatearMonedaARS(NumeroUtils.redondearMoneda(totalInversiones)));
 
-			lblTotalGastos.setText("Gastos Históricos: $" + totalGastosHistorico.setScale(2, RoundingMode.HALF_UP));
+			lblTotalGastos.setText("Gastos Históricos: $"
+					+ NumeroUtils.formatearMonedaARS(NumeroUtils.redondearMoneda(totalGastosHistorico)));
 
-			lblSaldoNeto.setText("Activos Invertidos: $" + patrimonioNeto.setScale(2, RoundingMode.HALF_UP));
+			lblSaldoNeto.setText("Activos Invertidos: $"
+					+ NumeroUtils.formatearMonedaARS(NumeroUtils.redondearMoneda(patrimonioNeto)));
 
-			lblGastosMes.setText("Gastos " + mesActual + ": $" + gastosMes.setScale(2, RoundingMode.HALF_UP));
+			lblGastosMes.setText("Gastos " + mesActual + ": $"
+					+ NumeroUtils.formatearMonedaARS(NumeroUtils.redondearMoneda(gastosMes)));
 
 			// ============================
 			// GRÁFICO INVERSIONES POR TIPO

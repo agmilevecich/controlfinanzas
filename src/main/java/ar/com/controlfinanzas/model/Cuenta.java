@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ar.com.controlfinanzas.domain.finanzas.TipoCuenta;
+import ar.com.controlfinanzas.util.NumeroUtils;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -77,7 +78,7 @@ public class Cuenta {
 			}
 		}
 
-		return total;
+		return NumeroUtils.redondearMoneda(total);
 	}
 
 	public Long getId() {
@@ -118,6 +119,6 @@ public class Cuenta {
 
 	@Override
 	public String toString() {
-		return getNombre() + "Saldo Actual: " + getSaldo();
+		return String.format("%-20s Saldo: %12s", getNombre(), NumeroUtils.formatearMonedaARS(getSaldo()));
 	}
 }

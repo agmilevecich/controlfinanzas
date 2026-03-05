@@ -104,4 +104,5 @@ public class PanelCuentas extends JPanel {
 	public void setCuentaSeleccionadaListener(Consumer<Cuenta> listener) {
 		this.cuentaSeleccionadaListener = listener;
 	}
+
 }
