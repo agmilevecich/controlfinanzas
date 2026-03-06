@@ -117,7 +117,7 @@ public class PanelMovimientos extends JPanel {
 
 		if (tipo == TipoMovimiento.TRANSFERENCIA) {
 			// Validamos que la cuenta origen tenga saldo suficiente
-			BigDecimal saldoOrigen = movimientoService.calcularSaldo(cuentaSeleccionada);
+			BigDecimal saldoOrigen = cuentaSeleccionada.getSaldo();
 			if (monto.compareTo(saldoOrigen) > 0) {
 				JOptionPane.showMessageDialog(this, "No puede transferir más de lo que tiene en la cuenta: "
 						+ NumeroUtils.formatearMonedaARS(saldoOrigen));
@@ -148,14 +148,12 @@ public class PanelMovimientos extends JPanel {
 			movOrigen.setCuenta(cuentaSeleccionada);
 			Movimiento movimientoActualizadoOrigen = movimientoService.registrarMovimiento(cuentaSeleccionada,
 					movOrigen);
-			cuentaSeleccionada.getMovimientos().add(movimientoActualizadoOrigen);
 
 			// Movimiento en cuenta destino (positivo)
 			Movimiento movDestino = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.INGRESO);
 			movDestino.setDescripcion(descripcion + " <- " + cuentaSeleccionada.getNombre());
 			movDestino.setCuenta(destino);
 			Movimiento movimientoActualizadoDestino = movimientoService.registrarMovimiento(destino, movDestino);
-			destino.getMovimientos().add(movimientoActualizadoDestino);
 
 			// Refrescar paneles
 			if (actualizarPanelCuentasCallback != null) {
@@ -170,7 +168,6 @@ public class PanelMovimientos extends JPanel {
 			mov.setCuenta(cuentaSeleccionada);
 
 			Movimiento movimientoActualizado = movimientoService.registrarMovimiento(cuentaSeleccionada, mov);
-			cuentaSeleccionada.getMovimientos().add(movimientoActualizado);
 
 			// Refrescar paneles
 			if (actualizarPanelCuentasCallback != null) {

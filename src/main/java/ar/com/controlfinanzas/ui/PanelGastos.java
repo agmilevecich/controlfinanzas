@@ -225,7 +225,6 @@ public class PanelGastos extends JPanel {
 			Movimiento mov = new Movimiento(LocalDate.now(), gasto.getDescripcion(), gasto.getMonto(),
 					TipoMovimiento.GASTO);
 			movimientoService.registrarMovimiento(cuenta, mov);
-			cuenta.getMovimientos().add(mov);
 			limpiarFormulario();
 			cargarGastos();
 			actualizarGraficos();

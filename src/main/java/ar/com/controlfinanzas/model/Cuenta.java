@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ar.com.controlfinanzas.domain.finanzas.TipoCuenta;
+import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
 import ar.com.controlfinanzas.util.NumeroUtils;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -65,20 +66,23 @@ public class Cuenta {
 
 	@Transient
 	public BigDecimal getSaldo() {
-		BigDecimal total = BigDecimal.ZERO;
+		BigDecimal saldo = BigDecimal.ZERO;
 
 		for (Movimiento m : movimientos) {
-			if (m.getMonto() == null) {
+
+			// si fue pagado con tarjeta no afecta la cuenta
+			if (m.getFormaPago() == FormaPago.CREDITO) {
 				continue;
 			}
 
-			switch (m.getTipo()) {
-			case INGRESO -> total = total.add(m.getMonto());
-			case GASTO, TRANSFERENCIA -> total = total.subtract(m.getMonto());
+			if (m.getTipo() == TipoMovimiento.INGRESO) {
+				saldo = saldo.add(m.getMonto());
+			} else {
+				saldo = saldo.subtract(m.getMonto());
 			}
 		}
 
-		return NumeroUtils.redondearMoneda(total);
+		return saldo;
 	}
 
 	public Long getId() {

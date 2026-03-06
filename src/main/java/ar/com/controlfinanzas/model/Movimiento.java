@@ -42,6 +42,15 @@ public class Movimiento {
 	@JoinColumn(name = "cuenta_id", nullable = false)
 	private Cuenta cuenta;
 
+	// NUEVO: tarjeta usada (solo si formaPago = CREDITO)
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "tarjeta_id")
+	private TarjetaCredito tarjeta;
+
+	// NUEVO: indica si la deuda de la tarjeta ya fue pagada
+	@Column(nullable = false)
+	private boolean pendiente = false;
+
 	protected Movimiento() {
 	}
 
@@ -51,6 +60,8 @@ public class Movimiento {
 		this.monto = monto;
 		this.tipo = tipo;
 	}
+
+	// getters
 
 	public Long getId() {
 		return id;
@@ -76,12 +87,22 @@ public class Movimiento {
 		return cuenta;
 	}
 
-	public void setCuenta(Cuenta cuenta) {
-		this.cuenta = cuenta;
-	}
-
 	public FormaPago getFormaPago() {
 		return formaPago;
+	}
+
+	public TarjetaCredito getTarjeta() {
+		return tarjeta;
+	}
+
+	public boolean isPendiente() {
+		return pendiente;
+	}
+
+	// setters
+
+	public void setCuenta(Cuenta cuenta) {
+		this.cuenta = cuenta;
 	}
 
 	public void setFormaPago(FormaPago formaPago) {
@@ -90,7 +111,13 @@ public class Movimiento {
 
 	public void setDescripcion(String descripcion) {
 		this.descripcion = descripcion;
-
 	}
 
+	public void setTarjeta(TarjetaCredito tarjeta) {
+		this.tarjeta = tarjeta;
+	}
+
+	public void setPendiente(boolean pendiente) {
+		this.pendiente = pendiente;
+	}
 }
