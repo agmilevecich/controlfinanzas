@@ -30,6 +30,8 @@ public class PanelCuentas extends JPanel {
 	private Consumer<Cuenta> cuentaSeleccionadaListener;
 	private PanelBotones botones = new PanelBotones();
 
+	private Runnable actualizarCuentas;
+
 	private boolean cuentaNueva;
 
 	public PanelCuentas(Usuario usuario, CuentaService cuentaService, MovimientoService movimientoService) {
@@ -87,6 +89,14 @@ public class PanelCuentas extends JPanel {
 		cuentaNueva = true;
 		cargarCuentas();
 		cuentaNueva = false;
+
+		if (actualizarCuentas != null) {
+			actualizarCuentas.run();
+		}
+	}
+
+	public void setActualizarCuentas(Runnable actualizarCuentas) {
+		this.actualizarCuentas = actualizarCuentas;
 	}
 
 	public void cargarCuentas() {

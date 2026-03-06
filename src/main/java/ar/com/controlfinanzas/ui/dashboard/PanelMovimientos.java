@@ -64,7 +64,7 @@ public class PanelMovimientos extends JPanel {
 		cargarMovimientos();
 	}
 
-	private void cargarMovimientos() {
+	public void cargarMovimientos() {
 		modeloMovimientos.clear();
 
 		if (cuentaSeleccionada == null) {

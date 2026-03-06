@@ -1,6 +1,7 @@
 package ar.com.controlfinanzas.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -15,9 +16,12 @@ import java.util.Locale;
 import java.util.Map;
 
 import javax.swing.BoxLayout;
+import javax.swing.DefaultComboBoxModel;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -32,8 +36,12 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
+import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
 import ar.com.controlfinanzas.model.CategoriaGasto;
+import ar.com.controlfinanzas.model.Cuenta;
+import ar.com.controlfinanzas.model.FormaPago;
 import ar.com.controlfinanzas.model.Gasto;
+import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.GastoService;
@@ -60,6 +68,11 @@ public class PanelGastos extends JPanel {
 	private Usuario usuario;
 	private CuentaService cuentaService;
 	private MovimientoService movimientoService;
+	private JComboBox<Cuenta> cbCuenta;
+	private JComboBox<FormaPago> cbFormaPago;
+	private DefaultComboBoxModel<Cuenta> modelCuenta = new DefaultComboBoxModel<Cuenta>();
+
+	private Runnable actualizaGastos;
 
 	public PanelGastos(GastoService gastoService, CuentaService cuentaServce, MovimientoService movimientoService,
 			PanelResumenFinanciero panelResumen, PanelResumenGastos panelResumenGastos, Usuario usuario) {
@@ -69,9 +82,22 @@ public class PanelGastos extends JPanel {
 		this.panelResumen = panelResumen;
 		this.panelResumenGastos = panelResumenGastos;
 		this.usuario = usuario;
+
 		inicializarPanel();
 		cargarGastos();
 		actualizarGraficos();
+		actualizarCuenta();
+	}
+
+	private void actualizarCuenta() {
+		modelCuenta.removeAllElements();
+		for (Cuenta c : cuentaService.getCuentasUsuario(usuario)) {
+			modelCuenta.addElement(c);
+		}
+	}
+
+	public void refrescarCuentas() {
+		actualizarCuenta();
 	}
 
 	private void inicializarPanel() {
@@ -79,6 +105,27 @@ public class PanelGastos extends JPanel {
 
 		JPanel panelFormulario = new JPanel(new GridBagLayout());
 		GridBagConstraints gbc = new GridBagConstraints();
+
+		cbCuenta = new JComboBox<>(modelCuenta);
+		cbCuenta.setRenderer(new DefaultListCellRenderer() {
+
+			@Override
+			public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
+					boolean cellHasFocus) {
+				JLabel lblCuenta = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected,
+						cellHasFocus);
+
+				if (value instanceof Cuenta) {
+					Cuenta cuenta = (Cuenta) value;
+					lblCuenta.setText(cuenta.getNombre() + " " + cuenta.getMoneda());
+				}
+
+				return lblCuenta;
+			}
+
+		});
+		cbFormaPago = new JComboBox<>(FormaPago.values());
+
 		gbc.insets = new Insets(5, 5, 5, 5);
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 
@@ -106,6 +153,18 @@ public class PanelGastos extends JPanel {
 
 		gbc.gridx = 0;
 		gbc.gridy = 3;
+		panelFormulario.add(new JLabel("Cuenta:"), gbc);
+		gbc.gridx = 1;
+		panelFormulario.add(cbCuenta, gbc);
+
+		gbc.gridx = 0;
+		gbc.gridy = 4;
+		panelFormulario.add(new JLabel("Forma de Pago:"), gbc);
+		gbc.gridx = 1;
+		panelFormulario.add(cbFormaPago, gbc);
+
+		gbc.gridx = 0;
+		gbc.gridy = 5;
 		gbc.gridwidth = 2;
 		panelFormulario.add(botones, gbc);
 
@@ -142,6 +201,8 @@ public class PanelGastos extends JPanel {
 			String descripcion = txtDescripcion.getText().trim();
 			String montoStr = txtMonto.getText().trim();
 			CategoriaGasto categoria = (CategoriaGasto) cbCategoria.getSelectedItem();
+			Cuenta cuenta = (Cuenta) cbCuenta.getSelectedItem();
+			FormaPago formaPago = (FormaPago) cbFormaPago.getSelectedItem();
 
 			if (descripcion.isEmpty() || montoStr.isEmpty()) {
 				JOptionPane.showMessageDialog(this, "Complete todos los campos");
@@ -155,10 +216,16 @@ public class PanelGastos extends JPanel {
 			gasto.setDescripcion(descripcion);
 			gasto.setMonto(monto);
 			gasto.setCategoria(categoria);
+			gasto.setCuenta(cuenta);
+			gasto.setFormapago(formaPago);
 			gasto.setUsuario(usuario);
 
 			gastoService.guardar(gasto);
 
+			Movimiento mov = new Movimiento(LocalDate.now(), gasto.getDescripcion(), gasto.getMonto(),
+					TipoMovimiento.GASTO);
+			movimientoService.registrarMovimiento(cuenta, mov);
+			cuenta.getMovimientos().add(mov);
 			limpiarFormulario();
 			cargarGastos();
 			actualizarGraficos();
@@ -167,10 +234,18 @@ public class PanelGastos extends JPanel {
 				panelResumen.actualizarResumen();
 			}
 
+			if (actualizaGastos != null) {
+				actualizaGastos.run();
+			}
+
 		} catch (Exception e) {
 			e.printStackTrace();
 			JOptionPane.showMessageDialog(this, "Error al guardar gasto");
 		}
+	}
+
+	public void setActualizaGastos(Runnable actualizaGastos) {
+		this.actualizaGastos = actualizaGastos;
 	}
 
 	private void limpiarFormulario() {
@@ -179,7 +254,7 @@ public class PanelGastos extends JPanel {
 		cbCategoria.setSelectedIndex(0);
 	}
 
-	private void cargarGastos() {
+	public void cargarGastos() {
 		tableModel.setRowCount(0);
 		try {
 			gastosCache = gastoService.listarPorUsuario(usuario.getUsuarioID());
@@ -246,4 +321,5 @@ public class PanelGastos extends JPanel {
 		chartPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 300));
 		panelGraficos.add(chartPanel);
 	}
+
 }

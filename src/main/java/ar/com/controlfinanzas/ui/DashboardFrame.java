@@ -94,6 +94,10 @@ public class DashboardFrame extends JFrame {
 		// ===============================
 		PanelGastos panelGastos = new PanelGastos(gastoService, cuentaService, movimientoService, panelResumen,
 				panelResumenGastos, usuario);
+		panelGastos.setActualizaGastos(() -> {
+			panelMovimientos.cargarMovimientos();
+			panelCuentas.cargarCuentas();
+		});
 		panelAlertas = new PanelAlertas();
 		panelVencimiento = new PanelVencimiento();
 		panelVencimientosGraficos = new PanelVencimientosGraficos(List.of());
@@ -107,6 +111,7 @@ public class DashboardFrame extends JFrame {
 
 		// Sincronizamos selección de cuenta
 		panelCuentas.setCuentaSeleccionadaListener(cuenta -> panelMovimientos.actualizarCuenta(cuenta));
+		panelCuentas.setActualizarCuentas(() -> panelGastos.refrescarCuentas());
 
 		// Callback para actualizar PanelCuentas al agregar movimiento
 		panelMovimientos.setActualizarPanelCuentasCallback(() -> panelCuentas.cargarCuentas());

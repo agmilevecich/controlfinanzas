@@ -4,6 +4,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -22,6 +24,12 @@ public class Gasto {
 	private String descripcion;
 	private BigDecimal monto;
 	private CategoriaGasto categoria;
+
+	@ManyToOne
+	private Cuenta cuenta;
+
+	@Enumerated(EnumType.STRING)
+	private FormaPago formapago;
 
 	@ManyToOne(optional = false)
 	@JoinColumn(name = "UsuarioID", nullable = false)
@@ -87,6 +95,22 @@ public class Gasto {
 
 	public void setCategoria(CategoriaGasto categoria) {
 		this.categoria = categoria;
+	}
+
+	public Cuenta getCuenta() {
+		return cuenta;
+	}
+
+	public void setCuenta(Cuenta cuenta) {
+		this.cuenta = cuenta;
+	}
+
+	public FormaPago getFormapago() {
+		return formapago;
+	}
+
+	public void setFormapago(FormaPago formapago) {
+		this.formapago = formapago;
 	}
 
 	public Usuario getUsuario() {
