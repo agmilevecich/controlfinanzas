@@ -1,5 +1,8 @@
 package ar.com.controlfinanzas.model;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -8,7 +11,9 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "tarjetas_credito")
@@ -27,6 +32,9 @@ public class TarjetaCredito {
 	@Column(nullable = false)
 	private int diaVencimiento;
 
+	@OneToMany(mappedBy = "tarjeta", fetch = FetchType.LAZY)
+	private List<Movimiento> movimientos = new ArrayList<>();
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "usuario_id", nullable = false)
 	private Usuario usuario;
@@ -39,6 +47,22 @@ public class TarjetaCredito {
 		this.diaCierre = diaCierre;
 		this.diaVencimiento = diaVencimiento;
 		this.usuario = usuario;
+	}
+
+	@Transient
+	public BigDecimal getDeuda() {
+
+		BigDecimal deuda = BigDecimal.ZERO;
+
+		for (Movimiento m : movimientos) {
+
+			if (m.getFormaPago() == FormaPago.CREDITO && m.isPendiente()) {
+				deuda = deuda.add(m.getMonto());
+			}
+
+		}
+
+		return deuda;
 	}
 
 	public Long getId() {
