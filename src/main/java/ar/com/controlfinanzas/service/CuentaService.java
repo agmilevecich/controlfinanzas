@@ -28,8 +28,8 @@ public class CuentaService {
 		return query.getResultList();
 	}
 
-	public Cuenta crearCuenta(Usuario usuario, String nombre, TipoCuenta tipo, Moneda moneda, BigDecimal capitalInicial,
-			double interesDiario, LocalDate fechaInicio) {
+	public Cuenta crearCuenta(Usuario usuario, String nombre, String descripcion, TipoCuenta tipo, Moneda moneda,
+			BigDecimal capitalInicial, double interesDiario, LocalDate fechaInicio) {
 
 		Cuenta cuenta = new Cuenta(nombre, tipo, moneda, interesDiario, fechaInicio, usuario);
 
@@ -38,7 +38,7 @@ public class CuentaService {
 
 		// Si hay capital inicial lo registramos como movimiento
 		if (capitalInicial != null && capitalInicial.compareTo(BigDecimal.ZERO) > 0) {
-			Movimiento movInicial = new Movimiento(fechaInicio, capitalInicial, TipoMovimiento.INGRESO);
+			Movimiento movInicial = new Movimiento(fechaInicio, descripcion, capitalInicial, TipoMovimiento.INGRESO);
 			movInicial.setCuenta(cuenta);
 			em.persist(movInicial);
 		}
@@ -51,6 +51,6 @@ public class CuentaService {
 	public Cuenta crearCuenta(Usuario usuario, String nombre, TipoCuenta tipo, Moneda moneda, double interesDiario,
 			LocalDate fechaInicio) {
 
-		return crearCuenta(usuario, nombre, tipo, moneda, BigDecimal.ZERO, interesDiario, fechaInicio);
+		return crearCuenta(usuario, nombre, "", tipo, moneda, BigDecimal.ZERO, interesDiario, fechaInicio);
 	}
 }

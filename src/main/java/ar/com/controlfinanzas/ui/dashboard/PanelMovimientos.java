@@ -16,6 +16,7 @@ import javax.swing.JScrollPane;
 import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Movimiento;
+import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.util.NumeroUtils;
 import jakarta.persistence.EntityManager;
@@ -31,10 +32,12 @@ public class PanelMovimientos extends JPanel {
 	// Callback para actualizar PanelCuentas
 	private Runnable actualizarPanelCuentasCallback;
 	private EntityManager em;
+	private CuentaService cuentaService;
 
-	public PanelMovimientos(Cuenta cuenta, MovimientoService movimientoService) {
+	public PanelMovimientos(Cuenta cuenta, CuentaService cuentaService, MovimientoService movimientoService) {
 		this.cuentaSeleccionada = cuenta;
 		this.movimientoService = movimientoService;
+		this.cuentaService = cuentaService;
 
 		setLayout(new BorderLayout());
 
@@ -73,8 +76,8 @@ public class PanelMovimientos extends JPanel {
 		BigDecimal saldo = BigDecimal.ZERO;
 
 		for (Movimiento m : movimientos) {
-			modeloMovimientos.addElement(
-					m.getFecha() + " | " + m.getTipo() + " | " + NumeroUtils.formatearMonedaARS(m.getMonto()) + " | ");
+			modeloMovimientos.addElement(m.getFecha() + " | " + m.getTipo() + " | " + m.getDescripcion() + " | "
+					+ NumeroUtils.formatearMonedaARS(m.getMonto()) + " | ");
 
 			switch (m.getTipo()) {
 			case INGRESO -> saldo = saldo.add(m.getMonto());
@@ -112,16 +115,83 @@ public class PanelMovimientos extends JPanel {
 
 		String descripcion = JOptionPane.showInputDialog(this, "Descripción:");
 
-		Movimiento mov = new Movimiento(LocalDate.now(), monto, tipo);
-		mov.setCuenta(cuentaSeleccionada);
+		if (tipo == TipoMovimiento.TRANSFERENCIA) {
+			// Validamos que la cuenta origen tenga saldo suficiente
+			BigDecimal saldoOrigen = movimientoService.calcularSaldo(cuentaSeleccionada);
+			if (monto.compareTo(saldoOrigen) > 0) {
+				JOptionPane.showMessageDialog(this, "No puede transferir más de lo que tiene en la cuenta: "
+						+ NumeroUtils.formatearMonedaARS(saldoOrigen));
+				return;
+			}
 
-		Movimiento movimientoActualizado = movimientoService.registrarMovimiento(cuentaSeleccionada, mov);
-		cuentaSeleccionada.getMovimientos().add(movimientoActualizado);
-		cargarMovimientos();
+			// Filtramos cuentas destino con misma moneda
+			List<Cuenta> cuentasDestino = cuentaService.getCuentasUsuario(cuentaSeleccionada.getUsuario());
+			cuentasDestino.removeIf(
+					c -> c.equals(cuentaSeleccionada) || !c.getMoneda().equals(cuentaSeleccionada.getMoneda()));
 
-		// Actualizar PanelCuentas para reflejar saldo nuevo
-		if (actualizarPanelCuentasCallback != null) {
-			actualizarPanelCuentasCallback.run();
+			if (cuentasDestino.isEmpty()) {
+				JOptionPane.showMessageDialog(this,
+						"No hay otra cuenta disponible con la misma moneda para transferir.");
+				return;
+			}
+
+			// Pedimos la cuenta destino
+			Cuenta destino = (Cuenta) JOptionPane.showInputDialog(this, "Seleccione cuenta destino:", "Cuenta Destino",
+					JOptionPane.QUESTION_MESSAGE, null, cuentasDestino.toArray(), cuentasDestino.get(0));
+			if (destino == null) {
+				return;
+			}
+
+			// Movimiento en cuenta origen (negativo)
+			Movimiento movOrigen = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.TRANSFERENCIA);
+			movOrigen.setDescripcion(descripcion + " -> " + destino.getNombre());
+			movOrigen.setCuenta(cuentaSeleccionada);
+			Movimiento movimientoActualizadoOrigen = movimientoService.registrarMovimiento(cuentaSeleccionada,
+					movOrigen);
+			cuentaSeleccionada.getMovimientos().add(movimientoActualizadoOrigen);
+
+			// Movimiento en cuenta destino (positivo)
+			Movimiento movDestino = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.INGRESO);
+			movDestino.setDescripcion(descripcion + " <- " + cuentaSeleccionada.getNombre());
+			movDestino.setCuenta(destino);
+			Movimiento movimientoActualizadoDestino = movimientoService.registrarMovimiento(destino, movDestino);
+			destino.getMovimientos().add(movimientoActualizadoDestino);
+
+			// Refrescar paneles
+			if (actualizarPanelCuentasCallback != null) {
+				actualizarPanelCuentasCallback.run();
+			}
+			cargarMovimientos();
+
+		} else {
+			// Movimiento normal
+			Movimiento mov = new Movimiento(LocalDate.now(), descripcion, monto, tipo);
+			mov.setDescripcion(descripcion);
+			mov.setCuenta(cuentaSeleccionada);
+
+			Movimiento movimientoActualizado = movimientoService.registrarMovimiento(cuentaSeleccionada, mov);
+			cuentaSeleccionada.getMovimientos().add(movimientoActualizado);
+
+			// Refrescar paneles
+			if (actualizarPanelCuentasCallback != null) {
+				actualizarPanelCuentasCallback.run();
+			}
+			cargarMovimientos();
 		}
+	}
+
+	private Cuenta elegirCuentaDestino() {
+		List<Cuenta> cuentas = cuentaService.getCuentasUsuario(cuentaSeleccionada.getUsuario());
+
+		// Filtrar cuentas que tengan la misma moneda que la cuenta origen
+		cuentas.removeIf(c -> c.equals(cuentaSeleccionada) || !c.getMoneda().equals(cuentaSeleccionada.getMoneda()));
+
+		if (cuentas.isEmpty()) {
+			JOptionPane.showMessageDialog(this, "No hay otra cuenta disponible con la misma moneda para transferir.");
+			return null;
+		}
+
+		return (Cuenta) JOptionPane.showInputDialog(this, "Seleccione cuenta destino:", "Cuenta Destino",
+				JOptionPane.QUESTION_MESSAGE, null, cuentas.toArray(), cuentas.get(0));
 	}
 }

@@ -103,7 +103,7 @@ public class DashboardFrame extends JFrame {
 
 		// NUEVOS: cuentas y movimientos
 		panelCuentas = new PanelCuentas(usuario, cuentaService, movimientoService);
-		panelMovimientos = new PanelMovimientos(null, movimientoService);
+		panelMovimientos = new PanelMovimientos(null, cuentaService, movimientoService);
 
 		// Sincronizamos selección de cuenta
 		panelCuentas.setCuentaSeleccionadaListener(cuenta -> panelMovimientos.actualizarCuenta(cuenta));

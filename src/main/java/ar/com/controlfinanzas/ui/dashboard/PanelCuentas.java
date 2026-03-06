@@ -30,6 +30,8 @@ public class PanelCuentas extends JPanel {
 	private Consumer<Cuenta> cuentaSeleccionadaListener;
 	private PanelBotones botones = new PanelBotones();
 
+	private boolean cuentaNueva;
+
 	public PanelCuentas(Usuario usuario, CuentaService cuentaService, MovimientoService movimientoService) {
 		this.usuario = usuario;
 		this.cuentaService = cuentaService;
@@ -82,8 +84,9 @@ public class PanelCuentas extends JPanel {
 
 		// Crear la cuenta con capital inicial = 0
 		cuentaService.crearCuenta(usuario, nombre, tipo, moneda, interesDiario, fechaInicio);
-
+		cuentaNueva = true;
 		cargarCuentas();
+		cuentaNueva = false;
 	}
 
 	public void cargarCuentas() {
@@ -97,6 +100,9 @@ public class PanelCuentas extends JPanel {
 			modeloCuentas.addElement(c); // toString() mostrará nombre + saldo
 		}
 
+		if (cuentaNueva) {
+			listaCuentas.setSelectedIndex(listaCuentas.getModel().getSize() - 1);
+		} else
 		// Volver a seleccionar la cuenta que estaba antes
 		if (seleccionadaAntes != null && cuentas.contains(seleccionadaAntes)) {
 			listaCuentas.setSelectedValue(seleccionadaAntes, true);

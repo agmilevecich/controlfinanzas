@@ -117,8 +117,17 @@ public class Cuenta {
 		return !fecha.isBefore(fechaInicio);
 	}
 
+	public TipoCuenta getTipo() {
+		return tipo;
+	}
+
+	public Usuario getUsuario() {
+		return usuario;
+	}
+
 	@Override
 	public String toString() {
-		return String.format("%-20s Saldo: %12s", getNombre(), NumeroUtils.formatearMonedaARS(getSaldo()));
+		return String.format("%-20s %5s Saldo: %12s", getNombre(), getMoneda(),
+				NumeroUtils.formatearMonedaARS(getSaldo()));
 	}
 }

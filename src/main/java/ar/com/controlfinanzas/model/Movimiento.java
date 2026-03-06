@@ -26,6 +26,9 @@ public class Movimiento {
 
 	private LocalDate fecha;
 
+	@Column(name = "descripcion", length = 50, nullable = false)
+	private String descripcion;
+
 	@Column(precision = 19, scale = 4)
 	private BigDecimal monto;
 
@@ -42,8 +45,9 @@ public class Movimiento {
 	protected Movimiento() {
 	}
 
-	public Movimiento(LocalDate fecha, BigDecimal monto, TipoMovimiento tipo) {
+	public Movimiento(LocalDate fecha, String descripcion, BigDecimal monto, TipoMovimiento tipo) {
 		this.fecha = fecha;
+		this.descripcion = descripcion;
 		this.monto = monto;
 		this.tipo = tipo;
 	}
@@ -54,6 +58,10 @@ public class Movimiento {
 
 	public LocalDate getFecha() {
 		return fecha;
+	}
+
+	public String getDescripcion() {
+		return descripcion;
 	}
 
 	public BigDecimal getMonto() {
@@ -80,7 +88,8 @@ public class Movimiento {
 		this.formaPago = formaPago;
 	}
 
-	public void setDescripcion(String string) {
+	public void setDescripcion(String descripcion) {
+		this.descripcion = descripcion;
 
 	}
 
