@@ -1,7 +1,6 @@
 package ar.com.controlfinanzas.model;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -11,9 +10,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "tarjetas_credito")
@@ -26,44 +23,37 @@ public class TarjetaCredito {
 	@Column(nullable = false, length = 50)
 	private String nombre;
 
-	@Column(nullable = false)
+	@Column(nullable = false, precision = 19, scale = 4)
+	private BigDecimal limite;
+
+	@Column(name = "dia_cierre", nullable = false)
 	private int diaCierre;
 
-	@Column(nullable = false)
+	@Column(name = "dia_vencimiento", nullable = false)
 	private int diaVencimiento;
 
-	@OneToMany(mappedBy = "tarjeta", fetch = FetchType.LAZY)
-	private List<Movimiento> movimientos = new ArrayList<>();
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "cuenta_id", nullable = false)
+	private Cuenta cuenta;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "usuario_id", nullable = false)
 	private Usuario usuario;
 
-	protected TarjetaCredito() {
+	public TarjetaCredito() {
 	}
 
-	public TarjetaCredito(String nombre, int diaCierre, int diaVencimiento, Usuario usuario) {
+	public TarjetaCredito(String nombre, BigDecimal limite, int diaCierre, int diaVencimiento, Cuenta cuenta,
+			Usuario usuario) {
 		this.nombre = nombre;
+		this.limite = limite;
 		this.diaCierre = diaCierre;
 		this.diaVencimiento = diaVencimiento;
+		this.cuenta = cuenta;
 		this.usuario = usuario;
 	}
 
-	@Transient
-	public BigDecimal getDeuda() {
-
-		BigDecimal deuda = BigDecimal.ZERO;
-
-		for (Movimiento m : movimientos) {
-
-			if (m.getFormaPago() == FormaPago.CREDITO && m.isPendiente()) {
-				deuda = deuda.add(m.getMonto());
-			}
-
-		}
-
-		return deuda;
-	}
+	// GETTERS
 
 	public Long getId() {
 		return id;
@@ -71,6 +61,10 @@ public class TarjetaCredito {
 
 	public String getNombre() {
 		return nombre;
+	}
+
+	public BigDecimal getLimite() {
+		return limite;
 	}
 
 	public int getDiaCierre() {
@@ -81,12 +75,22 @@ public class TarjetaCredito {
 		return diaVencimiento;
 	}
 
+	public Cuenta getCuenta() {
+		return cuenta;
+	}
+
 	public Usuario getUsuario() {
 		return usuario;
 	}
 
+	// SETTERS
+
 	public void setNombre(String nombre) {
 		this.nombre = nombre;
+	}
+
+	public void setLimite(BigDecimal limite) {
+		this.limite = limite;
 	}
 
 	public void setDiaCierre(int diaCierre) {
@@ -97,12 +101,16 @@ public class TarjetaCredito {
 		this.diaVencimiento = diaVencimiento;
 	}
 
+	public void setCuenta(Cuenta cuenta) {
+		this.cuenta = cuenta;
+	}
+
 	public void setUsuario(Usuario usuario) {
 		this.usuario = usuario;
 	}
 
 	@Override
 	public String toString() {
-		return nombre + " (Cierre: " + diaCierre + " / Vto: " + diaVencimiento + ")";
+		return nombre + " - " + cuenta.getNombre();
 	}
 }
