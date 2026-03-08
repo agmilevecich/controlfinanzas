@@ -73,18 +73,12 @@ public class PanelMovimientos extends JPanel {
 		}
 
 		List<Movimiento> movimientos = movimientoService.getMovimientosCuenta(cuentaSeleccionada);
-		BigDecimal saldo = BigDecimal.ZERO;
 
 		for (Movimiento m : movimientos) {
 			modeloMovimientos.addElement(m.getFecha() + " | " + m.getTipo() + " | " + m.getDescripcion() + " | "
 					+ NumeroUtils.formatearMonedaARS(m.getMonto()) + " | ");
-
-			switch (m.getTipo()) {
-			case INGRESO -> saldo = saldo.add(m.getMonto());
-			case GASTO, TRANSFERENCIA -> saldo = saldo.subtract(m.getMonto());
-			}
 		}
-		lblSaldo.setText("Saldo: " + NumeroUtils.formatearMonedaARS(saldo));
+		lblSaldo.setText("Saldo: " + NumeroUtils.formatearMonedaARS(cuentaSeleccionada.getSaldo()));
 
 	}
 

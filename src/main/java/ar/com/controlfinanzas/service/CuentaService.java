@@ -6,6 +6,7 @@ import java.util.List;
 
 import ar.com.controlfinanzas.domain.finanzas.TipoCuenta;
 import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
+import ar.com.controlfinanzas.model.Banco;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.Movimiento;
@@ -28,10 +29,10 @@ public class CuentaService {
 		return query.getResultList();
 	}
 
-	public Cuenta crearCuenta(Usuario usuario, String nombre, String descripcion, TipoCuenta tipo, Moneda moneda,
-			BigDecimal capitalInicial, double interesDiario, LocalDate fechaInicio) {
+	public Cuenta crearCuenta(Usuario usuario, String nombre, Banco banco, String descripcion, TipoCuenta tipo,
+			Moneda moneda, BigDecimal capitalInicial, double interesDiario, LocalDate fechaInicio) {
 
-		Cuenta cuenta = new Cuenta(nombre, tipo, moneda, interesDiario, fechaInicio, usuario);
+		Cuenta cuenta = new Cuenta(nombre, banco, tipo, moneda, interesDiario, fechaInicio, usuario);
 
 		em.getTransaction().begin();
 		em.persist(cuenta);
@@ -48,9 +49,9 @@ public class CuentaService {
 		return cuenta;
 	}
 
-	public Cuenta crearCuenta(Usuario usuario, String nombre, TipoCuenta tipo, Moneda moneda, double interesDiario,
-			LocalDate fechaInicio) {
+	public Cuenta crearCuenta(Usuario usuario, String nombre, Banco banco, TipoCuenta tipo, Moneda moneda,
+			double interesDiario, LocalDate fechaInicio) {
 
-		return crearCuenta(usuario, nombre, "", tipo, moneda, BigDecimal.ZERO, interesDiario, fechaInicio);
+		return crearCuenta(usuario, nombre, banco, "", tipo, moneda, BigDecimal.ZERO, interesDiario, fechaInicio);
 	}
 }

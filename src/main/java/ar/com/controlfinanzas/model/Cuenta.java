@@ -42,6 +42,9 @@ public class Cuenta {
 	private LocalDate fechaInicio;
 
 	@ManyToOne
+	private Banco banco;
+
+	@ManyToOne
 	private Usuario usuario;
 
 	@Column(nullable = false)
@@ -53,10 +56,11 @@ public class Cuenta {
 	protected Cuenta() {
 	}
 
-	public Cuenta(String nombre, TipoCuenta tipo, Moneda moneda, double interesDiario, LocalDate fechaInicio,
-			Usuario usuario) {
+	public Cuenta(String nombre, Banco banco, TipoCuenta tipo, Moneda moneda, double interesDiario,
+			LocalDate fechaInicio, Usuario usuario) {
 
 		this.nombre = nombre;
+		this.banco = banco;
 		this.tipo = tipo;
 		this.moneda = moneda;
 		this.interesDiario = interesDiario;
@@ -129,9 +133,13 @@ public class Cuenta {
 		return usuario;
 	}
 
+	public Banco getBanco() {
+		return banco;
+	}
+
 	@Override
 	public String toString() {
-		return String.format("%-20s %5s Saldo: %12s", getNombre(), getMoneda(),
+		return String.format("%s | %s | %s | Saldo: %s", banco.getNombre(), nombre, moneda,
 				NumeroUtils.formatearMonedaARS(getSaldo()));
 	}
 }

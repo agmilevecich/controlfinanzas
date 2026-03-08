@@ -120,4 +120,15 @@ public class Movimiento {
 	public void setPendiente(boolean pendiente) {
 		this.pendiente = pendiente;
 	}
+
+	public void validar() {
+
+		if (formaPago == FormaPago.CREDITO && tarjeta == null) {
+			throw new IllegalStateException("Los movimientos con tarjeta de crédito deben tener una tarjeta asociada");
+		}
+
+		if (formaPago != FormaPago.CREDITO && tarjeta != null) {
+			throw new IllegalStateException("Solo los movimientos con forma de pago CREDITO pueden tener tarjeta");
+		}
+	}
 }

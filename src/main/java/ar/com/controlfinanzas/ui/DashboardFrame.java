@@ -16,6 +16,7 @@ import ar.com.controlfinanzas.repository.GastoRepository;
 import ar.com.controlfinanzas.repository.InversionRepositoryJPA;
 import ar.com.controlfinanzas.repository.interfaces.InversionRepository;
 import ar.com.controlfinanzas.service.AlertaService;
+import ar.com.controlfinanzas.service.BancoService;
 import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.IngresoService;
@@ -23,12 +24,15 @@ import ar.com.controlfinanzas.service.InversionService;
 import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.service.PosicionService;
 import ar.com.controlfinanzas.service.ResumenService;
+import ar.com.controlfinanzas.service.TarjetaCreditoService;
 import ar.com.controlfinanzas.service.UsuarioService;
 import ar.com.controlfinanzas.ui.dashboard.PanelCuentas;
 import ar.com.controlfinanzas.ui.dashboard.PanelMovimientos;
 import ar.com.controlfinanzas.ui.dashboard.PanelResumen;
+import ar.com.controlfinanzas.ui.dashboard.PanelTarjetaCredito;
 import ar.com.controlfinanzas.ui.inversion.PanelCartera;
 import ar.com.controlfinanzas.ui.inversion.PanelVencimiento;
+import jakarta.persistence.EntityManager;
 
 public class DashboardFrame extends JFrame {
 
@@ -64,22 +68,30 @@ public class DashboardFrame extends JFrame {
 
 	private PanelCuentas panelCuentas;
 	private PanelMovimientos panelMovimientos;
+	private TarjetaCreditoService tarjetaCreditoService;
+	private PanelTarjetaCredito panelTarjetaCredito;
+	private EntityManager em;
+	private BancoService bancoService;
 
 	public DashboardFrame(Usuario usuario, UsuarioService usuarioService, CuentaService cuentaService,
-			MovimientoService movimientoService) {
+			MovimientoService movimientoService, EntityManager em) {
 
 		this.usuario = usuario;
+		this.em = em;
 		this.usuarioService = usuarioService;
 		this.cuentaService = cuentaService;
 
 		this.alertaService = new AlertaService();
-		this.inversionRepository = new InversionRepositoryJPA();
+		this.inversionRepository = new InversionRepositoryJPA(em);
 		this.inversionService = new InversionService(inversionRepository, usuario);
 		this.inversionController = new InversionController(inversionService);
-		this.gastoRepository = new GastoRepository();
+		this.gastoRepository = new GastoRepository(em);
 		this.gastoService = new GastoService(gastoRepository, usuario);
 		this.panelResumenGastos = new PanelResumenGastos(gastoService, usuario);
-		this.ingresoService = new IngresoService();
+		this.panelTarjetaCredito = new PanelTarjetaCredito(usuario, em);
+		this.bancoService = new BancoService(em);
+		this.ingresoService = new IngresoService(em);
+		this.tarjetaCreditoService = new TarjetaCreditoService(em);
 
 		panelResumen = new PanelResumenFinanciero(inversionService, gastoService, ingresoService, usuario);
 
@@ -92,29 +104,39 @@ public class DashboardFrame extends JFrame {
 		// ===============================
 		// Paneles
 		// ===============================
-		PanelGastos panelGastos = new PanelGastos(gastoService, cuentaService, movimientoService, panelResumen,
-				panelResumenGastos, usuario);
+		PanelGastos panelGastos = new PanelGastos(gastoService, cuentaService, movimientoService, tarjetaCreditoService,
+				panelResumen, panelResumenGastos, usuario);
 		panelGastos.setActualizaGastos(() -> {
 			panelMovimientos.cargarMovimientos();
 			panelCuentas.cargarCuentas();
+		});
+
+		panelTarjetaCredito.setActualizarTarjeta(() -> {
+			panelGastos.actualizarTarjetaCredito();
 		});
 		panelAlertas = new PanelAlertas();
 		panelVencimiento = new PanelVencimiento();
 		panelVencimientosGraficos = new PanelVencimientosGraficos(List.of());
 
 		PanelInversionesAvanzado panelInversiones = new PanelInversionesAvanzado(inversionController, panelVencimiento,
-				usuario);
+				usuario, em);
 
 		// NUEVOS: cuentas y movimientos
-		panelCuentas = new PanelCuentas(usuario, cuentaService, movimientoService);
+		panelCuentas = new PanelCuentas(usuario, cuentaService, movimientoService, bancoService);
 		panelMovimientos = new PanelMovimientos(null, cuentaService, movimientoService);
 
 		// Sincronizamos selección de cuenta
 		panelCuentas.setCuentaSeleccionadaListener(cuenta -> panelMovimientos.actualizarCuenta(cuenta));
-		panelCuentas.setActualizarCuentas(() -> panelGastos.refrescarCuentas());
+		panelCuentas.setActualizarCuentas(() -> {
+			panelGastos.refrescar();
+			panelTarjetaCredito.actualizarCuentas();
+		});
 
 		// Callback para actualizar PanelCuentas al agregar movimiento
-		panelMovimientos.setActualizarPanelCuentasCallback(() -> panelCuentas.cargarCuentas());
+		panelMovimientos.setActualizarPanelCuentasCallback(() -> {
+			panelCuentas.cargarCuentas();
+			panelTarjetaCredito.actualizarCuentas();
+		});
 
 		panelCartera = new PanelCartera();
 		panelResumenKPIs = new PanelResumen();
@@ -132,6 +154,7 @@ public class DashboardFrame extends JFrame {
 		tabs.addTab("Cartera", panelCartera);
 		tabs.addTab("Cuentas", panelCuentas);
 		tabs.addTab("Movimientos", panelMovimientos);
+		tabs.add("Tarjetas", panelTarjetaCredito);
 		tabs.addTab("KPIs", panelResumenKPIs);
 		tabs.addTab("Vencimientos", panelVencimientosGraficos);
 		tabs.addTab("Alertas", panelAlertas);
@@ -164,7 +187,7 @@ public class DashboardFrame extends JFrame {
 	}
 
 	private void cargarPosiciones() {
-		PosicionService posicionService = new PosicionService(new InversionRepositoryJPA());
+		PosicionService posicionService = new PosicionService(new InversionRepositoryJPA(em));
 		posiciones = posicionService.obtenerPosiciones(usuario.getUsuarioID());
 		panelCartera.refrescar(posiciones);
 	}

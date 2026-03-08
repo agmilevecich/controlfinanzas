@@ -26,7 +26,10 @@ public class LoginFrame extends JFrame {
 	private CuentaService cuentaService;
 	private MovimientoService movimientoService;
 
+	private EntityManager em;
+
 	public LoginFrame(UsuarioService usuarioService, EntityManager em) {
+		this.em = em;
 		this.usuarioService = usuarioService;
 		this.cuentaService = new CuentaService(em);
 		this.movimientoService = new MovimientoService(em);
@@ -67,7 +70,7 @@ public class LoginFrame extends JFrame {
 		Usuario usuario = usuarioService.buscarOCrearUsuario(nombre);
 
 		// Abre dashboard
-		DashboardFrame dashboard = new DashboardFrame(usuario, usuarioService, cuentaService, movimientoService);
+		DashboardFrame dashboard = new DashboardFrame(usuario, usuarioService, cuentaService, movimientoService, em);
 		dashboard.setVisible(true);
 
 		this.dispose(); // cierra login

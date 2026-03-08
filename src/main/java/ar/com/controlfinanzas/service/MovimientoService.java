@@ -2,7 +2,10 @@ package ar.com.controlfinanzas.service;
 
 import java.util.List;
 
+import javax.swing.JOptionPane;
+
 import ar.com.controlfinanzas.model.Cuenta;
+import ar.com.controlfinanzas.model.FormaPago;
 import ar.com.controlfinanzas.model.Movimiento;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
@@ -17,12 +20,32 @@ public class MovimientoService {
 
 	public Movimiento registrarMovimiento(Cuenta cuenta, Movimiento movimiento) {
 
-		movimiento.setCuenta(cuenta);
+		try {
 
-		em.getTransaction().begin();
-		em.persist(movimiento);
-		em.getTransaction().commit();
-		cuenta.getMovimientos().add(movimiento);
+			movimiento.validar();
+
+			movimiento.setCuenta(cuenta); // SIEMPRE se asigna
+
+			em.getTransaction().begin();
+
+			em.persist(movimiento);
+
+			if (movimiento.getFormaPago() != FormaPago.CREDITO) {
+				cuenta.getMovimientos().add(movimiento);
+			} else {
+				movimiento.setPendiente(true); // deuda de tarjeta
+			}
+
+			em.getTransaction().commit();
+
+		} catch (Exception e) {
+
+			if (em.getTransaction().isActive()) {
+				em.getTransaction().rollback();
+			}
+
+			JOptionPane.showMessageDialog(null, e.getMessage());
+		}
 
 		return movimiento;
 	}

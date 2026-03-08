@@ -3,16 +3,20 @@ package ar.com.controlfinanzas.repository;
 import java.util.List;
 
 import ar.com.controlfinanzas.domain.inversion.Inversion;
-import ar.com.controlfinanzas.persistence.JPAUtil;
 import ar.com.controlfinanzas.repository.interfaces.InversionRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityTransaction;
 
 public class InversionRepositoryJPA implements InversionRepository {
 
+	private EntityManager em;
+
+	public InversionRepositoryJPA(EntityManager em) {
+		this.em = em;
+	}
+
 	@Override
 	public Inversion guardar(Inversion inversion) {
-		EntityManager em = JPAUtil.getEntityManager();
 		try {
 			em.getTransaction().begin();
 			em.persist(inversion);
@@ -23,27 +27,17 @@ public class InversionRepositoryJPA implements InversionRepository {
 				em.getTransaction().rollback();
 			}
 			throw e;
-		} finally {
-			em.close();
 		}
 	}
 
 	@Override
 	public List<Inversion> listarPorUsuario(Integer usuarioId) {
-		EntityManager em = JPAUtil.getEntityManager();
-
-		try {
-			return em.createQuery("SELECT i FROM Inversion i WHERE i.usuario.usuarioID = :usuarioId", Inversion.class)
-					.setParameter("usuarioId", usuarioId).getResultList();
-
-		} finally {
-			em.close();
-		}
+		return em.createQuery("SELECT i FROM Inversion i WHERE i.usuario.usuarioID = :usuarioId", Inversion.class)
+				.setParameter("usuarioId", usuarioId).getResultList();
 	}
 
 	@Override
 	public void eliminar(Long id) {
-		EntityManager em = JPAUtil.getEntityManager();
 		EntityTransaction tx = em.getTransaction();
 
 		try {
@@ -58,8 +52,6 @@ public class InversionRepositoryJPA implements InversionRepository {
 				tx.rollback();
 			}
 			throw e;
-		} finally {
-			em.close();
 		}
 	}
 

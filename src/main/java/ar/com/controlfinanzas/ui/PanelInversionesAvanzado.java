@@ -36,6 +36,7 @@ import ar.com.controlfinanzas.ui.inversion.PanelIngresosMensuales;
 import ar.com.controlfinanzas.ui.inversion.PanelVencimiento;
 import ar.com.controlfinanzas.util.NumeroUtils;
 import ar.com.controlfinanzas.valuacion.EstrategiaValuacion;
+import jakarta.persistence.EntityManager;
 
 public class PanelInversionesAvanzado extends JPanel {
 
@@ -71,13 +72,16 @@ public class PanelInversionesAvanzado extends JPanel {
 
 	private Usuario usuario;
 
+	private EntityManager em;
+
 	public PanelInversionesAvanzado(InversionController inversionController, PanelVencimiento panelVencimiento,
-			Usuario usuario) {
+			Usuario usuario, EntityManager em) {
+		this.em = em;
 		this.inversionController = inversionController;
 		this.usuario = usuario;
 
 		panelDistribucion = new PanelDistribucion(inversionController);
-		panelPosiciones = new PanelPosiciones(new PosicionService(new InversionRepositoryJPA()));
+		panelPosiciones = new PanelPosiciones(new PosicionService(new InversionRepositoryJPA(em)));
 		panelPosiciones.refrescar(usuario.getUsuarioID());
 		panelIngresoMensuales = new PanelIngresosMensuales();
 		this.panelVencimiento = panelVencimiento;

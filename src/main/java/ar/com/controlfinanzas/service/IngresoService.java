@@ -7,10 +7,15 @@ import java.util.List;
 import ar.com.controlfinanzas.model.CategoriaIngreso;
 import ar.com.controlfinanzas.model.Ingreso;
 import ar.com.controlfinanzas.repository.IngresoRepository;
+import jakarta.persistence.EntityManager;
 
 public class IngresoService {
 
-	private final IngresoRepository repository = new IngresoRepository();
+	private final IngresoRepository repository;
+
+	public IngresoService(EntityManager em) {
+		repository = new IngresoRepository(em);
+	}
 
 	public BigDecimal calcularTotalHistorico(Integer usuarioId) {
 

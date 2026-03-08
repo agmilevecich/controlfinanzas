@@ -12,11 +12,13 @@ public class TarjetaCreditoRepository {
 		em.persist(tarjeta);
 	}
 
-	public List<TarjetaCredito> buscarPorUsuario(EntityManager em, Integer cuenusuarioId) {
+	public List<TarjetaCredito> buscarPorUsuario(EntityManager em, Integer usuarioId) {
+
 		TypedQuery<TarjetaCredito> query = em.createQuery(
-				"SELECT DISTINCT u FROM Usuario JOIN FETCH u.cuentas JOIN FETCH c.tarjetas WHERE u.id = :usuarioId",
-				TarjetaCredito.class);
-		query.setParameter("usuarioId", cuenusuarioId);
+				"SELECT t FROM TarjetaCredito t WHERE t.cuenta.usuario.id = :usuarioId", TarjetaCredito.class);
+
+		query.setParameter("usuarioId", usuarioId);
+
 		return query.getResultList();
 	}
 

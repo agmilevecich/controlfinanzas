@@ -1,6 +1,7 @@
 package ar.com.controlfinanzas.model;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -10,6 +11,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
 @Entity
@@ -35,6 +37,9 @@ public class TarjetaCredito {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "cuenta_id", nullable = false)
 	private Cuenta cuenta;
+
+	@OneToMany(mappedBy = "tarjeta")
+	private List<Movimiento> movimientos;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "usuario_id", nullable = false)
@@ -79,6 +84,10 @@ public class TarjetaCredito {
 		return cuenta;
 	}
 
+	public List<Movimiento> getMovimientos() {
+		return movimientos;
+	}
+
 	public Usuario getUsuario() {
 		return usuario;
 	}
@@ -105,8 +114,17 @@ public class TarjetaCredito {
 		this.cuenta = cuenta;
 	}
 
+	public void setMovimientos(List<Movimiento> movimientos) {
+		this.movimientos = movimientos;
+	}
+
 	public void setUsuario(Usuario usuario) {
 		this.usuario = usuario;
+	}
+
+	public BigDecimal getDeuda() {
+		return movimientos.stream().filter(Movimiento::isPendiente).map(Movimiento::getMonto).reduce(BigDecimal.ZERO,
+				BigDecimal::add);
 	}
 
 	@Override
