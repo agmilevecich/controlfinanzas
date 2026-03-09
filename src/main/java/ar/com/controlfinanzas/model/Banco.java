@@ -41,4 +41,8 @@ public class Banco {
 		this.usuario = usuario;
 	}
 
+	@Override
+	public String toString() {
+		return nombre;
+	}
 }

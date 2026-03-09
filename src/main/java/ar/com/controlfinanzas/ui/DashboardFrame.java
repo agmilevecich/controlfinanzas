@@ -26,6 +26,7 @@ import ar.com.controlfinanzas.service.PosicionService;
 import ar.com.controlfinanzas.service.ResumenService;
 import ar.com.controlfinanzas.service.TarjetaCreditoService;
 import ar.com.controlfinanzas.service.UsuarioService;
+import ar.com.controlfinanzas.ui.dashboard.PanelBancos;
 import ar.com.controlfinanzas.ui.dashboard.PanelCuentas;
 import ar.com.controlfinanzas.ui.dashboard.PanelMovimientos;
 import ar.com.controlfinanzas.ui.dashboard.PanelResumen;
@@ -104,6 +105,7 @@ public class DashboardFrame extends JFrame {
 		// ===============================
 		// Paneles
 		// ===============================
+		PanelBancos panelBancos = new PanelBancos(usuario, bancoService);
 		PanelGastos panelGastos = new PanelGastos(gastoService, cuentaService, movimientoService, tarjetaCreditoService,
 				panelResumen, panelResumenGastos, usuario);
 		panelGastos.setActualizaGastos(() -> {
@@ -152,6 +154,7 @@ public class DashboardFrame extends JFrame {
 		tabs.addTab("Gastos", panelGastos);
 		tabs.addTab("Inversiones", panelInversiones);
 		tabs.addTab("Cartera", panelCartera);
+		tabs.addTab("Bancos", panelBancos);
 		tabs.addTab("Cuentas", panelCuentas);
 		tabs.addTab("Movimientos", panelMovimientos);
 		tabs.add("Tarjetas", panelTarjetaCredito);
