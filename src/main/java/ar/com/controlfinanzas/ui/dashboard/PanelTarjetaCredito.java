@@ -45,6 +45,7 @@ public class PanelTarjetaCredito extends JPanel {
 
 	private Runnable actualizar;
 	private EntityManager em;
+	private PanelResumenTarjeta panelResumenTarjeta;
 
 	public PanelTarjetaCredito(Usuario usuario, EntityManager em) {
 

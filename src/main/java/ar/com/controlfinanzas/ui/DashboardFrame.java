@@ -109,7 +109,7 @@ public class DashboardFrame extends JFrame {
 		PanelBancos panelBancos = new PanelBancos(usuario, bancoService);
 		PanelResumenTarjeta panelResumenTarjeta = new PanelResumenTarjeta(usuario, em);
 		PanelGastos panelGastos = new PanelGastos(gastoService, cuentaService, movimientoService, tarjetaCreditoService,
-				panelResumen, panelResumenGastos, usuario);
+				panelResumen, panelResumenGastos, panelResumenTarjeta, usuario);
 		panelGastos.setActualizaGastos(() -> {
 			panelMovimientos.cargarMovimientos();
 			panelCuentas.cargarCuentas();
@@ -117,6 +117,7 @@ public class DashboardFrame extends JFrame {
 
 		panelTarjetaCredito.setActualizarTarjeta(() -> {
 			panelGastos.actualizarTarjetaCredito();
+			panelResumenTarjeta.refrescar();
 		});
 		panelAlertas = new PanelAlertas();
 		panelVencimiento = new PanelVencimiento();

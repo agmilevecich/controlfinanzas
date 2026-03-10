@@ -38,9 +38,13 @@ public class Movimiento {
 	@Enumerated(EnumType.STRING)
 	private FormaPago formaPago;
 
-	private Integer numeroCuota;
-	private Integer totalCuotas;
 	private String compraId;
+
+	private int cuotas;
+	private int numeroCuotas;
+	private int totalCuotas;
+	private int cuotasPendientes;
+	private BigDecimal interes;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "cuenta_id", nullable = false)
@@ -125,20 +129,28 @@ public class Movimiento {
 		this.pendiente = pendiente;
 	}
 
-	public Integer getNumeroCuota() {
-		return numeroCuota;
+	public int getCuotas() {
+		return cuotas;
 	}
 
-	public void setNumeroCuota(Integer numeroCuota) {
-		this.numeroCuota = numeroCuota;
+	public void setCuotas(int cuotas) {
+		this.cuotas = cuotas;
 	}
 
-	public Integer getTotalCuotas() {
-		return totalCuotas;
+	public int getCuotasPendientes() {
+		return cuotasPendientes;
 	}
 
-	public void setTotalCuotas(Integer totalCuotas) {
-		this.totalCuotas = totalCuotas;
+	public void setCuotasPendientes(int cuotasPendientes) {
+		this.cuotasPendientes = cuotasPendientes;
+	}
+
+	public BigDecimal getInteres() {
+		return interes;
+	}
+
+	public void setInteres(BigDecimal interes) {
+		this.interes = interes;
 	}
 
 	public String getCompraId() {
@@ -155,6 +167,22 @@ public class Movimiento {
 
 	public void setMonto(BigDecimal monto) {
 		this.monto = monto;
+	}
+
+	public int getNumeroCuotas() {
+		return numeroCuotas;
+	}
+
+	public void setNumeroCuotas(int numeroCuotas) {
+		this.numeroCuotas = numeroCuotas;
+	}
+
+	public int getTotalCuotas() {
+		return totalCuotas;
+	}
+
+	public void setTotalCuotas(int totalCuotas) {
+		this.totalCuotas = totalCuotas;
 	}
 
 	public void validar() {

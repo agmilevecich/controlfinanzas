@@ -115,7 +115,7 @@ public class TarjetaCreditoService {
 			m.setMonto(montoCuota);
 			m.setFecha(LocalDate.now().plusMonths(i - 1));
 
-			m.setNumeroCuota(i);
+			m.setNumeroCuotas(cuotas);
 			m.setTotalCuotas(cuotas);
 			m.setCompraId(compraId);
 
@@ -125,5 +125,20 @@ public class TarjetaCreditoService {
 		}
 
 		em.getTransaction().commit();
+	}
+
+	public BigDecimal calcularTotalFinanciado(BigDecimal monto, BigDecimal interes) {
+
+		if (interes.compareTo(BigDecimal.ZERO) <= 0) {
+			return monto;
+		}
+
+		BigDecimal recargo = monto.multiply(interes);
+		return monto.add(recargo);
+	}
+
+	public BigDecimal calcularCuota(BigDecimal total, int cuotas) {
+
+		return total.divide(BigDecimal.valueOf(cuotas), 2, RoundingMode.HALF_UP);
 	}
 }

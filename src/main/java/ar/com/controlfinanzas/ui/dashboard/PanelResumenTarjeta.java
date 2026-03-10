@@ -186,4 +186,8 @@ public class PanelResumenTarjeta extends JPanel {
 			JOptionPane.showMessageDialog(this, "Error al pagar tarjeta");
 		}
 	}
+
+	public void refrescar() {
+		cargarTarjetas();
+	}
 }
