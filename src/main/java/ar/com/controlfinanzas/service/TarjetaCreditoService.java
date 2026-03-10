@@ -6,6 +6,9 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.UUID;
 
+import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
+import ar.com.controlfinanzas.model.Cuenta;
+import ar.com.controlfinanzas.model.FormaPago;
 import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.model.TarjetaCredito;
 import ar.com.controlfinanzas.repository.TarjetaCreditoRepository;
@@ -86,13 +89,35 @@ public class TarjetaCreditoService {
 
 		em.getTransaction().begin();
 
-		List<Movimiento> movimientos = getMovimientosTarjeta(tarjeta);
+		List<Movimiento> movimientos = getMovimientosCiclo(tarjeta);
+
+		BigDecimal totalPago = BigDecimal.ZERO;
 
 		for (Movimiento m : movimientos) {
+
 			if (m.isPendiente()) {
+
+				totalPago = totalPago.add(m.getMonto());
+
 				m.setPendiente(false);
 				em.merge(m);
 			}
+		}
+
+		if (totalPago.compareTo(BigDecimal.ZERO) > 0) {
+
+			Movimiento pago = new Movimiento(LocalDate.now(), "Pago tarjeta " + tarjeta.getNombre(), totalPago,
+					TipoMovimiento.GASTO);
+
+			pago.setFormaPago(FormaPago.DEBITO);
+			pago.setPendiente(false);
+
+			Cuenta cuenta = tarjeta.getCuenta();
+			cuenta.getMovimientos().add(pago);
+
+			pago.setCuenta(cuenta);
+
+			em.persist(pago);
 		}
 
 		em.getTransaction().commit();
@@ -141,4 +166,42 @@ public class TarjetaCreditoService {
 
 		return total.divide(BigDecimal.valueOf(cuotas), 2, RoundingMode.HALF_UP);
 	}
+
+	public BigDecimal calcularDeudaTotal(TarjetaCredito tarjeta) {
+
+		List<Movimiento> movimientos = getMovimientosTarjeta(tarjeta);
+
+		BigDecimal deuda = BigDecimal.ZERO;
+
+		for (Movimiento m : movimientos) {
+			if (m.isPendiente()) {
+				deuda = deuda.add(m.getMonto());
+			}
+		}
+
+		return deuda;
+	}
+
+	public BigDecimal calcularDeudaCiclo(TarjetaCredito tarjeta) {
+
+		List<Movimiento> movimientos = getMovimientosCiclo(tarjeta);
+
+		BigDecimal deuda = BigDecimal.ZERO;
+
+		for (Movimiento m : movimientos) {
+			if (m.isPendiente()) {
+				deuda = deuda.add(m.getMonto());
+			}
+		}
+
+		return deuda;
+	}
+
+	public BigDecimal calcularDisponible(TarjetaCredito tarjeta) {
+
+		BigDecimal deudaTotal = calcularDeudaTotal(tarjeta);
+
+		return tarjeta.getLimite().subtract(deudaTotal);
+	}
+
 }

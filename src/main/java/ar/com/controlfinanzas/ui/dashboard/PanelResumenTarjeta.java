@@ -28,6 +28,7 @@ public class PanelResumenTarjeta extends JPanel {
 
 	private JComboBox<TarjetaCredito> comboTarjetas;
 
+	private JLabel lblDeudaCiclo;
 	private JLabel lblDeuda;
 	private JLabel lblDisponible;
 
@@ -40,6 +41,8 @@ public class PanelResumenTarjeta extends JPanel {
 
 	private Usuario usuario;
 	private EntityManager em;
+
+	private Runnable actualizar;
 
 	public PanelResumenTarjeta(Usuario usuario, EntityManager em) {
 
@@ -69,6 +72,13 @@ public class PanelResumenTarjeta extends JPanel {
 		gbc.gridx = 1;
 		comboTarjetas = new JComboBox<>();
 		panelSuperior.add(comboTarjetas, gbc);
+
+		gbc.gridx = 0;
+		gbc.gridy++;
+		panelSuperior.add(new JLabel("Deuda del mes:"), gbc);
+		gbc.gridx = 1;
+		lblDeudaCiclo = new JLabel("$0");
+		panelSuperior.add(lblDeudaCiclo, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy++;
@@ -134,26 +144,23 @@ public class PanelResumenTarjeta extends JPanel {
 		}
 
 		List<Movimiento> movimientos = tarjetaService.getMovimientosCiclo(tarjeta);
+		List<Movimiento> todos = tarjetaService.getMovimientosTarjeta(tarjeta);
 
 		modeloTabla.setRowCount(0);
 
-		BigDecimal deuda = BigDecimal.ZERO;
-
 		for (Movimiento m : movimientos) {
-
-			if (m.isPendiente()) {
-				deuda = deuda.add(m.getMonto());
-			}
 
 			modeloTabla.addRow(new Object[] { m.getFecha(), m.getDescripcion(),
 					NumeroUtils.formatearMonedaARS(m.getMonto()), m.isPendiente() ? "Pendiente" : "Pagado" });
 		}
 
-		lblDeuda.setText(NumeroUtils.formatearMonedaARS(deuda));
+		BigDecimal deudaCiclo = tarjetaService.calcularDeudaCiclo(tarjeta);
+		BigDecimal deudaTotal = tarjetaService.calcularDeudaTotal(tarjeta);
+		BigDecimal disponible = tarjetaService.calcularDisponible(tarjeta);
 
-		BigDecimal disponible = tarjeta.getLimite().subtract(deuda);
-
+		lblDeuda.setText(NumeroUtils.formatearMonedaARS(deudaTotal));
 		lblDisponible.setText(NumeroUtils.formatearMonedaARS(disponible));
+		lblDeudaCiclo.setText(NumeroUtils.formatearMonedaARS(deudaCiclo));
 	}
 
 	private void pagarTarjeta() {
@@ -175,6 +182,10 @@ public class PanelResumenTarjeta extends JPanel {
 
 			tarjetaService.pagarTarjeta(tarjeta);
 
+			if (actualizar != null) {
+				actualizar.run();
+			}
+
 			JOptionPane.showMessageDialog(this, "Tarjeta pagada correctamente");
 
 			cargarMovimientos();
@@ -185,6 +196,10 @@ public class PanelResumenTarjeta extends JPanel {
 
 			JOptionPane.showMessageDialog(this, "Error al pagar tarjeta");
 		}
+	}
+
+	public void setActualizar(Runnable actualizar) {
+		this.actualizar = actualizar;
 	}
 
 	public void refrescar() {

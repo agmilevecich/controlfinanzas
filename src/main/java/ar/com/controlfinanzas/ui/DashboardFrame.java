@@ -137,6 +137,12 @@ public class DashboardFrame extends JFrame {
 			panelTarjetaCredito.actualizarCuentas();
 		});
 
+		panelResumenTarjeta.setActualizar(() -> {
+
+			panelMovimientos.cargarMovimientos();
+
+		});
+
 		// Callback para actualizar PanelCuentas al agregar movimiento
 		panelMovimientos.setActualizarPanelCuentasCallback(() -> {
 			panelCuentas.cargarCuentas();
