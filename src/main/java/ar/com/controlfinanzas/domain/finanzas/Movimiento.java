@@ -18,6 +18,7 @@ public class Movimiento {
 	private LocalDate fecha;
 	private FormaPago formaPago;
 	private String descripcion;
+	private boolean pendiente;
 
 	private Movimiento(Cuenta cuentaOrigen, Cuenta cuentaDestino, BigDecimal monto, Moneda moneda, TipoMovimiento tipo,
 			LocalDate fecha, FormaPago formaPago, String descripcion) {
@@ -125,4 +126,13 @@ public class Movimiento {
 	public String getDescripcion() {
 		return descripcion;
 	}
+
+	public boolean isPendiente() {
+		return pendiente;
+	}
+
+	public void setPendiente(boolean pendiente) {
+		this.pendiente = pendiente;
+	}
+
 }

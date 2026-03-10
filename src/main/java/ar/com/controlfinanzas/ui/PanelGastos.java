@@ -48,6 +48,7 @@ import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.service.TarjetaCreditoService;
+import ar.com.controlfinanzas.util.NumeroUtils;
 
 public class PanelGastos extends JPanel {
 
@@ -256,7 +257,7 @@ public class PanelGastos extends JPanel {
 		try {
 
 			String descripcion = txtDescripcion.getText().trim();
-			String montoStr = txtMonto.getText().trim();
+			String montoStr = NumeroUtils.parse(txtMonto.getText().trim()).toString();
 
 			CategoriaGasto categoria = (CategoriaGasto) cbCategoria.getSelectedItem();
 			Cuenta cuenta = (Cuenta) cbCuenta.getSelectedItem();

@@ -38,6 +38,10 @@ public class Movimiento {
 	@Enumerated(EnumType.STRING)
 	private FormaPago formaPago;
 
+	private Integer numeroCuota;
+	private Integer totalCuotas;
+	private String compraId;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "cuenta_id", nullable = false)
 	private Cuenta cuenta;
@@ -51,7 +55,7 @@ public class Movimiento {
 	@Column(nullable = false)
 	private boolean pendiente = false;
 
-	protected Movimiento() {
+	public Movimiento() {
 	}
 
 	public Movimiento(LocalDate fecha, String descripcion, BigDecimal monto, TipoMovimiento tipo) {
@@ -119,6 +123,38 @@ public class Movimiento {
 
 	public void setPendiente(boolean pendiente) {
 		this.pendiente = pendiente;
+	}
+
+	public Integer getNumeroCuota() {
+		return numeroCuota;
+	}
+
+	public void setNumeroCuota(Integer numeroCuota) {
+		this.numeroCuota = numeroCuota;
+	}
+
+	public Integer getTotalCuotas() {
+		return totalCuotas;
+	}
+
+	public void setTotalCuotas(Integer totalCuotas) {
+		this.totalCuotas = totalCuotas;
+	}
+
+	public String getCompraId() {
+		return compraId;
+	}
+
+	public void setCompraId(String compraId) {
+		this.compraId = compraId;
+	}
+
+	public void setFecha(LocalDate fecha) {
+		this.fecha = fecha;
+	}
+
+	public void setMonto(BigDecimal monto) {
+		this.monto = monto;
 	}
 
 	public void validar() {

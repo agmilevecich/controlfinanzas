@@ -30,6 +30,7 @@ import ar.com.controlfinanzas.ui.dashboard.PanelBancos;
 import ar.com.controlfinanzas.ui.dashboard.PanelCuentas;
 import ar.com.controlfinanzas.ui.dashboard.PanelMovimientos;
 import ar.com.controlfinanzas.ui.dashboard.PanelResumen;
+import ar.com.controlfinanzas.ui.dashboard.PanelResumenTarjeta;
 import ar.com.controlfinanzas.ui.dashboard.PanelTarjetaCredito;
 import ar.com.controlfinanzas.ui.inversion.PanelCartera;
 import ar.com.controlfinanzas.ui.inversion.PanelVencimiento;
@@ -106,6 +107,7 @@ public class DashboardFrame extends JFrame {
 		// Paneles
 		// ===============================
 		PanelBancos panelBancos = new PanelBancos(usuario, bancoService);
+		PanelResumenTarjeta panelResumenTarjeta = new PanelResumenTarjeta(usuario, em);
 		PanelGastos panelGastos = new PanelGastos(gastoService, cuentaService, movimientoService, tarjetaCreditoService,
 				panelResumen, panelResumenGastos, usuario);
 		panelGastos.setActualizaGastos(() -> {
@@ -159,6 +161,7 @@ public class DashboardFrame extends JFrame {
 		tabs.addTab("Movimientos", panelMovimientos);
 		tabs.add("Tarjetas", panelTarjetaCredito);
 		tabs.addTab("KPIs", panelResumenKPIs);
+		tabs.addTab("Resumen Tarjeta", panelResumenTarjeta);
 		tabs.addTab("Vencimientos", panelVencimientosGraficos);
 		tabs.addTab("Alertas", panelAlertas);
 
