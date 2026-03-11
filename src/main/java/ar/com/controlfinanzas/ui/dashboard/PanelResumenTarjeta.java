@@ -33,6 +33,7 @@ public class PanelResumenTarjeta extends JPanel {
 	private JLabel lblDeudaCiclo;
 	private JLabel lblDeuda;
 	private JLabel lblDisponible;
+	private JLabel lblAFavor;
 
 	private JTable tablaMovimientos;
 	private DefaultTableModel modeloTabla;
@@ -99,6 +100,14 @@ public class PanelResumenTarjeta extends JPanel {
 
 		gbc.gridx = 0;
 		gbc.gridy++;
+		panelSuperior.add(new JLabel("Saldo a Favor:"), gbc);
+
+		gbc.gridx = 1;
+		lblAFavor = new JLabel("$0");
+		panelSuperior.add(lblAFavor, gbc);
+
+		gbc.gridx = 0;
+		gbc.gridy++;
 		gbc.gridwidth = 2;
 
 		btnPagar = new JButton("Pagar tarjeta");
@@ -162,6 +171,7 @@ public class PanelResumenTarjeta extends JPanel {
 		lblDeuda.setText(NumeroUtils.formatearMonedaARS(deudaTotal));
 		lblDisponible.setText(NumeroUtils.formatearMonedaARS(disponible));
 		lblDeudaCiclo.setText(NumeroUtils.formatearMonedaARS(deudaCiclo));
+		lblAFavor.setText(NumeroUtils.formatearMonedaARS(tarjetaService.calcularSaldoFavor(tarjeta)));
 	}
 
 	private void pagarTarjeta() {

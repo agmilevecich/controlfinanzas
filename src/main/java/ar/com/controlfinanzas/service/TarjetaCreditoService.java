@@ -203,4 +203,15 @@ public class TarjetaCreditoService {
 		return tarjeta.getLimite().subtract(deudaTotal);
 	}
 
+	public BigDecimal calcularSaldoFavor(TarjetaCredito tarjeta) {
+
+		BigDecimal deuda = calcularDeudaTotal(tarjeta);
+
+		if (deuda.compareTo(BigDecimal.ZERO) < 0) {
+			return deuda.abs();
+		}
+
+		return BigDecimal.ZERO;
+	}
+
 }
