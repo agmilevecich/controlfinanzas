@@ -36,7 +36,7 @@ public class TarjetaCredito {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "cuenta_id", nullable = false)
-	private Cuenta cuenta;
+	private Banco banco;
 
 	@OneToMany(mappedBy = "tarjeta")
 	private List<Movimiento> movimientos;
@@ -48,13 +48,13 @@ public class TarjetaCredito {
 	public TarjetaCredito() {
 	}
 
-	public TarjetaCredito(String nombre, BigDecimal limite, int diaCierre, int diaVencimiento, Cuenta cuenta,
+	public TarjetaCredito(String nombre, BigDecimal limite, int diaCierre, int diaVencimiento, Banco banco,
 			Usuario usuario) {
 		this.nombre = nombre;
 		this.limite = limite;
 		this.diaCierre = diaCierre;
 		this.diaVencimiento = diaVencimiento;
-		this.cuenta = cuenta;
+		this.banco = banco;
 		this.usuario = usuario;
 	}
 
@@ -80,8 +80,8 @@ public class TarjetaCredito {
 		return diaVencimiento;
 	}
 
-	public Cuenta getCuenta() {
-		return cuenta;
+	public Banco getBanco() {
+		return banco;
 	}
 
 	public List<Movimiento> getMovimientos() {
@@ -110,8 +110,8 @@ public class TarjetaCredito {
 		this.diaVencimiento = diaVencimiento;
 	}
 
-	public void setCuenta(Cuenta cuenta) {
-		this.cuenta = cuenta;
+	public void setBanco(Banco banco) {
+		this.banco = banco;
 	}
 
 	public void setMovimientos(List<Movimiento> movimientos) {
@@ -129,6 +129,6 @@ public class TarjetaCredito {
 
 	@Override
 	public String toString() {
-		return nombre + " - " + cuenta.getNombre();
+		return nombre + " - " + banco.getNombre();
 	}
 }

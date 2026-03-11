@@ -19,10 +19,10 @@ import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
-import ar.com.controlfinanzas.model.Cuenta;
+import ar.com.controlfinanzas.model.Banco;
 import ar.com.controlfinanzas.model.TarjetaCredito;
 import ar.com.controlfinanzas.model.Usuario;
-import ar.com.controlfinanzas.service.CuentaService;
+import ar.com.controlfinanzas.service.BancoService;
 import ar.com.controlfinanzas.service.TarjetaCreditoService;
 import ar.com.controlfinanzas.util.NumeroUtils;
 import jakarta.persistence.EntityManager;
@@ -34,31 +34,27 @@ public class PanelTarjetaCredito extends JPanel {
 	private JSpinner txtDiaCierre;
 	private JSpinner txtDiaVencimiento;
 
-	private JComboBox<Cuenta> comboCuentas;
+	private JComboBox<Banco> comboBanco;
 
 	private JButton btnGuardar;
 
 	private TarjetaCreditoService tarjetaService;
-	private CuentaService cuentaService;
+	private BancoService bancoService;
 
 	private Usuario usuarioActual;
 
 	private Runnable actualizar;
-	private EntityManager em;
-	private PanelResumenTarjeta panelResumenTarjeta;
 
 	public PanelTarjetaCredito(Usuario usuario, EntityManager em) {
 
 		this.usuarioActual = usuario;
-		this.em = em;
-
 		tarjetaService = new TarjetaCreditoService(em);
-		cuentaService = new CuentaService(em);
+		bancoService = new BancoService(em);
 
 		setLayout(new BorderLayout());
 
 		inicializarComponentes();
-		cargarCuentas();
+		cargarBancos();
 	}
 
 	private void inicializarComponentes() {
@@ -100,26 +96,25 @@ public class PanelTarjetaCredito extends JPanel {
 		gbc.gridy++;
 		formulario.add(new JLabel("Cuenta asociada:"), gbc);
 		gbc.gridx = 1;
-		comboCuentas = new JComboBox<>();
-		comboCuentas.setRenderer(new DefaultListCellRenderer() {
+		comboBanco = new JComboBox<>();
+		comboBanco.setRenderer(new DefaultListCellRenderer() {
 			@Override
 			public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
 					boolean cellHasFocus) {
 
 				JLabel lbl = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 
-				if (value instanceof Cuenta c) {
-					lbl.setText(
-							c.getNombre() + " " + c.getMoneda() + " " + NumeroUtils.formatearMonedaARS(c.getSaldo()));
+				if (value instanceof Banco b) {
+					lbl.setText(b.getNombre());
 				}
 
 				return lbl;
 			}
 		});
 
-		comboCuentas.revalidate();
-		comboCuentas.repaint();
-		formulario.add(comboCuentas, gbc);
+		comboBanco.revalidate();
+		comboBanco.repaint();
+		formulario.add(comboBanco, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy++;
@@ -132,19 +127,19 @@ public class PanelTarjetaCredito extends JPanel {
 		btnGuardar.addActionListener(e -> guardarTarjeta());
 	}
 
-	private void cargarCuentas() {
+	private void cargarBancos() {
 
-		List<Cuenta> cuentas = cuentaService.getCuentasUsuario(usuarioActual);
+		List<Banco> bancos = bancoService.getBancosUsuario(usuarioActual);
 
-		comboCuentas.removeAllItems();
+		comboBanco.removeAllItems();
 
-		for (Cuenta cuenta : cuentas) {
-			comboCuentas.addItem(cuenta);
+		for (Banco banco : bancos) {
+			comboBanco.addItem(banco);
 		}
 	}
 
-	public void actualizarCuentas() {
-		cargarCuentas();
+	public void actualizarBancos() {
+		cargarBancos();
 	}
 
 	public void setActualizarTarjeta(Runnable actualizar) {
@@ -167,9 +162,9 @@ public class PanelTarjetaCredito extends JPanel {
 
 			int diaVencimiento = (int) txtDiaVencimiento.getValue();
 
-			Cuenta cuentaSeleccionada = (Cuenta) comboCuentas.getSelectedItem();
+			Banco bancoSeleccionado = (Banco) comboBanco.getSelectedItem();
 
-			if (cuentaSeleccionada == null) {
+			if (bancoSeleccionado == null) {
 				JOptionPane.showMessageDialog(this, "Debe seleccionar una cuenta");
 				return;
 			}
@@ -180,7 +175,7 @@ public class PanelTarjetaCredito extends JPanel {
 			tarjeta.setLimite(limite);
 			tarjeta.setDiaCierre(diaCierre);
 			tarjeta.setDiaVencimiento(diaVencimiento);
-			tarjeta.setCuenta(cuentaSeleccionada);
+			tarjeta.setBanco(bancoSeleccionado);
 			tarjeta.setUsuario(usuarioActual);
 
 			tarjetaService.guardar(tarjeta);

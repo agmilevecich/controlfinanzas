@@ -107,7 +107,7 @@ public class DashboardFrame extends JFrame {
 		// Paneles
 		// ===============================
 		PanelBancos panelBancos = new PanelBancos(usuario, bancoService);
-		PanelResumenTarjeta panelResumenTarjeta = new PanelResumenTarjeta(usuario, em);
+		PanelResumenTarjeta panelResumenTarjeta = new PanelResumenTarjeta(usuario, cuentaService, em);
 		PanelGastos panelGastos = new PanelGastos(gastoService, cuentaService, movimientoService, tarjetaCreditoService,
 				panelResumen, panelResumenGastos, panelResumenTarjeta, usuario);
 		panelGastos.setActualizaGastos(() -> {
@@ -134,7 +134,7 @@ public class DashboardFrame extends JFrame {
 		panelCuentas.setCuentaSeleccionadaListener(cuenta -> panelMovimientos.actualizarCuenta(cuenta));
 		panelCuentas.setActualizarCuentas(() -> {
 			panelGastos.refrescar();
-			panelTarjetaCredito.actualizarCuentas();
+			panelTarjetaCredito.actualizarBancos();
 		});
 
 		panelResumenTarjeta.setActualizar(() -> {
@@ -146,7 +146,7 @@ public class DashboardFrame extends JFrame {
 		// Callback para actualizar PanelCuentas al agregar movimiento
 		panelMovimientos.setActualizarPanelCuentasCallback(() -> {
 			panelCuentas.cargarCuentas();
-			panelTarjetaCredito.actualizarCuentas();
+			panelTarjetaCredito.actualizarBancos();
 		});
 
 		panelCartera = new PanelCartera();

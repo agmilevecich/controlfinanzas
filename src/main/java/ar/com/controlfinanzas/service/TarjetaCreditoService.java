@@ -85,7 +85,7 @@ public class TarjetaCreditoService {
 				Movimiento.class).setParameter("tarjeta", tarjeta).getResultList();
 	}
 
-	public void pagarTarjeta(TarjetaCredito tarjeta) {
+	public void pagarTarjeta(TarjetaCredito tarjeta, Cuenta cuenta) {
 
 		em.getTransaction().begin();
 
@@ -106,13 +106,12 @@ public class TarjetaCreditoService {
 
 		if (totalPago.compareTo(BigDecimal.ZERO) > 0) {
 
-			Movimiento pago = new Movimiento(LocalDate.now(), "Pago tarjeta " + tarjeta.getNombre(), totalPago,
-					TipoMovimiento.GASTO);
+			Movimiento pago = new Movimiento(LocalDate.now(),
+					"Pago tarjeta " + tarjeta.getNombre() + "-" + tarjeta.getBanco(), totalPago, TipoMovimiento.GASTO);
 
 			pago.setFormaPago(FormaPago.DEBITO);
 			pago.setPendiente(false);
 
-			Cuenta cuenta = tarjeta.getCuenta();
 			cuenta.getMovimientos().add(pago);
 
 			pago.setCuenta(cuenta);

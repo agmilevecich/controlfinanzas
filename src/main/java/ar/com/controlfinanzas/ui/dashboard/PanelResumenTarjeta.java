@@ -17,9 +17,11 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 
+import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.model.TarjetaCredito;
 import ar.com.controlfinanzas.model.Usuario;
+import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.TarjetaCreditoService;
 import ar.com.controlfinanzas.util.NumeroUtils;
 import jakarta.persistence.EntityManager;
@@ -40,16 +42,15 @@ public class PanelResumenTarjeta extends JPanel {
 	private TarjetaCreditoService tarjetaService;
 
 	private Usuario usuario;
-	private EntityManager em;
-
 	private Runnable actualizar;
 
-	public PanelResumenTarjeta(Usuario usuario, EntityManager em) {
+	private CuentaService cuentaService;
+
+	public PanelResumenTarjeta(Usuario usuario, CuentaService cuentaService, EntityManager em) {
 
 		this.usuario = usuario;
-		this.em = em;
-
 		tarjetaService = new TarjetaCreditoService(em);
+		this.cuentaService = cuentaService;
 
 		setLayout(new BorderLayout());
 
@@ -178,9 +179,14 @@ public class PanelResumenTarjeta extends JPanel {
 			return;
 		}
 
+		List<Cuenta> cuentas = cuentaService.getCuentasUsuario(usuario);
+
+		Cuenta cuenta = (Cuenta) JOptionPane.showInputDialog(this, "Seleccione una cuenta:", "Cuenta",
+				JOptionPane.QUESTION_MESSAGE, null, cuentas.toArray(), cuentas.get(0));
+
 		try {
 
-			tarjetaService.pagarTarjeta(tarjeta);
+			tarjetaService.pagarTarjeta(tarjeta, cuenta);
 
 			if (actualizar != null) {
 				actualizar.run();
