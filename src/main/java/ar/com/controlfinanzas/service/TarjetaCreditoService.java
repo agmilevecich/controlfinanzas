@@ -43,8 +43,7 @@ public class TarjetaCreditoService {
 
 		int diaCierre = tarjeta.getDiaCierre();
 		LocalDate hoy = LocalDate.now();
-
-		LocalDate cierreEsteMes = LocalDate.of(hoy.getYear(), hoy.getMonth(), diaCierre);
+		LocalDate cierreEsteMes = calcularCierreDelMes(diaCierre, hoy);
 
 		if (hoy.isAfter(cierreEsteMes)) {
 			return cierreEsteMes.plusDays(1);
@@ -59,7 +58,7 @@ public class TarjetaCreditoService {
 		int diaCierre = tarjeta.getDiaCierre();
 		LocalDate hoy = LocalDate.now();
 
-		LocalDate cierreEsteMes = LocalDate.of(hoy.getYear(), hoy.getMonth(), diaCierre);
+		LocalDate cierreEsteMes = calcularCierreDelMes(diaCierre, hoy);
 
 		if (hoy.isAfter(cierreEsteMes)) {
 			return cierreEsteMes.plusMonths(1);
@@ -68,14 +67,26 @@ public class TarjetaCreditoService {
 		return cierreEsteMes;
 	}
 
+	private LocalDate calcularCierreDelMes(int diaCierre, LocalDate fecha) {
+
+		int dia = Math.min(diaCierre, fecha.lengthOfMonth());
+		return LocalDate.of(fecha.getYear(), fecha.getMonth(), dia);
+	}
+
 	public List<Movimiento> getMovimientosCiclo(TarjetaCredito tarjeta) {
 
 		LocalDate inicio = obtenerInicioCiclo(tarjeta);
 		LocalDate cierre = obtenerCierreActual(tarjeta);
 
-		return em.createQuery(
-				"SELECT m FROM Movimiento m WHERE m.tarjeta = :tarjeta AND m.fecha BETWEEN :inicio AND :cierre ORDER BY m.fecha",
-				Movimiento.class).setParameter("tarjeta", tarjeta).setParameter("inicio", inicio)
+		String jpql = """
+				    SELECT m
+				    FROM Movimiento m
+				    WHERE m.tarjeta = :tarjeta
+				    AND m.fecha BETWEEN :inicio AND :cierre
+				    ORDER BY m.fecha
+				""";
+
+		return em.createQuery(jpql, Movimiento.class).setParameter("tarjeta", tarjeta).setParameter("inicio", inicio)
 				.setParameter("cierre", cierre).getResultList();
 	}
 
