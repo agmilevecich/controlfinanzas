@@ -196,7 +196,8 @@ public class PanelResumenTarjeta extends JPanel {
 
 		try {
 
-			tarjetaService.pagarTarjeta(tarjeta, cuenta);
+			tarjetaService.pagarTarjeta(tarjeta, cuenta, BigDecimal.ZERO); // odificar BigDeecimal cuando este hecho el
+																			// método para seleccionar forma de pago
 
 			if (actualizar != null) {
 				actualizar.run();

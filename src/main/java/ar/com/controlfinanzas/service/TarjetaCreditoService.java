@@ -96,41 +96,58 @@ public class TarjetaCreditoService {
 				Movimiento.class).setParameter("tarjeta", tarjeta).getResultList();
 	}
 
-	public void pagarTarjeta(TarjetaCredito tarjeta, Cuenta cuenta) {
+	public void pagarTarjeta(TarjetaCredito tarjeta, Cuenta cuenta, BigDecimal montoPago) {
+
+		if (montoPago.compareTo(BigDecimal.ZERO) <= 0) {
+			return;
+		}
 
 		em.getTransaction().begin();
 
-		List<Movimiento> movimientos = getMovimientosCiclo(tarjeta);
+		List<Movimiento> movimientos = getMovimientosPendientes(tarjeta);
 
-		BigDecimal totalPago = BigDecimal.ZERO;
+		BigDecimal restante = montoPago;
 
 		for (Movimiento m : movimientos) {
 
-			if (m.isPendiente()) {
+			if (!m.isPendiente()) {
+				continue;
+			}
 
-				totalPago = totalPago.add(m.getMonto());
+			BigDecimal montoMovimiento = m.getMonto();
+
+			if (restante.compareTo(montoMovimiento) >= 0) {
 
 				m.setPendiente(false);
 				em.merge(m);
+
+				restante = restante.subtract(montoMovimiento);
+
+			} else {
+				break;
+			}
+
+			if (restante.compareTo(BigDecimal.ZERO) == 0) {
+				break;
 			}
 		}
 
-		if (totalPago.compareTo(BigDecimal.ZERO) > 0) {
+		Movimiento pago = new Movimiento(LocalDate.now(), "Pago tarjeta " + tarjeta.getNombre(), montoPago,
+				TipoMovimiento.GASTO);
 
-			Movimiento pago = new Movimiento(LocalDate.now(),
-					"Pago tarjeta " + tarjeta.getNombre() + "-" + tarjeta.getBanco(), totalPago, TipoMovimiento.GASTO);
+		pago.setFormaPago(FormaPago.DEBITO);
+		pago.setCuenta(cuenta);
+		pago.setPendiente(false);
 
-			pago.setFormaPago(FormaPago.DEBITO);
-			pago.setPendiente(false);
-
-			cuenta.getMovimientos().add(pago);
-
-			pago.setCuenta(cuenta);
-
-			em.persist(pago);
-		}
+		em.persist(pago);
 
 		em.getTransaction().commit();
+	}
+
+	public List<Movimiento> getMovimientosPendientes(TarjetaCredito tarjeta) {
+
+		return em.createQuery("SELECT m FROM Movimiento m " + "WHERE m.tarjeta = :tarjeta " + "AND m.pendiente = true "
+				+ "ORDER BY m.fecha", Movimiento.class).setParameter("tarjeta", tarjeta).getResultList();
 	}
 
 	public void registrarCompraCuotas(TarjetaCredito tarjeta, BigDecimal montoTotal, int cuotas, String descripcion) {

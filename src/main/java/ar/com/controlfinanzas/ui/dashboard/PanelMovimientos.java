@@ -137,17 +137,28 @@ public class PanelMovimientos extends JPanel {
 			}
 
 			// Movimiento en cuenta origen (negativo)
+//			Movimiento movOrigen = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.TRANSFERENCIA);
+//			movOrigen.setDescripcion(descripcion + " -> " + destino.getNombre());
+//			movOrigen.setCuenta(cuentaSeleccionada);
+//			Movimiento movimientoActualizadoOrigen = movimientoService.registrarMovimiento(movOrigen);
+//
+//			// Movimiento en cuenta destino (positivo)
+//			Movimiento movDestino = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.INGRESO);
+//			movDestino.setDescripcion(descripcion + " <- " + cuentaSeleccionada.getNombre());
+//			movDestino.setCuenta(destino);
+//			Movimiento movimientoActualizadoDestino = movimientoService.registrarMovimiento(destino, movDestino);
+
+			// Movimiento en cuenta origen
 			Movimiento movOrigen = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.TRANSFERENCIA);
 			movOrigen.setDescripcion(descripcion + " -> " + destino.getNombre());
 			movOrigen.setCuenta(cuentaSeleccionada);
-			Movimiento movimientoActualizadoOrigen = movimientoService.registrarMovimiento(cuentaSeleccionada,
-					movOrigen);
+			movimientoService.registrarMovimiento(movOrigen);
 
-			// Movimiento en cuenta destino (positivo)
+			// Movimiento en cuenta destino
 			Movimiento movDestino = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.INGRESO);
 			movDestino.setDescripcion(descripcion + " <- " + cuentaSeleccionada.getNombre());
 			movDestino.setCuenta(destino);
-			Movimiento movimientoActualizadoDestino = movimientoService.registrarMovimiento(destino, movDestino);
+			movimientoService.registrarMovimiento(movDestino);
 
 			// Refrescar paneles
 			if (actualizarPanelCuentasCallback != null) {
@@ -161,7 +172,7 @@ public class PanelMovimientos extends JPanel {
 			mov.setDescripcion(descripcion);
 			mov.setCuenta(cuentaSeleccionada);
 
-			Movimiento movimientoActualizado = movimientoService.registrarMovimiento(cuentaSeleccionada, mov);
+			Movimiento movimientoActualizado = movimientoService.registrarMovimiento(mov);
 
 			// Refrescar paneles
 			if (actualizarPanelCuentasCallback != null) {

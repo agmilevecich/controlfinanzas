@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import javax.swing.JOptionPane;
 
@@ -23,32 +24,35 @@ public class MovimientoService {
 		this.em = em;
 	}
 
-	public Movimiento registrarMovimiento(Cuenta cuenta, Movimiento movimiento) {
+	public Movimiento registrarMovimiento(Movimiento movimiento) {
 
 		try {
-
+			// Validamos que cumpla las reglas de tarjeta vs cuenta
 			movimiento.validar();
-
-			movimiento.setCuenta(cuenta); // SIEMPRE se asigna
 
 			em.getTransaction().begin();
 
-			em.persist(movimiento);
-
 			if (movimiento.getFormaPago() != FormaPago.CREDITO) {
-				cuenta.getMovimientos().add(movimiento);
+				// Movimientos normales o pagos de tarjeta
+				if (movimiento.getCuenta() == null) {
+					throw new IllegalStateException(
+							"Los movimientos que no son de tarjeta deben tener una cuenta asignada");
+				}
+				em.persist(movimiento);
+				movimiento.getCuenta().getMovimientos().add(movimiento);
 			} else {
-				movimiento.setPendiente(true); // deuda de tarjeta
+				// Movimiento de tarjeta
+				movimiento.setCuenta(null); // ✅ La cuenta no se asigna
+				movimiento.setPendiente(true); // ✅ Marca como deuda pendiente
+				em.persist(movimiento);
 			}
 
 			em.getTransaction().commit();
 
 		} catch (Exception e) {
-
 			if (em.getTransaction().isActive()) {
 				em.getTransaction().rollback();
 			}
-
 			JOptionPane.showMessageDialog(null, e.getMessage());
 		}
 
@@ -58,42 +62,95 @@ public class MovimientoService {
 	public List<Movimiento> getMovimientosCuenta(Cuenta cuenta) {
 
 		TypedQuery<Movimiento> query = em.createQuery(
-				"SELECT m FROM Movimiento m WHERE m.cuenta = :cuenta ORDER BY m.fecha DESC", Movimiento.class);
+				"SELECT m FROM Movimiento m " + "WHERE m.cuenta = :cuenta "
+						+ "AND (m.formaPago <> :credito or m.formaPago is null) ORDER BY m.fecha DESC",
+				Movimiento.class);
 
 		query.setParameter("cuenta", cuenta);
+		query.setParameter("credito", FormaPago.CREDITO);
 
 		return query.getResultList();
 	}
 
-	public void registrarCompraCuotas(Cuenta cuenta, TarjetaCredito tarjeta, String descripcion, BigDecimal montoTotal,
-			int cuotas, BigDecimal interes) {
+	public void registrarCompraCuotas(TarjetaCredito tarjeta, String descripcion, BigDecimal montoTotal, int cuotas,
+			BigDecimal interes) {
 
+		// Calculamos el total financiado
 		BigDecimal totalFinanciado = montoTotal;
 
 		if (interes != null && interes.compareTo(BigDecimal.ZERO) > 0) {
-			totalFinanciado = montoTotal.add(montoTotal.multiply(interes).divide(new BigDecimal("100")));
+
+			BigDecimal recargo = montoTotal.multiply(interes).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+
+			totalFinanciado = montoTotal.add(recargo);
 		}
 
+		// Calculamos monto por cuota
 		BigDecimal montoCuota = totalFinanciado.divide(new BigDecimal(cuotas), 2, RoundingMode.HALF_UP);
 
 		LocalDate fechaBase = LocalDate.now();
+
+		String compraId = UUID.randomUUID().toString();
 
 		for (int i = 1; i <= cuotas; i++) {
 
 			LocalDate fechaCuota = fechaBase.plusMonths(i - 1);
 
-			Movimiento mov = new Movimiento(fechaCuota, descripcion + " (" + i + "/" + cuotas + ")", montoCuota,
-					TipoMovimiento.GASTO);
+			Movimiento mov = new Movimiento(fechaCuota, descripcion, montoCuota, TipoMovimiento.GASTO);
+
+			mov.setCompraId(compraId);
 
 			mov.setFormaPago(FormaPago.CREDITO);
+
+			mov.setCuenta(null); // compra con tarjeta no afecta cuenta
 			mov.setTarjeta(tarjeta);
-			mov.setCuotas(cuotas);
+
+			mov.setNumeroCuotas(i); // cuota actual
+			mov.setTotalCuotas(cuotas); // total de cuotas
 			mov.setCuotasPendientes(cuotas - i);
+
 			mov.setInteres(interes);
+
 			mov.setPendiente(true);
 
-			registrarMovimiento(cuenta, mov);
+			registrarMovimiento(mov);
 		}
+	}
+
+	public BigDecimal calcularDeudaTarjeta(TarjetaCredito tarjeta) {
+
+		BigDecimal total = em
+				.createQuery("SELECT COALESCE(SUM(m.monto),0) FROM Movimiento m "
+						+ "WHERE m.tarjeta = :tarjeta AND m.pendiente = true", BigDecimal.class)
+				.setParameter("tarjeta", tarjeta).getSingleResult();
+
+		return total;
+	}
+
+	public List<Movimiento> getCuotasCompra(String compraId) {
+
+		String jpql = """
+				    SELECT m
+				    FROM Movimiento m
+				    WHERE m.compraId = :compraId
+				    ORDER BY m.numeroCuotas
+				""";
+
+		return em.createQuery(jpql, Movimiento.class).setParameter("compraId", compraId).getResultList();
+	}
+
+	public int calcularCuotasPagadas(String compraId) {
+
+		String jpql = """
+				    SELECT COUNT(m)
+				    FROM Movimiento m
+				    WHERE m.compraId = :compraId
+				    AND m.pendiente = false
+				""";
+
+		Long pagadas = em.createQuery(jpql, Long.class).setParameter("compraId", compraId).getSingleResult();
+
+		return pagadas.intValue();
 	}
 
 }

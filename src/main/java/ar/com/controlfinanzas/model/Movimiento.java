@@ -47,7 +47,7 @@ public class Movimiento {
 	private BigDecimal interes;
 
 	@ManyToOne(fetch = FetchType.LAZY)
-	@JoinColumn(name = "cuenta_id", nullable = false)
+	@JoinColumn(name = "cuenta_id", nullable = true)
 	private Cuenta cuenta;
 
 	// NUEVO: tarjeta usada (solo si formaPago = CREDITO)
@@ -169,6 +169,14 @@ public class Movimiento {
 		this.monto = monto;
 	}
 
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public void setTipo(TipoMovimiento tipo) {
+		this.tipo = tipo;
+	}
+
 	public int getNumeroCuotas() {
 		return numeroCuotas;
 	}
@@ -187,12 +195,24 @@ public class Movimiento {
 
 	public void validar() {
 
-		if (formaPago == FormaPago.CREDITO && tarjeta == null) {
-			throw new IllegalStateException("Los movimientos con tarjeta de crédito deben tener una tarjeta asociada");
+		if (formaPago == FormaPago.CREDITO) {
+			// Movimientos de tarjeta
+			if (tarjeta == null) {
+				throw new IllegalStateException(
+						"Los movimientos con tarjeta de crédito deben tener una tarjeta asociada");
+			}
+			if (cuenta != null) {
+				throw new IllegalStateException("Las compras con tarjeta no deben estar asociadas a una cuenta");
+			}
+		} else {
+			// Movimientos de cuenta normales
+			if (tarjeta != null) {
+				throw new IllegalStateException("Solo los movimientos con forma de pago CREDITO pueden tener tarjeta");
+			}
+			if (cuenta == null) {
+				throw new IllegalStateException("Los movimientos que no son de tarjeta deben tener una cuenta");
+			}
 		}
 
-		if (formaPago != FormaPago.CREDITO && tarjeta != null) {
-			throw new IllegalStateException("Solo los movimientos con forma de pago CREDITO pueden tener tarjeta");
-		}
 	}
 }

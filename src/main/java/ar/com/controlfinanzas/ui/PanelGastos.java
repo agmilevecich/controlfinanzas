@@ -84,25 +84,20 @@ public class PanelGastos extends JPanel {
 	private DefaultComboBoxModel<TarjetaCredito> modelTarjeta = new DefaultComboBoxModel<>();
 
 	private TarjetaCreditoService tarjetaCreditoService;
-	private PanelResumenFinanciero panelResumen;
-	private PanelResumenGastos panelResumenGastos;
+	private PanelResumenTarjeta panelResumenTarjeta;
 	private Runnable actualizaGastos;
 
 	private JLabel lblTarjeta;
 	private JLabel lblCuotas;
 	private JLabel lblInteres;
-	private PanelResumenTarjeta panelResumenTarjeta;
 
 	public PanelGastos(GastoService gastoService, CuentaService cuentaService, MovimientoService movimientoService,
-			TarjetaCreditoService tarjetaCreditoService, PanelResumenFinanciero panelResumen,
-			PanelResumenGastos panelResumenGastos, PanelResumenTarjeta panelResumenTarjeta, Usuario usuario) {
+			TarjetaCreditoService tarjetaCreditoService, PanelResumenTarjeta panelResumenTarjeta, Usuario usuario) {
 
 		this.gastoService = gastoService;
 		this.cuentaService = cuentaService;
 		this.movimientoService = movimientoService;
 		this.tarjetaCreditoService = tarjetaCreditoService;
-		this.panelResumen = panelResumen;
-		this.panelResumenGastos = panelResumenGastos;
 		this.panelResumenTarjeta = panelResumenTarjeta;
 		this.usuario = usuario;
 
@@ -143,11 +138,8 @@ public class PanelGastos extends JPanel {
 		cbTarjetaCredito = new JComboBox<>(modelTarjeta);
 
 		cbFormaPago.addActionListener(e -> {
-
 			FormaPago forma = (FormaPago) cbFormaPago.getSelectedItem();
-
 			boolean esCredito = forma == FormaPago.CREDITO;
-
 			mostrarCamposCredito(esCredito);
 		});
 
@@ -183,21 +175,18 @@ public class PanelGastos extends JPanel {
 
 		gbc.gridx = 0;
 		gbc.gridy = 5;
-		panelFormulario.add(new JLabel("Tarjeta:"), gbc);
 		panelFormulario.add(lblTarjeta, gbc);
 		gbc.gridx = 1;
 		panelFormulario.add(cbTarjetaCredito, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 6;
-		panelFormulario.add(new JLabel("Cuotas:"), gbc);
 		panelFormulario.add(lblCuotas, gbc);
 		gbc.gridx = 1;
 		panelFormulario.add(txtCuotas, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy = 7;
-		panelFormulario.add(new JLabel("Interés %:"), gbc);
 		panelFormulario.add(lblInteres, gbc);
 		gbc.gridx = 1;
 		panelFormulario.add(txtInteres, gbc);
@@ -218,8 +207,8 @@ public class PanelGastos extends JPanel {
 		gbc.gridwidth = 2;
 		panelFormulario.add(botones, gbc);
 
-		tableModel = new DefaultTableModel(new String[] { "ID", "Fecha", "Descripción", "Monto", "Categoría" }, 0) {
-
+		tableModel = new DefaultTableModel(
+				new String[] { "ID", "Fecha", "Descripción", "Monto", "Categoría", "Cuenta/Tarjeta" }, 0) {
 			@Override
 			public boolean isCellEditable(int r, int c) {
 				return false;
@@ -235,12 +224,10 @@ public class PanelGastos extends JPanel {
 
 		panelGraficos = new JPanel();
 		panelGraficos.setLayout(new BoxLayout(panelGraficos, BoxLayout.Y_AXIS));
-
 		JScrollPane scrollGrafico = new JScrollPane(panelGraficos);
 
 		split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelTabla, scrollGrafico);
 		split.setResizeWeight(0.5);
-
 		add(split, BorderLayout.CENTER);
 
 		btnSimular.addActionListener(e -> simularCuotas());
@@ -250,47 +237,31 @@ public class PanelGastos extends JPanel {
 	}
 
 	private void simularCuotas() {
-
 		try {
-
 			BigDecimal monto = NumeroUtils.parse(txtMonto.getText());
-			int cuotas = Integer.parseInt(txtCuotas.getText());
+			int cuotas = txtCuotas.getText().isBlank() ? 1 : Integer.parseInt(txtCuotas.getText());
+			BigDecimal interes = txtInteres.getText().isBlank() ? BigDecimal.ZERO
+					: new BigDecimal(txtInteres.getText()).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
 
-			BigDecimal interes = new BigDecimal(txtInteres.getText()).divide(BigDecimal.valueOf(100));
-
-			BigDecimal total = monto;
-
-			if (interes.compareTo(BigDecimal.ZERO) > 0) {
-				BigDecimal recargo = monto.multiply(interes);
-				total = monto.add(recargo);
-			}
-
+			BigDecimal total = monto.add(monto.multiply(interes));
 			BigDecimal cuota = total.divide(BigDecimal.valueOf(cuotas), 2, RoundingMode.HALF_UP);
 
 			lblTotalFinanciado.setText("Total: $" + total);
 			lblValorCuota.setText("Cuota: $" + cuota);
-
 		} catch (Exception e) {
-
 			JOptionPane.showMessageDialog(this, "Ingrese monto, cuotas e interés válidos");
 		}
 	}
 
 	private void agregarGasto() {
-
 		try {
-
 			String descripcion = txtDescripcion.getText().trim();
 			BigDecimal monto = NumeroUtils.parse(txtMonto.getText());
-
 			CategoriaGasto categoria = (CategoriaGasto) cbCategoria.getSelectedItem();
-
-			Cuenta cuenta = (Cuenta) cbCuenta.getSelectedItem();
-
 			FormaPago formaPago = (FormaPago) cbFormaPago.getSelectedItem();
 
 			if (formaPago != FormaPago.CREDITO) {
-
+				Cuenta cuenta = (Cuenta) cbCuenta.getSelectedItem();
 				Gasto gasto = new Gasto();
 				gasto.setFecha(LocalDate.now());
 				gasto.setDescripcion(descripcion);
@@ -299,24 +270,19 @@ public class PanelGastos extends JPanel {
 				gasto.setCuenta(cuenta);
 				gasto.setFormapago(formaPago);
 				gasto.setUsuario(usuario);
-
 				gastoService.guardar(gasto);
 
 				Movimiento mov = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.GASTO);
-
-				movimientoService.registrarMovimiento(cuenta, mov);
-
+				mov.setCuenta(cuenta);
+				mov.setFormaPago(formaPago);
+				movimientoService.registrarMovimiento(mov);
 			} else {
-
 				TarjetaCredito tarjeta = (TarjetaCredito) cbTarjetaCredito.getSelectedItem();
-
-				Movimiento mov = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.GASTO);
-
 				int cuotas = txtCuotas.getText().isBlank() ? 1 : Integer.parseInt(txtCuotas.getText());
 				BigDecimal interes = txtInteres.getText().isBlank() ? BigDecimal.ZERO
 						: new BigDecimal(txtInteres.getText());
 
-				movimientoService.registrarCompraCuotas(cuenta, tarjeta, descripcion, monto, cuotas, interes);
+				movimientoService.registrarCompraCuotas(tarjeta, descripcion, monto, cuotas, interes);
 			}
 
 			if (actualizaGastos != null) {
@@ -331,14 +297,12 @@ public class PanelGastos extends JPanel {
 				panelResumenTarjeta.refrescar();
 			}
 		} catch (Exception e) {
-
 			e.printStackTrace();
 			JOptionPane.showMessageDialog(this, "Error al guardar gasto");
 		}
 	}
 
 	private void limpiarFormulario() {
-
 		txtDescripcion.setText("");
 		txtMonto.setText("");
 		txtCuotas.setText("");
@@ -347,112 +311,81 @@ public class PanelGastos extends JPanel {
 	}
 
 	public void cargarGastos() {
-
 		tableModel.setRowCount(0);
-
 		try {
-
 			gastosCache = gastoService.listarPorUsuario(usuario.getUsuarioID());
 
 			for (Gasto g : gastosCache) {
+				// Solo usamos cuenta, porque Gasto no sabe de tarjetas
+				String cuentaNombre = g.getCuenta() != null ? g.getCuenta().getNombre() : "-";
 
-				tableModel.addRow(
-						new Object[] { g.getId(), g.getFecha(), g.getDescripcion(), g.getMonto(), g.getCategoria() });
+				tableModel.addRow(new Object[] { g.getId(), g.getFecha(), g.getDescripcion(), g.getMonto(),
+						g.getCategoria(), cuentaNombre });
 			}
-
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	private void actualizarCuenta() {
-
+	public void actualizarCuenta() {
 		modelCuenta.removeAllElements();
-
 		for (Cuenta c : cuentaService.getCuentasUsuario(usuario)) {
-
 			modelCuenta.addElement(c);
 		}
 	}
 
 	public void actualizarTarjetaCredito() {
-
 		modelTarjeta.removeAllElements();
-
 		for (TarjetaCredito t : tarjetaCreditoService.getTarjetasUsuario(usuario.getUsuarioID())) {
-
 			modelTarjeta.addElement(t);
 		}
 	}
 
 	private void actualizarGraficos() {
-
 		panelGraficos.removeAll();
-
 		actualizarGraficoPie();
 		actualizarGraficoBarras();
-
 		panelGraficos.revalidate();
 		panelGraficos.repaint();
 	}
 
 	private void actualizarGraficoPie() {
-
 		if (gastosCache == null || gastosCache.isEmpty()) {
 			return;
 		}
 
 		DefaultPieDataset dataset = new DefaultPieDataset();
-
 		Map<CategoriaGasto, BigDecimal> totales = new HashMap<>();
-
 		for (Gasto g : gastosCache) {
-
 			totales.put(g.getCategoria(), totales.getOrDefault(g.getCategoria(), BigDecimal.ZERO).add(g.getMonto()));
 		}
-
 		for (Map.Entry<CategoriaGasto, BigDecimal> e : totales.entrySet()) {
-
 			dataset.setValue(e.getKey(), e.getValue());
 		}
-
 		JFreeChart chart = ChartFactory.createPieChart("Gastos por Categoría", dataset, true, true, false);
-
 		ChartPanel chartPanel = new ChartPanel(chart);
 		chartPanel.setPreferredSize(new Dimension(400, 300));
-
 		panelGraficos.add(chartPanel);
 	}
 
 	private void actualizarGraficoBarras() {
-
 		if (gastosCache == null || gastosCache.isEmpty()) {
 			return;
 		}
 
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-
 		Map<Integer, BigDecimal> totales = new HashMap<>();
-
 		for (Gasto g : gastosCache) {
-
 			int mes = g.getFecha().getMonthValue();
-
 			totales.put(mes, totales.getOrDefault(mes, BigDecimal.ZERO).add(g.getMonto()));
 		}
-
 		for (Map.Entry<Integer, BigDecimal> e : totales.entrySet()) {
-
 			String nombreMes = java.time.Month.of(e.getKey()).getDisplayName(TextStyle.SHORT, Locale.getDefault());
-
 			dataset.addValue(e.getValue(), "Gastos", nombreMes);
 		}
-
 		JFreeChart chart = ChartFactory.createBarChart("Gastos Mensuales", "Mes", "Monto", dataset);
-
 		ChartPanel chartPanel = new ChartPanel(chart);
 		chartPanel.setPreferredSize(new Dimension(400, 300));
-
 		panelGraficos.add(chartPanel);
 	}
 
@@ -468,16 +401,12 @@ public class PanelGastos extends JPanel {
 	}
 
 	private void mostrarCamposCredito(boolean visible) {
-
 		lblTarjeta.setVisible(visible);
 		cbTarjetaCredito.setVisible(visible);
-
 		lblCuotas.setVisible(visible);
 		txtCuotas.setVisible(visible);
-
 		lblInteres.setVisible(visible);
 		txtInteres.setVisible(visible);
-
 		btnSimular.setVisible(visible);
 		lblTotalFinanciado.setVisible(visible);
 		lblValorCuota.setVisible(visible);
