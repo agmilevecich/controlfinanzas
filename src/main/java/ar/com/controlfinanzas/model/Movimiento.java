@@ -39,8 +39,6 @@ public class Movimiento {
 	private FormaPago formaPago;
 
 	private String compraId;
-
-	private int cuotas;
 	private int numeroCuotas;
 	private int totalCuotas;
 	private int cuotasPendientes;
@@ -128,14 +126,6 @@ public class Movimiento {
 
 	public void setPendiente(boolean pendiente) {
 		this.pendiente = pendiente;
-	}
-
-	public int getCuotas() {
-		return cuotas;
-	}
-
-	public void setCuotas(int cuotas) {
-		this.cuotas = cuotas;
 	}
 
 	public int getCuotasPendientes() {
