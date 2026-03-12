@@ -211,15 +211,18 @@ public class TarjetaCreditoService {
 
 	public BigDecimal calcularDeudaCiclo(TarjetaCredito tarjeta) {
 
-		List<Movimiento> movimientos = getMovimientosCiclo(tarjeta);
+		LocalDate inicio = obtenerInicioCiclo(tarjeta);
+		LocalDate cierre = obtenerCierreActual(tarjeta);
 
-		BigDecimal deuda = BigDecimal.ZERO;
-
-		for (Movimiento m : movimientos) {
-			if (m.isPendiente()) {
-				deuda = deuda.add(m.getMonto());
-			}
-		}
+		BigDecimal deuda = em.createQuery("""
+				SELECT COALESCE(SUM(m.monto),0)
+				FROM Movimiento m
+				WHERE m.tarjeta = :tarjeta
+				AND m.formaPago = :formaPago
+				AND m.pendiente = true
+				AND m.fecha BETWEEN :inicio AND :cierre
+				""", BigDecimal.class).setParameter("tarjeta", tarjeta).setParameter("formaPago", FormaPago.CREDITO)
+				.setParameter("inicio", inicio).setParameter("cierre", cierre).getSingleResult();
 
 		return deuda;
 	}

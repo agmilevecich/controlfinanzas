@@ -45,6 +45,7 @@ public class Movimiento {
 	private int totalCuotas;
 	private int cuotasPendientes;
 	private BigDecimal interes;
+	private String periodo;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "cuenta_id", nullable = true)
@@ -191,6 +192,14 @@ public class Movimiento {
 
 	public void setTotalCuotas(int totalCuotas) {
 		this.totalCuotas = totalCuotas;
+	}
+
+	public String getPeriodo() {
+		return periodo;
+	}
+
+	public void setPeriodo(String periodo) {
+		this.periodo = periodo;
 	}
 
 	public void validar() {
