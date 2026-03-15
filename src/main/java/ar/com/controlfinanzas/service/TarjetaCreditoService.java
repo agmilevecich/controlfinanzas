@@ -110,26 +110,48 @@ public class TarjetaCreditoService {
 
 		for (Movimiento m : movimientos) {
 
-			if (!m.isPendiente()) {
+			BigDecimal pagado = m.getMontoPagado() == null ? BigDecimal.ZERO : m.getMontoPagado();
+
+			BigDecimal deudaCuota = m.getMonto().subtract(pagado);
+
+			if (deudaCuota.compareTo(BigDecimal.ZERO) <= 0) {
 				continue;
 			}
 
-			BigDecimal montoMovimiento = m.getMonto();
+			if (restante.compareTo(deudaCuota) >= 0) {
 
-			if (restante.compareTo(montoMovimiento) >= 0) {
-
+				m.setMontoPagado(m.getMonto());
 				m.setPendiente(false);
-				em.merge(m);
 
-				restante = restante.subtract(montoMovimiento);
+				restante = restante.subtract(deudaCuota);
 
 			} else {
+
+				m.setMontoPagado(pagado.add(restante));
+
+				restante = BigDecimal.ZERO;
+
+				em.merge(m);
+
 				break;
 			}
+
+			em.merge(m);
 
 			if (restante.compareTo(BigDecimal.ZERO) == 0) {
 				break;
 			}
+		}
+
+		if (restante.compareTo(BigDecimal.ZERO) > 0) {
+
+			Movimiento saldoFavor = new Movimiento(LocalDate.now(), "Saldo a favor tarjeta " + tarjeta.getNombre(),
+					restante, TipoMovimiento.INGRESO);
+
+			saldoFavor.setTarjeta(tarjeta);
+			saldoFavor.setPendiente(false);
+
+			em.persist(saldoFavor);
 		}
 
 		Movimiento pago = new Movimiento(LocalDate.now(), "Pago tarjeta " + tarjeta.getNombre(), montoPago,
@@ -138,16 +160,16 @@ public class TarjetaCreditoService {
 		pago.setFormaPago(FormaPago.DEBITO);
 		pago.setCuenta(cuenta);
 		pago.setPendiente(false);
-
 		em.persist(pago);
-
+		cuenta.getMovimientos().add(pago);
 		em.getTransaction().commit();
 	}
 
 	public List<Movimiento> getMovimientosPendientes(TarjetaCredito tarjeta) {
 
-		return em.createQuery("SELECT m FROM Movimiento m " + "WHERE m.tarjeta = :tarjeta " + "AND m.pendiente = true "
-				+ "ORDER BY m.fecha", Movimiento.class).setParameter("tarjeta", tarjeta).getResultList();
+		return em.createQuery(
+				"SELECT m FROM Movimiento m WHERE m.tarjeta = :tarjeta AND m.pendiente = true ORDER BY m.fecha",
+				Movimiento.class).setParameter("tarjeta", tarjeta).getResultList();
 	}
 
 	public void registrarCompraCuotas(TarjetaCredito tarjeta, BigDecimal montoTotal, int cuotas, String descripcion) {
@@ -167,10 +189,13 @@ public class TarjetaCreditoService {
 			m.setMonto(montoCuota);
 			m.setFecha(LocalDate.now().plusMonths(i - 1));
 
-			m.setNumeroCuotas(cuotas);
+			m.setNumeroCuotas(i);
 			m.setTotalCuotas(cuotas);
+			m.setCuotasPendientes(cuotas - i);
+
 			m.setCompraId(compraId);
 
+			m.setFormaPago(FormaPago.CREDITO);
 			m.setPendiente(true);
 
 			em.persist(m);
@@ -185,7 +210,8 @@ public class TarjetaCreditoService {
 			return monto;
 		}
 
-		BigDecimal recargo = monto.multiply(interes);
+		BigDecimal recargo = monto.multiply(interes).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP);
+
 		return monto.add(recargo);
 	}
 
@@ -201,8 +227,23 @@ public class TarjetaCreditoService {
 		BigDecimal deuda = BigDecimal.ZERO;
 
 		for (Movimiento m : movimientos) {
-			if (m.isPendiente()) {
-				deuda = deuda.add(m.getMonto());
+
+			if (m.getTipo() == TipoMovimiento.GASTO) {
+
+				BigDecimal pagado = m.getMontoPagado() == null ? BigDecimal.ZERO : m.getMontoPagado();
+
+				BigDecimal restante = m.getMonto().subtract(pagado);
+
+				if (m.isPendiente()) {
+					deuda = deuda.add(restante);
+				}
+
+			}
+
+			if (m.getTipo() == TipoMovimiento.INGRESO) {
+
+				deuda = deuda.subtract(m.getMonto());
+
 			}
 		}
 
@@ -214,15 +255,27 @@ public class TarjetaCreditoService {
 		LocalDate inicio = obtenerInicioCiclo(tarjeta);
 		LocalDate cierre = obtenerCierreActual(tarjeta);
 
-		BigDecimal deuda = em.createQuery("""
-				SELECT COALESCE(SUM(m.monto),0)
+		List<Movimiento> movimientos = em.createQuery("""
+				SELECT m
 				FROM Movimiento m
 				WHERE m.tarjeta = :tarjeta
 				AND m.formaPago = :formaPago
 				AND m.pendiente = true
 				AND m.fecha BETWEEN :inicio AND :cierre
-				""", BigDecimal.class).setParameter("tarjeta", tarjeta).setParameter("formaPago", FormaPago.CREDITO)
-				.setParameter("inicio", inicio).setParameter("cierre", cierre).getSingleResult();
+				ORDER BY m.fecha
+				""", Movimiento.class).setParameter("tarjeta", tarjeta).setParameter("formaPago", FormaPago.CREDITO)
+				.setParameter("inicio", inicio).setParameter("cierre", cierre).getResultList();
+
+		BigDecimal deuda = BigDecimal.ZERO;
+
+		for (Movimiento m : movimientos) {
+
+			BigDecimal restante = m.getMonto().subtract(m.getMontoPagado());
+
+			if (restante.compareTo(BigDecimal.ZERO) > 0) {
+				deuda = deuda.add(restante);
+			}
+		}
 
 		return deuda;
 	}
@@ -243,6 +296,29 @@ public class TarjetaCreditoService {
 		}
 
 		return BigDecimal.ZERO;
+	}
+
+	public BigDecimal calcularPagoMinimo(TarjetaCredito tarjeta) {
+
+		BigDecimal deuda = calcularDeudaCiclo(tarjeta);
+
+		if (deuda.compareTo(BigDecimal.ZERO) <= 0) {
+			return BigDecimal.ZERO;
+		}
+
+		BigDecimal minimo = deuda.multiply(new BigDecimal("0.05"));
+
+		BigDecimal minimoFijo = new BigDecimal("10000");
+
+		if (minimo.compareTo(minimoFijo) < 0) {
+			minimo = minimoFijo;
+		}
+
+		if (minimo.compareTo(deuda) > 0) {
+			minimo = deuda;
+		}
+
+		return minimo;
 	}
 
 }

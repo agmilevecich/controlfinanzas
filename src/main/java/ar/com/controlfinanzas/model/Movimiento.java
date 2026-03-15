@@ -45,6 +45,8 @@ public class Movimiento {
 	private BigDecimal interes;
 	private String periodo;
 
+	private BigDecimal montoPagado = BigDecimal.ZERO;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "cuenta_id", nullable = true)
 	private Cuenta cuenta;
@@ -190,6 +192,14 @@ public class Movimiento {
 
 	public void setPeriodo(String periodo) {
 		this.periodo = periodo;
+	}
+
+	public BigDecimal getMontoPagado() {
+		return montoPagado == null ? BigDecimal.ZERO : montoPagado;
+	}
+
+	public void setMontoPagado(BigDecimal montoPagado) {
+		this.montoPagado = montoPagado;
 	}
 
 	public void validar() {

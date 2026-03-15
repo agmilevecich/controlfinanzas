@@ -110,7 +110,7 @@ public class MovimientoService {
 			mov.setNumeroCuotas(i); // cuota actual
 			mov.setTotalCuotas(cuotas); // total de cuotas
 			mov.setCuotasPendientes(cuotas - i);
-
+			mov.setMontoPagado(BigDecimal.ZERO);
 			mov.setInteres(interes);
 
 			mov.setPendiente(true);

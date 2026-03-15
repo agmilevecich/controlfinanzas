@@ -15,6 +15,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableModel;
 
 import ar.com.controlfinanzas.model.Cuenta;
@@ -80,6 +81,7 @@ public class PanelResumenTarjeta extends JPanel {
 		panelSuperior.add(new JLabel("Deuda del mes:"), gbc);
 		gbc.gridx = 1;
 		lblDeudaCiclo = new JLabel("$0");
+		lblDeudaCiclo.setHorizontalAlignment(SwingConstants.RIGHT);
 		panelSuperior.add(lblDeudaCiclo, gbc);
 
 		gbc.gridx = 0;
@@ -88,6 +90,7 @@ public class PanelResumenTarjeta extends JPanel {
 
 		gbc.gridx = 1;
 		lblDeuda = new JLabel("$0");
+		lblDeuda.setHorizontalAlignment(SwingConstants.RIGHT);
 		panelSuperior.add(lblDeuda, gbc);
 
 		gbc.gridx = 0;
@@ -96,6 +99,7 @@ public class PanelResumenTarjeta extends JPanel {
 
 		gbc.gridx = 1;
 		lblDisponible = new JLabel("$0");
+		lblDisponible.setHorizontalAlignment(SwingConstants.RIGHT);
 		panelSuperior.add(lblDisponible, gbc);
 
 		gbc.gridx = 0;
@@ -104,6 +108,7 @@ public class PanelResumenTarjeta extends JPanel {
 
 		gbc.gridx = 1;
 		lblAFavor = new JLabel("$0");
+		lblAFavor.setHorizontalAlignment(SwingConstants.RIGHT);
 		panelSuperior.add(lblAFavor, gbc);
 
 		gbc.gridx = 0;
@@ -167,11 +172,12 @@ public class PanelResumenTarjeta extends JPanel {
 		BigDecimal deudaCiclo = tarjetaService.calcularDeudaCiclo(tarjeta);
 		BigDecimal deudaTotal = tarjetaService.calcularDeudaTotal(tarjeta);
 		BigDecimal disponible = tarjetaService.calcularDisponible(tarjeta);
+		BigDecimal saldoFavor = tarjetaService.calcularSaldoFavor(tarjeta);
 
 		lblDeuda.setText(NumeroUtils.formatearMonedaARS(deudaTotal));
 		lblDisponible.setText(NumeroUtils.formatearMonedaARS(disponible));
 		lblDeudaCiclo.setText(NumeroUtils.formatearMonedaARS(deudaCiclo));
-		lblAFavor.setText(NumeroUtils.formatearMonedaARS(tarjetaService.calcularSaldoFavor(tarjeta)));
+		lblAFavor.setText(NumeroUtils.formatearMonedaARS(saldoFavor));
 	}
 
 	private void pagarTarjeta() {
@@ -194,10 +200,44 @@ public class PanelResumenTarjeta extends JPanel {
 		Cuenta cuenta = (Cuenta) JOptionPane.showInputDialog(this, "Seleccione una cuenta:", "Cuenta",
 				JOptionPane.QUESTION_MESSAGE, null, cuentas.toArray(), cuentas.get(0));
 
+		if (cuenta == null) {
+			return;
+		}
+
 		try {
 
-			tarjetaService.pagarTarjeta(tarjeta, cuenta, BigDecimal.ZERO); // odificar BigDeecimal cuando este hecho el
-																			// método para seleccionar forma de pago
+			// elegir tipo de pago
+			String[] opciones = { "Pago mínimo", "Pago parcial", "Pago total" };
+
+			String opcion = (String) JOptionPane.showInputDialog(this, "Seleccione tipo de pago:", "Pago de tarjeta",
+					JOptionPane.QUESTION_MESSAGE, null, opciones, opciones[2]);
+
+			if (opcion == null) {
+				return;
+			}
+
+			BigDecimal montoPago;
+
+			if (opcion.equals("Pago total")) {
+
+				montoPago = tarjetaService.calcularDeudaCiclo(tarjeta);
+
+			} else if (opcion.equals("Pago mínimo")) {
+
+				montoPago = tarjetaService.calcularPagoMinimo(tarjeta);
+
+			} else {
+
+				String monto = JOptionPane.showInputDialog(this, "Ingrese el monto a pagar:");
+
+				if (monto == null || monto.isEmpty()) {
+					return;
+				}
+
+				montoPago = new BigDecimal(monto);
+			}
+
+			tarjetaService.pagarTarjeta(tarjeta, cuenta, montoPago);
 
 			if (actualizar != null) {
 				actualizar.run();
