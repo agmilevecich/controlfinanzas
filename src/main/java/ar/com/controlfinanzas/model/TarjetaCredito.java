@@ -1,6 +1,7 @@
 package ar.com.controlfinanzas.model;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.persistence.Column;
@@ -44,6 +45,9 @@ public class TarjetaCredito {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "usuario_id", nullable = false)
 	private Usuario usuario;
+
+	@OneToMany(mappedBy = "tarjeta")
+	private List<CompraTarjeta> compras = new ArrayList<>();
 
 	public TarjetaCredito() {
 	}
@@ -125,6 +129,10 @@ public class TarjetaCredito {
 	public BigDecimal getDeuda() {
 		return movimientos.stream().filter(Movimiento::isPendiente).map(Movimiento::getMonto).reduce(BigDecimal.ZERO,
 				BigDecimal::add);
+	}
+
+	public List<CompraTarjeta> getCompras() {
+		return compras;
 	}
 
 	@Override

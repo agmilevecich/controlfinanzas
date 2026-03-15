@@ -9,6 +9,7 @@ import java.util.UUID;
 import javax.swing.JOptionPane;
 
 import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
+import ar.com.controlfinanzas.model.CompraTarjeta;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.FormaPago;
 import ar.com.controlfinanzas.model.Movimiento;
@@ -90,7 +91,18 @@ public class MovimientoService {
 
 		LocalDate fechaBase = LocalDate.now();
 
-		String compraId = UUID.randomUUID().toString();
+		UUID compraId = UUID.randomUUID();
+
+		CompraTarjeta compra = new CompraTarjeta();
+		compra.setId(compraId);
+		compra.setComercio(descripcion);
+		compra.setMontoTotal(montoTotal);
+		compra.setCuotas(cuotas);
+		compra.setInteres(interes);
+		compra.setFechaCompra(LocalDate.now());
+		compra.setTarjeta(tarjeta);
+
+		em.persist(compra);
 
 		for (int i = 1; i <= cuotas; i++) {
 
@@ -100,7 +112,7 @@ public class MovimientoService {
 			String periodo = mov.getFecha().getYear() + "-" + String.format("%02d", mov.getFecha().getMonthValue());
 
 			mov.setPeriodo(periodo);
-			mov.setCompraId(compraId);
+			mov.setCompraId(compraId.toString());
 
 			mov.setFormaPago(FormaPago.CREDITO);
 
