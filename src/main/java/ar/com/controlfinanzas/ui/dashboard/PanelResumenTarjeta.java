@@ -169,10 +169,10 @@ public class PanelResumenTarjeta extends JPanel {
 					NumeroUtils.formatearMonedaARS(m.getMonto()), m.isPendiente() ? "Pendiente" : "Pagado" });
 		}
 
-		BigDecimal deudaCiclo = tarjetaService.calcularDeudaCiclo(tarjeta);
-		BigDecimal deudaTotal = tarjetaService.calcularDeudaTotal(tarjeta);
-		BigDecimal disponible = tarjetaService.calcularDisponible(tarjeta);
-		BigDecimal saldoFavor = tarjetaService.calcularSaldoFavor(tarjeta);
+		BigDecimal deudaCiclo = tarjetaService.obtenerResumenTarjeta(tarjeta).getDeudaMes();
+		BigDecimal deudaTotal = tarjetaService.obtenerResumenTarjeta(tarjeta).getDeudaTotal();
+		BigDecimal disponible = tarjetaService.obtenerResumenTarjeta(tarjeta).getLimiteDisponible();
+		BigDecimal saldoFavor = tarjetaService.obtenerResumenTarjeta(tarjeta).getSaldoFavor();
 
 		lblDeuda.setText(NumeroUtils.formatearMonedaARS(deudaTotal));
 		lblDisponible.setText(NumeroUtils.formatearMonedaARS(disponible));

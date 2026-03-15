@@ -3,6 +3,7 @@ package ar.com.controlfinanzas.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.YearMonth;
 import java.util.List;
 import java.util.UUID;
 
@@ -10,6 +11,7 @@ import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.FormaPago;
 import ar.com.controlfinanzas.model.Movimiento;
+import ar.com.controlfinanzas.model.ResumenTarjeta;
 import ar.com.controlfinanzas.model.TarjetaCredito;
 import ar.com.controlfinanzas.repository.TarjetaCreditoRepository;
 import jakarta.persistence.EntityManager;
@@ -39,7 +41,7 @@ public class TarjetaCreditoService {
 		return repo.buscarPorId(em, id);
 	}
 
-	public LocalDate obtenerInicioCiclo(TarjetaCredito tarjeta) {
+	private LocalDate obtenerInicioCiclo(TarjetaCredito tarjeta) {
 
 		int diaCierre = tarjeta.getDiaCierre();
 		LocalDate hoy = LocalDate.now();
@@ -53,7 +55,7 @@ public class TarjetaCreditoService {
 		}
 	}
 
-	public LocalDate obtenerCierreActual(TarjetaCredito tarjeta) {
+	private LocalDate obtenerCierreActual(TarjetaCredito tarjeta) {
 
 		int diaCierre = tarjeta.getDiaCierre();
 		LocalDate hoy = LocalDate.now();
@@ -112,8 +114,7 @@ public class TarjetaCreditoService {
 
 			BigDecimal pagado = m.getMontoPagado() == null ? BigDecimal.ZERO : m.getMontoPagado();
 
-			BigDecimal deudaCuota = m.getMonto().subtract(pagado);
-
+			BigDecimal deudaCuota = m.getRestante();
 			if (deudaCuota.compareTo(BigDecimal.ZERO) <= 0) {
 				continue;
 			}
@@ -222,30 +223,11 @@ public class TarjetaCreditoService {
 
 	public BigDecimal calcularDeudaTotal(TarjetaCredito tarjeta) {
 
-		List<Movimiento> movimientos = getMovimientosTarjeta(tarjeta);
-
-		BigDecimal deuda = BigDecimal.ZERO;
-
-		for (Movimiento m : movimientos) {
-
-			if (m.getTipo() == TipoMovimiento.GASTO) {
-
-				BigDecimal pagado = m.getMontoPagado() == null ? BigDecimal.ZERO : m.getMontoPagado();
-
-				BigDecimal restante = m.getMonto().subtract(pagado);
-
-				if (m.isPendiente()) {
-					deuda = deuda.add(restante);
-				}
-
-			}
-
-			if (m.getTipo() == TipoMovimiento.INGRESO) {
-
-				deuda = deuda.subtract(m.getMonto());
-
-			}
-		}
+		BigDecimal deuda = em.createQuery(
+				"SELECT COALESCE(SUM(CASE WHEN m.tipo = :gasto THEN (m.monto - m.montoPagado) WHEN m.tipo = :ingreso THEN -m.monto "
+						+ "END),0) FROM Movimiento m WHERE m.tarjeta = :tarjeta",
+				BigDecimal.class).setParameter("tarjeta", tarjeta).setParameter("gasto", TipoMovimiento.GASTO)
+				.setParameter("ingreso", TipoMovimiento.INGRESO).getSingleResult();
 
 		return deuda;
 	}
@@ -319,6 +301,49 @@ public class TarjetaCreditoService {
 		}
 
 		return minimo;
+	}
+
+	public BigDecimal calcularDeudaMes(TarjetaCredito tarjeta, YearMonth periodo) {
+
+		BigDecimal deudaMes = em
+				.createQuery("SELECT COALESCE(SUM(m.monto - m.montoPagado),0) " + "FROM Movimiento m "
+						+ "WHERE m.tarjeta = :tarjeta " + "AND m.tipo = :tipo " + "AND m.periodo = :periodo "
+						+ "AND m.pendiente = true", BigDecimal.class)
+				.setParameter("tarjeta", tarjeta).setParameter("tipo", TipoMovimiento.GASTO)
+				.setParameter("periodo", periodo.toString()).getSingleResult();
+
+		return deudaMes;
+	}
+
+	public BigDecimal calcularLimiteDisponible(TarjetaCredito tarjeta) {
+
+		BigDecimal deuda = calcularDeudaTotal(tarjeta);
+
+		return tarjeta.getLimite().subtract(deuda);
+	}
+
+	public ResumenTarjeta obtenerResumenTarjeta(TarjetaCredito tarjeta) {
+
+		ResumenTarjeta resumen = new ResumenTarjeta();
+
+		BigDecimal deudaTotal = calcularDeudaTotal(tarjeta);
+		BigDecimal deudaMes = calcularDeudaMes(tarjeta, YearMonth.now());
+
+		BigDecimal saldoFavor = BigDecimal.ZERO;
+
+		if (deudaTotal.compareTo(BigDecimal.ZERO) < 0) {
+			saldoFavor = deudaTotal.abs();
+			deudaTotal = BigDecimal.ZERO;
+		}
+
+		BigDecimal limiteDisponible = calcularLimiteDisponible(tarjeta);
+
+		resumen.setDeudaMes(deudaMes);
+		resumen.setDeudaTotal(deudaTotal);
+		resumen.setLimiteDisponible(limiteDisponible);
+		resumen.setSaldoFavor(saldoFavor);
+
+		return resumen;
 	}
 
 }

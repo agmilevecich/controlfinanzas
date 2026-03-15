@@ -159,7 +159,7 @@ public class Movimiento {
 	}
 
 	public void setMonto(BigDecimal monto) {
-		this.monto = monto;
+		this.monto = (monto != null) ? monto : BigDecimal.ZERO;
 	}
 
 	public void setId(Long id) {
@@ -199,7 +199,11 @@ public class Movimiento {
 	}
 
 	public void setMontoPagado(BigDecimal montoPagado) {
-		this.montoPagado = montoPagado;
+		this.montoPagado = (montoPagado != null) ? montoPagado : BigDecimal.ZERO;
+	}
+
+	public BigDecimal getRestante() {
+		return monto.subtract(montoPagado);
 	}
 
 	public void validar() {
