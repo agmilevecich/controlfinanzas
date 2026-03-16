@@ -31,7 +31,11 @@ public class MovimientoService {
 			// Validamos que cumpla las reglas de tarjeta vs cuenta
 			movimiento.validar();
 
-			em.getTransaction().begin();
+			boolean nuevaTransiccion = em.getTransaction().isActive();
+
+			if (nuevaTransiccion) {
+				em.getTransaction().begin();
+			}
 
 			if (movimiento.getFormaPago() != FormaPago.CREDITO) {
 				// Movimientos normales o pagos de tarjeta
@@ -48,7 +52,9 @@ public class MovimientoService {
 				em.persist(movimiento);
 			}
 
-			em.getTransaction().commit();
+			if (nuevaTransiccion) {
+				em.getTransaction().commit();
+			}
 
 		} catch (Exception e) {
 			if (em.getTransaction().isActive()) {
@@ -76,61 +82,88 @@ public class MovimientoService {
 	public void registrarCompraCuotas(TarjetaCredito tarjeta, String descripcion, BigDecimal montoTotal, int cuotas,
 			BigDecimal interes) {
 
-		// Calculamos el total financiado
-		BigDecimal totalFinanciado = montoTotal;
+		try {
+			em.getTransaction().begin();
+			// Calculamos el total financiado
+			BigDecimal totalFinanciado = montoTotal;
 
-		if (interes != null && interes.compareTo(BigDecimal.ZERO) > 0) {
+			if (interes != null && interes.compareTo(BigDecimal.ZERO) > 0) {
 
-			BigDecimal recargo = montoTotal.multiply(interes).divide(new BigDecimal("100"), 2, RoundingMode.HALF_UP);
+				BigDecimal recargo = montoTotal.multiply(interes).divide(new BigDecimal("100"), 2,
+						RoundingMode.HALF_UP);
 
-			totalFinanciado = montoTotal.add(recargo);
+				totalFinanciado = montoTotal.add(recargo);
+			}
+
+			// Calculamos monto por cuota
+			BigDecimal montoBase = totalFinanciado.divide(new BigDecimal(cuotas), 2, RoundingMode.HALF_UP);
+			BigDecimal totalCalculado = montoBase.multiply(BigDecimal.valueOf(cuotas));
+			BigDecimal diferencia = totalFinanciado.subtract(totalCalculado);
+
+			LocalDate fechaBase = LocalDate.now();
+
+			UUID compraId = generarCompraId();
+
+			CompraTarjeta compra = new CompraTarjeta();
+			compra.setId(compraId);
+			compra.setComercio(descripcion);
+			compra.setMontoTotal(montoTotal);
+			compra.setCuotas(cuotas);
+			compra.setInteres(interes);
+			compra.setFechaCompra(LocalDate.now());
+			compra.setTarjeta(tarjeta);
+
+			em.persist(compra);
+
+			for (int i = 1; i <= cuotas; i++) {
+
+				LocalDate fechaCuota = fechaBase.plusMonths(i - 1);
+
+				BigDecimal montoCuota = montoBase;
+
+				if (i == cuotas) {
+					montoCuota = montoCuota.add(diferencia);
+				}
+
+				String desCuotas = descripcion + " (" + i + "/" + cuotas + ")";
+
+				Movimiento mov = new Movimiento(fechaCuota, desCuotas, montoCuota, TipoMovimiento.GASTO);
+
+				mov.setPeriodo(generarPeriodo(mov));
+				mov.setCompraId(compraId.toString());
+
+				mov.setFormaPago(FormaPago.CREDITO);
+
+				mov.setCuenta(null); // compra con tarjeta no afecta cuenta
+				mov.setTarjeta(tarjeta);
+
+				mov.setNumeroCuotas(i); // cuota actual
+				mov.setTotalCuotas(cuotas); // total de cuotas
+				mov.setCuotasPendientes(cuotas - i);
+				mov.setMontoPagado(BigDecimal.ZERO);
+				mov.setInteres(interes);
+
+				mov.setPendiente(true);
+
+				registrarMovimiento(mov);
+
+				em.getTransaction().commit();
+			}
+
+		} catch (Exception e) {
+			if (em.getTransaction().isActive()) {
+				em.getTransaction().rollback();
+			}
+			JOptionPane.showMessageDialog(null, e.getMessage());
 		}
+	}
 
-		// Calculamos monto por cuota
-		BigDecimal montoCuota = totalFinanciado.divide(new BigDecimal(cuotas), 2, RoundingMode.HALF_UP);
+	private UUID generarCompraId() {
+		return UUID.randomUUID();
+	}
 
-		LocalDate fechaBase = LocalDate.now();
-
-		UUID compraId = UUID.randomUUID();
-
-		CompraTarjeta compra = new CompraTarjeta();
-		compra.setId(compraId);
-		compra.setComercio(descripcion);
-		compra.setMontoTotal(montoTotal);
-		compra.setCuotas(cuotas);
-		compra.setInteres(interes);
-		compra.setFechaCompra(LocalDate.now());
-		compra.setTarjeta(tarjeta);
-
-		em.persist(compra);
-
-		for (int i = 1; i <= cuotas; i++) {
-
-			LocalDate fechaCuota = fechaBase.plusMonths(i - 1);
-
-			String desCuotas = descripcion + " (" + i + "/" + cuotas + ")";
-
-			Movimiento mov = new Movimiento(fechaCuota, desCuotas, montoCuota, TipoMovimiento.GASTO);
-			String periodo = mov.getFecha().getYear() + "-" + String.format("%02d", mov.getFecha().getMonthValue());
-
-			mov.setPeriodo(periodo);
-			mov.setCompraId(compraId.toString());
-
-			mov.setFormaPago(FormaPago.CREDITO);
-
-			mov.setCuenta(null); // compra con tarjeta no afecta cuenta
-			mov.setTarjeta(tarjeta);
-
-			mov.setNumeroCuotas(i); // cuota actual
-			mov.setTotalCuotas(cuotas); // total de cuotas
-			mov.setCuotasPendientes(cuotas - i);
-			mov.setMontoPagado(BigDecimal.ZERO);
-			mov.setInteres(interes);
-
-			mov.setPendiente(true);
-
-			registrarMovimiento(mov);
-		}
+	private String generarPeriodo(Movimiento mov) {
+		return mov.getFecha().getYear() + "-" + String.format("%02d", mov.getFecha().getMonthValue());
 	}
 
 	public BigDecimal calcularDeudaTarjeta(TarjetaCredito tarjeta) {
