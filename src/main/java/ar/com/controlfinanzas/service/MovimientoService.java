@@ -108,7 +108,9 @@ public class MovimientoService {
 
 			LocalDate fechaCuota = fechaBase.plusMonths(i - 1);
 
-			Movimiento mov = new Movimiento(fechaCuota, descripcion, montoCuota, TipoMovimiento.GASTO);
+			String desCuotas = descripcion + " (" + i + "/" + cuotas + ")";
+
+			Movimiento mov = new Movimiento(fechaCuota, desCuotas, montoCuota, TipoMovimiento.GASTO);
 			String periodo = mov.getFecha().getYear() + "-" + String.format("%02d", mov.getFecha().getMonthValue());
 
 			mov.setPeriodo(periodo);

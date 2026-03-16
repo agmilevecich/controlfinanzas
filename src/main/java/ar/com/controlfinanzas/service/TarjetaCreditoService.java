@@ -5,7 +5,6 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
-import java.util.UUID;
 
 import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
 import ar.com.controlfinanzas.model.Cuenta;
@@ -171,38 +170,6 @@ public class TarjetaCreditoService {
 		return em.createQuery(
 				"SELECT m FROM Movimiento m WHERE m.tarjeta = :tarjeta AND m.pendiente = true ORDER BY m.fecha",
 				Movimiento.class).setParameter("tarjeta", tarjeta).getResultList();
-	}
-
-	public void registrarCompraCuotas(TarjetaCredito tarjeta, BigDecimal montoTotal, int cuotas, String descripcion) {
-
-		em.getTransaction().begin();
-
-		BigDecimal montoCuota = montoTotal.divide(BigDecimal.valueOf(cuotas), 2, RoundingMode.HALF_UP);
-
-		String compraId = UUID.randomUUID().toString();
-
-		for (int i = 1; i <= cuotas; i++) {
-
-			Movimiento m = new Movimiento();
-
-			m.setTarjeta(tarjeta);
-			m.setDescripcion(descripcion + " (" + i + "/" + cuotas + ")");
-			m.setMonto(montoCuota);
-			m.setFecha(LocalDate.now().plusMonths(i - 1));
-
-			m.setNumeroCuotas(i);
-			m.setTotalCuotas(cuotas);
-			m.setCuotasPendientes(cuotas - i);
-
-			m.setCompraId(compraId);
-
-			m.setFormaPago(FormaPago.CREDITO);
-			m.setPendiente(true);
-
-			em.persist(m);
-		}
-
-		em.getTransaction().commit();
 	}
 
 	public BigDecimal calcularTotalFinanciado(BigDecimal monto, BigDecimal interes) {
