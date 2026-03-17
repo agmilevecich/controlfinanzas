@@ -10,6 +10,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 
+import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.MovimientoService;
@@ -68,6 +69,8 @@ public class LoginFrame extends JFrame {
 
 		// Busca o crea usuario
 		Usuario usuario = usuarioService.buscarOCrearUsuario(nombre);
+
+		SesionUsuario.setUsuarioActual(usuario);
 
 		// Abre dashboard
 		DashboardFrame dashboard = new DashboardFrame(usuario, usuarioService, cuentaService, movimientoService, em);

@@ -39,6 +39,7 @@ import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.FormaPago;
 import ar.com.controlfinanzas.model.Gasto;
 import ar.com.controlfinanzas.model.Movimiento;
+import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.TarjetaCredito;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.CuentaService;
@@ -269,7 +270,7 @@ public class PanelGastos extends JPanel {
 				gasto.setCategoria(categoria);
 				gasto.setCuenta(cuenta);
 				gasto.setFormapago(formaPago);
-				gasto.setUsuario(usuario);
+				gasto.setUsuario(SesionUsuario.getUsuarioActual());
 				gastoService.guardar(gasto);
 
 				Movimiento mov = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.GASTO);

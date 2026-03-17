@@ -33,7 +33,7 @@ public class MovimientoService {
 
 			boolean nuevaTransiccion = em.getTransaction().isActive();
 
-			if (nuevaTransiccion) {
+			if (!nuevaTransiccion) {
 				em.getTransaction().begin();
 			}
 
@@ -52,7 +52,7 @@ public class MovimientoService {
 				em.persist(movimiento);
 			}
 
-			if (nuevaTransiccion) {
+			if (!nuevaTransiccion) {
 				em.getTransaction().commit();
 			}
 
