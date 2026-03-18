@@ -20,6 +20,7 @@ import javax.swing.table.DefaultTableModel;
 
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Movimiento;
+import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.TarjetaCredito;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.CuentaService;
@@ -48,9 +49,9 @@ public class PanelResumenTarjeta extends JPanel {
 
 	private CuentaService cuentaService;
 
-	public PanelResumenTarjeta(Usuario usuario, CuentaService cuentaService, EntityManager em) {
+	public PanelResumenTarjeta(CuentaService cuentaService, EntityManager em) {
 
-		this.usuario = usuario;
+		this.usuario = usuario = SesionUsuario.getUsuarioActual();
 		tarjetaService = new TarjetaCreditoService(em);
 		this.cuentaService = cuentaService;
 

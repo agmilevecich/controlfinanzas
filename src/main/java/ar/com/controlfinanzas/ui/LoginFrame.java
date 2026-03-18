@@ -73,7 +73,7 @@ public class LoginFrame extends JFrame {
 		SesionUsuario.setUsuarioActual(usuario);
 
 		// Abre dashboard
-		DashboardFrame dashboard = new DashboardFrame(usuario, usuarioService, cuentaService, movimientoService, em);
+		DashboardFrame dashboard = new DashboardFrame(cuentaService, movimientoService, em);
 		dashboard.setVisible(true);
 
 		this.dispose(); // cierra login

@@ -93,14 +93,14 @@ public class PanelGastos extends JPanel {
 	private JLabel lblInteres;
 
 	public PanelGastos(GastoService gastoService, CuentaService cuentaService, MovimientoService movimientoService,
-			TarjetaCreditoService tarjetaCreditoService, PanelResumenTarjeta panelResumenTarjeta, Usuario usuario) {
+			TarjetaCreditoService tarjetaCreditoService, PanelResumenTarjeta panelResumenTarjeta) {
 
 		this.gastoService = gastoService;
 		this.cuentaService = cuentaService;
 		this.movimientoService = movimientoService;
 		this.tarjetaCreditoService = tarjetaCreditoService;
 		this.panelResumenTarjeta = panelResumenTarjeta;
-		this.usuario = usuario;
+		this.usuario = SesionUsuario.getUsuarioActual();
 
 		inicializarPanel();
 		cargarGastos();

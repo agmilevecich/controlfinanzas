@@ -20,6 +20,7 @@ import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
 
 import ar.com.controlfinanzas.model.Banco;
+import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.TarjetaCredito;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.BancoService;
@@ -45,9 +46,9 @@ public class PanelTarjetaCredito extends JPanel {
 
 	private Runnable actualizar;
 
-	public PanelTarjetaCredito(Usuario usuario, EntityManager em) {
+	public PanelTarjetaCredito(EntityManager em) {
 
-		this.usuarioActual = usuario;
+		this.usuarioActual = SesionUsuario.getUsuarioActual();
 		tarjetaService = new TarjetaCreditoService(em);
 		bancoService = new BancoService(em);
 

@@ -17,6 +17,7 @@ import ar.com.controlfinanzas.domain.finanzas.TipoCuenta;
 import ar.com.controlfinanzas.model.Banco;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Moneda;
+import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.BancoService;
 import ar.com.controlfinanzas.service.CuentaService;
@@ -41,10 +42,9 @@ public class PanelCuentas extends JPanel {
 
 	private boolean cuentaNueva;
 
-	public PanelCuentas(Usuario usuario, CuentaService cuentaService, MovimientoService movimientoService,
-			BancoService bancoService) {
+	public PanelCuentas(CuentaService cuentaService, MovimientoService movimientoService, BancoService bancoService) {
 
-		this.usuario = usuario;
+		this.usuario = SesionUsuario.getUsuarioActual();
 		this.cuentaService = cuentaService;
 		this.movimientoService = movimientoService;
 		this.bancoService = bancoService;

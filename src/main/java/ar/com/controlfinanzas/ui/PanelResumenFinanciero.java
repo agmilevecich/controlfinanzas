@@ -22,6 +22,7 @@ import org.jfree.data.general.DefaultPieDataset;
 import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.CategoriaGasto;
 import ar.com.controlfinanzas.model.Gasto;
+import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.TipoInversion;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.GastoService;
@@ -50,12 +51,12 @@ public class PanelResumenFinanciero extends JPanel {
 	private Usuario usuario;
 
 	public PanelResumenFinanciero(InversionService inversionService, GastoService gastoService,
-			IngresoService ingresoService, Usuario usuario) {
+			IngresoService ingresoService) {
 
 		this.inversionService = inversionService;
 		this.gastoService = gastoService;
 		this.ingresoService = ingresoService;
-		this.usuario = usuario;
+		this.usuario = SesionUsuario.getUsuarioActual();
 
 		setLayout(new BorderLayout());
 

@@ -5,17 +5,16 @@ import java.time.YearMonth;
 import java.util.List;
 
 import ar.com.controlfinanzas.domain.inversion.Inversion;
+import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.repository.interfaces.InversionRepository;
 
 public class InversionService {
 
 	private final InversionRepository repository;
-	private Usuario usuario;
 
-	public InversionService(InversionRepository inversionRepositoty, Usuario usuario) {
+	public InversionService(InversionRepository inversionRepositoty) {
 		this.repository = inversionRepositoty;
-		this.usuario = usuario;
 	}
 
 	public Inversion crearInversion(Inversion inversion) {
@@ -24,7 +23,7 @@ public class InversionService {
 	}
 
 	public List<Inversion> obtenerTodas() {
-		return repository.listarPorUsuario(usuario.getUsuarioID());
+		return repository.listarPorUsuario(SesionUsuario.getUsuarioActual().getUsuarioID());
 	}
 
 	public void eliminarInversion(Long id) {

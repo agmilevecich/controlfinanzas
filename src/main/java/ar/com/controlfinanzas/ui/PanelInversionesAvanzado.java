@@ -26,6 +26,7 @@ import ar.com.controlfinanzas.controller.InversionController;
 import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.Alerta;
 import ar.com.controlfinanzas.model.Moneda;
+import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.TipoActivo;
 import ar.com.controlfinanzas.model.TipoInversion;
 import ar.com.controlfinanzas.model.Usuario;
@@ -75,10 +76,10 @@ public class PanelInversionesAvanzado extends JPanel {
 	private EntityManager em;
 
 	public PanelInversionesAvanzado(InversionController inversionController, PanelVencimiento panelVencimiento,
-			Usuario usuario, EntityManager em) {
+			EntityManager em) {
 		this.em = em;
 		this.inversionController = inversionController;
-		this.usuario = usuario;
+		this.usuario = SesionUsuario.getUsuarioActual();
 
 		panelDistribucion = new PanelDistribucion(inversionController);
 		panelPosiciones = new PanelPosiciones(new PosicionService(new InversionRepositoryJPA(em)));

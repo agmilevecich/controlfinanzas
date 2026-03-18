@@ -84,19 +84,18 @@ public class MovimientoService {
 
 		try {
 			em.getTransaction().begin();
-			// Calculamos el total financiado
+
 			BigDecimal totalFinanciado = montoTotal;
 
 			if (interes != null && interes.compareTo(BigDecimal.ZERO) > 0) {
-
 				BigDecimal recargo = montoTotal.multiply(interes).divide(new BigDecimal("100"), 2,
 						RoundingMode.HALF_UP);
 
 				totalFinanciado = montoTotal.add(recargo);
 			}
 
-			// Calculamos monto por cuota
-			BigDecimal montoBase = totalFinanciado.divide(new BigDecimal(cuotas), 2, RoundingMode.HALF_UP);
+			BigDecimal montoBase = totalFinanciado.divide(new BigDecimal(cuotas), 2, RoundingMode.DOWN);
+
 			BigDecimal totalCalculado = montoBase.multiply(BigDecimal.valueOf(cuotas));
 			BigDecimal diferencia = totalFinanciado.subtract(totalCalculado);
 
@@ -131,24 +130,21 @@ public class MovimientoService {
 
 				mov.setPeriodo(generarPeriodo(mov));
 				mov.setCompraId(compraId.toString());
-
 				mov.setFormaPago(FormaPago.CREDITO);
-
-				mov.setCuenta(null); // compra con tarjeta no afecta cuenta
 				mov.setTarjeta(tarjeta);
 
-				mov.setNumeroCuotas(i); // cuota actual
-				mov.setTotalCuotas(cuotas); // total de cuotas
+				mov.setNumeroCuotas(i);
+				mov.setTotalCuotas(cuotas);
 				mov.setCuotasPendientes(cuotas - i);
 				mov.setMontoPagado(BigDecimal.ZERO);
 				mov.setInteres(interes);
-
 				mov.setPendiente(true);
 
-				registrarMovimiento(mov);
-
-				em.getTransaction().commit();
+				// 🔴 IMPORTANTE: NO usar registrarMovimiento acá
+				em.persist(mov);
 			}
+
+			em.getTransaction().commit();
 
 		} catch (Exception e) {
 			if (em.getTransaction().isActive()) {

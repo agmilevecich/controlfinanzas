@@ -11,6 +11,7 @@ import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 
 import ar.com.controlfinanzas.model.Banco;
+import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.BancoService;
 import ar.com.controlfinanzas.ui.PanelBotones;
@@ -25,9 +26,9 @@ public class PanelBancos extends JPanel {
 
 	private PanelBotones botones = new PanelBotones();
 
-	public PanelBancos(Usuario usuario, BancoService bancoService) {
+	public PanelBancos(BancoService bancoService) {
 
-		this.usuario = usuario;
+		this.usuario = usuario = SesionUsuario.getUsuarioActual();
 		this.bancoService = bancoService;
 
 		setLayout(new BorderLayout());
