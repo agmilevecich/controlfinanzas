@@ -283,7 +283,8 @@ public class PanelGastos extends JPanel {
 				BigDecimal interes = txtInteres.getText().isBlank() ? BigDecimal.ZERO
 						: new BigDecimal(txtInteres.getText());
 
-				movimientoService.registrarCompraCuotas(tarjeta, descripcion, monto, cuotas, interes);
+				movimientoService.registrarCompraCuotas(tarjeta, descripcion, monto, cuotas, interes, categoria);
+				JOptionPane.showMessageDialog(this, "Compra realizada con tarjeta realizada correctamente");
 			}
 
 			if (actualizaGastos != null) {

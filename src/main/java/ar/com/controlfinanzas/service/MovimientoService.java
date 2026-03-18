@@ -9,10 +9,12 @@ import java.util.UUID;
 import javax.swing.JOptionPane;
 
 import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
+import ar.com.controlfinanzas.model.CategoriaGasto;
 import ar.com.controlfinanzas.model.CompraTarjeta;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.FormaPago;
 import ar.com.controlfinanzas.model.Movimiento;
+import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.TarjetaCredito;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
@@ -80,7 +82,7 @@ public class MovimientoService {
 	}
 
 	public void registrarCompraCuotas(TarjetaCredito tarjeta, String descripcion, BigDecimal montoTotal, int cuotas,
-			BigDecimal interes) {
+			BigDecimal interes, CategoriaGasto categoria) {
 
 		try {
 			em.getTransaction().begin();
@@ -130,6 +132,7 @@ public class MovimientoService {
 
 				mov.setPeriodo(generarPeriodo(mov));
 				mov.setCompraId(compraId.toString());
+				mov.setCategoria(categoria);
 				mov.setFormaPago(FormaPago.CREDITO);
 				mov.setTarjeta(tarjeta);
 
@@ -196,6 +199,35 @@ public class MovimientoService {
 		Long pagadas = em.createQuery(jpql, Long.class).setParameter("compraId", compraId).getSingleResult();
 
 		return pagadas.intValue();
+	}
+
+	public List<Object[]> obtenerGastosPorCategoria() {
+
+		String jpql = """
+				    SELECT m.categoria, SUM(m.monto)
+				    FROM Movimiento m
+				    WHERE m.tipo = :tipo
+				    AND m.usuario = :usuario
+				    GROUP BY m.categoria
+				""";
+
+		return em.createQuery(jpql, Object[].class).setParameter("tipo", TipoMovimiento.GASTO)
+				.setParameter("usuario", SesionUsuario.getUsuarioActual()).getResultList();
+	}
+
+	public List<Object[]> obtenerDeudaPorCategoria() {
+
+		String jpql = """
+				    SELECT m.categoria, SUM(m.monto)
+				    FROM Movimiento m
+				    WHERE m.formaPago = :credito
+				    AND m.pendiente = true
+				    AND m.usuario = :usuario
+				    GROUP BY m.categoria
+				""";
+
+		return em.createQuery(jpql, Object[].class).setParameter("credito", FormaPago.CREDITO)
+				.setParameter("usuario", SesionUsuario.getUsuarioActual()).getResultList();
 	}
 
 }

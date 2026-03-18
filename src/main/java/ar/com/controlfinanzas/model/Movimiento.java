@@ -47,6 +47,9 @@ public class Movimiento {
 
 	private BigDecimal montoPagado = BigDecimal.ZERO;
 
+	@Enumerated(EnumType.STRING)
+	private CategoriaGasto categoria;
+
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "cuenta_id", nullable = true)
 	private Cuenta cuenta;
@@ -200,6 +203,14 @@ public class Movimiento {
 
 	public void setMontoPagado(BigDecimal montoPagado) {
 		this.montoPagado = (montoPagado != null) ? montoPagado : BigDecimal.ZERO;
+	}
+
+	public CategoriaGasto getCategoria() {
+		return categoria;
+	}
+
+	public void setCategoria(CategoriaGasto categoria) {
+		this.categoria = categoria;
 	}
 
 	public BigDecimal getRestante() {
