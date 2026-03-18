@@ -47,6 +47,7 @@ import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.service.TarjetaCreditoService;
 import ar.com.controlfinanzas.ui.dashboard.PanelResumenTarjeta;
+import ar.com.controlfinanzas.ui.render.ComboRendererGenerico;
 import ar.com.controlfinanzas.util.NumeroUtils;
 
 public class PanelGastos extends JPanel {
@@ -134,8 +135,18 @@ public class PanelGastos extends JPanel {
 		btnSimular = new JButton("Simular");
 
 		cbCategoria = new JComboBox<>(CategoriaGasto.values());
+		cbCategoria.insertItemAt(null, 0);
+		cbCategoria.setRenderer(new ComboRendererGenerico<>("Seleccione una categoría", CategoriaGasto::toString));
+		cbCategoria.setSelectedIndex(0);
+
 		cbCuenta = new JComboBox<>(modelCuenta);
+		cbCuenta.setRenderer(new ComboRendererGenerico<>("Seleccione una cuenta", Cuenta::getNombre));
+
 		cbFormaPago = new JComboBox<>(FormaPago.values());
+		cbFormaPago.insertItemAt(null, 0);
+		cbFormaPago.setRenderer(new ComboRendererGenerico<>("Seleccione una forma de pago", FormaPago::toString));
+		cbFormaPago.setSelectedIndex(0);
+
 		cbTarjetaCredito = new JComboBox<>(modelTarjeta);
 
 		cbFormaPago.addActionListener(e -> {
@@ -255,14 +266,29 @@ public class PanelGastos extends JPanel {
 	}
 
 	private void agregarGasto() {
+
 		try {
 			String descripcion = txtDescripcion.getText().trim();
 			BigDecimal monto = NumeroUtils.parse(txtMonto.getText());
 			CategoriaGasto categoria = (CategoriaGasto) cbCategoria.getSelectedItem();
-			FormaPago formaPago = (FormaPago) cbFormaPago.getSelectedItem();
+			if (categoria == null) {
+				JOptionPane.showMessageDialog(this, "Seleccione una categoría");
+				return;
+			}
 
+			FormaPago formaPago = (FormaPago) cbFormaPago.getSelectedItem();
+			if (formaPago == null) {
+				JOptionPane.showMessageDialog(this, "Seleccione una forma de pago");
+				return;
+			}
+
+			Cuenta cuenta = (Cuenta) cbCuenta.getSelectedItem();
+			if (formaPago != FormaPago.CREDITO && cuenta == null) {
+				JOptionPane.showMessageDialog(this, "Debe seleccionar una cuenta");
+				return;
+			}
 			if (formaPago != FormaPago.CREDITO) {
-				Cuenta cuenta = (Cuenta) cbCuenta.getSelectedItem();
+
 				Gasto gasto = new Gasto();
 				gasto.setFecha(LocalDate.now());
 				gasto.setDescripcion(descripcion);
@@ -276,6 +302,7 @@ public class PanelGastos extends JPanel {
 				Movimiento mov = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.GASTO);
 				mov.setCuenta(cuenta);
 				mov.setFormaPago(formaPago);
+				mov.setCategoria(categoria);
 				movimientoService.registrarMovimiento(mov);
 			} else {
 				TarjetaCredito tarjeta = (TarjetaCredito) cbTarjetaCredito.getSelectedItem();
@@ -310,6 +337,8 @@ public class PanelGastos extends JPanel {
 		txtCuotas.setText("");
 		txtInteres.setText("");
 		cbCategoria.setSelectedIndex(0);
+		cbCuenta.setSelectedIndex(0);
+		cbFormaPago.setSelectedIndex(0);
 	}
 
 	public void cargarGastos() {
@@ -331,6 +360,7 @@ public class PanelGastos extends JPanel {
 
 	public void actualizarCuenta() {
 		modelCuenta.removeAllElements();
+		modelCuenta.addElement(null);
 		for (Cuenta c : cuentaService.getCuentasUsuario(usuario)) {
 			modelCuenta.addElement(c);
 		}

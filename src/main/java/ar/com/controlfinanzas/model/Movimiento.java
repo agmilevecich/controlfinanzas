@@ -219,6 +219,11 @@ public class Movimiento {
 
 	public void validar() {
 
+		// ✔ Regla de categoría SOLO para gastos
+		if (tipo == TipoMovimiento.GASTO && categoria == null) {
+			throw new IllegalStateException("Los gastos deben tener categoría");
+		}
+
 		if (formaPago == FormaPago.CREDITO) {
 			// Movimientos de tarjeta
 			if (tarjeta == null) {

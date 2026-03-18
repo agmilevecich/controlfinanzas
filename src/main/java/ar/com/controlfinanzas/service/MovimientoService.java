@@ -30,33 +30,25 @@ public class MovimientoService {
 	public Movimiento registrarMovimiento(Movimiento movimiento) {
 
 		try {
-			// Validamos que cumpla las reglas de tarjeta vs cuenta
-			movimiento.validar();
-
-			boolean nuevaTransiccion = em.getTransaction().isActive();
-
-			if (!nuevaTransiccion) {
-				em.getTransaction().begin();
+			// 🔥 PRIMERO ajustar estado
+			if (movimiento.getFormaPago() == FormaPago.CREDITO) {
+				movimiento.setCuenta(null);
+				movimiento.setPendiente(true);
 			}
 
+			// ✅ DESPUÉS validar
+			movimiento.validar();
+
+			em.getTransaction().begin();
+
 			if (movimiento.getFormaPago() != FormaPago.CREDITO) {
-				// Movimientos normales o pagos de tarjeta
-				if (movimiento.getCuenta() == null) {
-					throw new IllegalStateException(
-							"Los movimientos que no son de tarjeta deben tener una cuenta asignada");
-				}
 				em.persist(movimiento);
 				movimiento.getCuenta().getMovimientos().add(movimiento);
 			} else {
-				// Movimiento de tarjeta
-				movimiento.setCuenta(null); // ✅ La cuenta no se asigna
-				movimiento.setPendiente(true); // ✅ Marca como deuda pendiente
 				em.persist(movimiento);
 			}
 
-			if (!nuevaTransiccion) {
-				em.getTransaction().commit();
-			}
+			em.getTransaction().commit();
 
 		} catch (Exception e) {
 			if (em.getTransaction().isActive()) {
