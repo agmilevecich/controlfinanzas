@@ -63,6 +63,9 @@ public class Movimiento {
 	@Column(nullable = false)
 	private boolean pendiente = false;
 
+	@ManyToOne
+	private Usuario usuario;
+
 	public Movimiento() {
 	}
 
@@ -215,6 +218,14 @@ public class Movimiento {
 
 	public BigDecimal getRestante() {
 		return monto.subtract(montoPagado);
+	}
+
+	public Usuario getUsuario() {
+		return usuario;
+	}
+
+	public void setUsuario(Usuario usuario) {
+		this.usuario = usuario;
 	}
 
 	public void validar() {

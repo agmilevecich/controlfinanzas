@@ -222,4 +222,15 @@ public class MovimientoService {
 				.setParameter("usuario", SesionUsuario.getUsuarioActual()).getResultList();
 	}
 
+	public List<Movimiento> listarPorUsuario() {
+		String jpql = """
+				    SELECT m FROM Movimiento m
+				    WHERE m.usuario = :usuario
+				    AND m.tipo = :tipo
+				    ORDER BY m.fecha DESC
+				""";
+
+		return em.createQuery(jpql, Movimiento.class).setParameter("usuario", SesionUsuario.getUsuarioActual())
+				.setParameter("tipo", TipoMovimiento.GASTO).getResultList();
+	}
 }

@@ -37,7 +37,6 @@ import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
 import ar.com.controlfinanzas.model.CategoriaGasto;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.FormaPago;
-import ar.com.controlfinanzas.model.Gasto;
 import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.TarjetaCredito;
@@ -79,7 +78,7 @@ public class PanelGastos extends JPanel {
 
 	private Usuario usuario;
 
-	private List<Gasto> gastosCache;
+	private List<Movimiento> movimientosCache;
 
 	private PanelBotones botones = new PanelBotones();
 	private DefaultComboBoxModel<Cuenta> modelCuenta = new DefaultComboBoxModel<>();
@@ -289,17 +288,8 @@ public class PanelGastos extends JPanel {
 			}
 			if (formaPago != FormaPago.CREDITO) {
 
-				Gasto gasto = new Gasto();
-				gasto.setFecha(LocalDate.now());
-				gasto.setDescripcion(descripcion);
-				gasto.setMonto(monto);
-				gasto.setCategoria(categoria);
-				gasto.setCuenta(cuenta);
-				gasto.setFormapago(formaPago);
-				gasto.setUsuario(SesionUsuario.getUsuarioActual());
-				gastoService.guardar(gasto);
-
 				Movimiento mov = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.GASTO);
+				mov.setUsuario(usuario);
 				mov.setCuenta(cuenta);
 				mov.setFormaPago(formaPago);
 				mov.setCategoria(categoria);
@@ -342,20 +332,23 @@ public class PanelGastos extends JPanel {
 	}
 
 	public void cargarGastos() {
-		tableModel.setRowCount(0);
-		try {
-			gastosCache = gastoService.listarPorUsuario(usuario.getUsuarioID());
 
-			for (Gasto g : gastosCache) {
-				// Solo usamos cuenta, porque Gasto no sabe de tarjetas
-				String cuentaNombre = g.getCuenta() != null ? g.getCuenta().getNombre() : "-";
+		movimientosCache = movimientoService.listarPorUsuario();
 
-				tableModel.addRow(new Object[] { g.getId(), g.getFecha(), g.getDescripcion(), g.getMonto(),
-						g.getCategoria(), cuentaNombre });
+		for (Movimiento m : movimientosCache) {
+
+			String cuentaNombre = "-";
+
+			if (m.getFormaPago() == FormaPago.CREDITO) {
+				cuentaNombre = m.getTarjeta() != null ? m.getTarjeta().toString() : "Tarjeta";
+			} else {
+				cuentaNombre = m.getCuenta() != null ? m.getCuenta().getNombre() : "-";
 			}
-		} catch (Exception e) {
-			e.printStackTrace();
+
+			tableModel.addRow(new Object[] { m.getId(), m.getFecha(), m.getDescripcion(), m.getMonto(),
+					m.getCategoria(), cuentaNombre });
 		}
+
 	}
 
 	public void actualizarCuenta() {
@@ -382,14 +375,14 @@ public class PanelGastos extends JPanel {
 	}
 
 	private void actualizarGraficoPie() {
-		if (gastosCache == null || gastosCache.isEmpty()) {
+		if (movimientosCache == null || movimientosCache.isEmpty()) {
 			return;
 		}
 
 		DefaultPieDataset dataset = new DefaultPieDataset();
 		Map<CategoriaGasto, BigDecimal> totales = new HashMap<>();
-		for (Gasto g : gastosCache) {
-			totales.put(g.getCategoria(), totales.getOrDefault(g.getCategoria(), BigDecimal.ZERO).add(g.getMonto()));
+		for (Movimiento m : movimientosCache) {
+			totales.put(m.getCategoria(), totales.getOrDefault(m.getCategoria(), BigDecimal.ZERO).add(m.getMonto()));
 		}
 		for (Map.Entry<CategoriaGasto, BigDecimal> e : totales.entrySet()) {
 			dataset.setValue(e.getKey(), e.getValue());
@@ -401,15 +394,15 @@ public class PanelGastos extends JPanel {
 	}
 
 	private void actualizarGraficoBarras() {
-		if (gastosCache == null || gastosCache.isEmpty()) {
+		if (movimientosCache == null || movimientosCache.isEmpty()) {
 			return;
 		}
 
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
 		Map<Integer, BigDecimal> totales = new HashMap<>();
-		for (Gasto g : gastosCache) {
-			int mes = g.getFecha().getMonthValue();
-			totales.put(mes, totales.getOrDefault(mes, BigDecimal.ZERO).add(g.getMonto()));
+		for (Movimiento m : movimientosCache) {
+			int mes = m.getFecha().getMonthValue();
+			totales.put(mes, totales.getOrDefault(mes, BigDecimal.ZERO).add(m.getMonto()));
 		}
 		for (Map.Entry<Integer, BigDecimal> e : totales.entrySet()) {
 			String nombreMes = java.time.Month.of(e.getKey()).getDisplayName(TextStyle.SHORT, Locale.getDefault());
