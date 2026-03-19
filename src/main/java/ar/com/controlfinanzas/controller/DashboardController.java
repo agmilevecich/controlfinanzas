@@ -4,18 +4,19 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import ar.com.controlfinanzas.domain.inversion.Inversion;
-import ar.com.controlfinanzas.model.Gasto;
+import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.model.Usuario;
-import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.InversionService;
+import ar.com.controlfinanzas.service.MovimientoService;
 
 public class DashboardController {
 
-	private final GastoService gastoService;
+	private final MovimientoService movimientoService;
+
 	@SuppressWarnings("unused")
 	private final InversionService inversionService;
 
-	private List<Gasto> gastos;
+	private List<Movimiento> movimientos;
 	private List<Inversion> inversiones;
 
 	private BigDecimal totalGastos = BigDecimal.ZERO;
@@ -23,25 +24,25 @@ public class DashboardController {
 	private BigDecimal patrimonioNeto = BigDecimal.ZERO;
 	private Usuario usuario;
 
-	public DashboardController(GastoService gastoService, InversionService inversionService, Usuario usuario) {
-		this.gastoService = gastoService;
+	public DashboardController(MovimientoService movimientoService, InversionService inversionService) {
+		this.movimientoService = movimientoService;
 		this.inversionService = inversionService;
 		this.usuario = usuario;
 	}
 
 	public void refrescarDatos() throws Exception {
 
-		gastos = gastoService.listarPorUsuario(usuario.getUsuarioID());
+		movimientos = movimientoService.listarPorUsuario();
 //		inversiones = inversionService.listarPorUsuario(usuarioId);
 
-		totalGastos = gastoService.calcularTotalGastos();
+		totalGastos = movimientoService.calcularTotalGastos();
 //		capitalTotalInvertido = inversionService.calcularCapitalTotal(inversiones);
 
 		patrimonioNeto = capitalTotalInvertido.subtract(totalGastos);
 	}
 
-	public List<Gasto> getGastos() {
-		return gastos;
+	public List<Movimiento> getMovimientos() {
+		return movimientos;
 	}
 
 	public List<Inversion> getInversiones() {

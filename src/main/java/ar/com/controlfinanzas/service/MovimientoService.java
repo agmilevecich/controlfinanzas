@@ -3,8 +3,14 @@ package ar.com.controlfinanzas.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.EnumMap;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
 
@@ -16,6 +22,7 @@ import ar.com.controlfinanzas.model.FormaPago;
 import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.TarjetaCredito;
+import ar.com.controlfinanzas.model.Usuario;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 
@@ -233,4 +240,177 @@ public class MovimientoService {
 		return em.createQuery(jpql, Movimiento.class).setParameter("usuario", SesionUsuario.getUsuarioActual())
 				.setParameter("tipo", TipoMovimiento.GASTO).getResultList();
 	}
+
+	public BigDecimal obtenerTotalPorUsuario(Integer usuarioId) {
+		return em
+				.createQuery("SELECT COALESCE(SUM(g.monto), 0) " + "FROM Gasto g "
+						+ "WHERE g.usuario.usuarioID = :usuarioId", BigDecimal.class)
+				.setParameter("usuarioId", usuarioId).getSingleResult();
+	}
+
+	public void guardar(Movimiento movimiento) {
+
+		try {
+			em.getTransaction().begin();
+			em.persist(movimiento);
+			em.getTransaction().commit();
+
+		} catch (Exception e) {
+			em.getTransaction().rollback();
+			throw e;
+
+		}
+	}
+
+	public void eliminar(Integer id) {
+
+		try {
+			em.getTransaction().begin();
+
+			Movimiento movimiento = em.find(Movimiento.class, id);
+			if (movimiento != null) {
+				em.remove(movimiento);
+			}
+
+			em.getTransaction().commit();
+
+		} catch (Exception e) {
+			em.getTransaction().rollback();
+			throw e;
+		}
+	}
+
+	public List<Movimiento> listarPorUsuarioYPeriodo(LocalDate fechaInicio, LocalDate fechaFin) {
+
+		return em.createQuery("""
+				SELECT m FROM Movimiento m
+				WHERE m.usuario.usuarioID = :usuarioId
+				AND m.fecha BETWEEN :inicio AND :fin
+				""", Movimiento.class).setParameter("usuarioId", SesionUsuario.getUsuarioActual().getUsuarioID())
+				.setParameter("inicio", fechaInicio).setParameter("fin", fechaFin).getResultList();
+
+	}
+
+	public BigDecimal calcularTotalGastos() {
+		List<Movimiento> movimientos = listarPorUsuario();
+
+		return movimientos.stream().map(m -> m.getMonto() != null ? m.getMonto() : BigDecimal.ZERO)
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
+
+	public BigDecimal calcularTotalHistorico(Integer usuarioId) {
+		return listarPorUsuario().stream().map(m -> m.getMonto()).reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
+
+	public BigDecimal calcularTotalPorMes(Integer usuarioId, YearMonth mes) {
+		return listarPorUsuario().stream().filter(m -> YearMonth.from(m.getFecha()).equals(mes)).map(m -> m.getMonto())
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
+
+	public BigDecimal calcularTotalGastosHistoricos(Usuario usuario) {
+		return obtenerTotalPorUsuario(usuario.getUsuarioID());
+	}
+
+	public BigDecimal calcularTotalPorCategoria(CategoriaGasto categoria) {
+
+		List<Movimiento> movimientos = listarPorUsuario();
+
+		BigDecimal total = BigDecimal.ZERO;
+
+		for (Movimiento m : movimientos) {
+
+			if (m.getCategoria() == categoria && m.getMonto() != null) {
+				total = total.add(m.getMonto());
+			}
+		}
+
+		return total;
+	}
+
+	public BigDecimal calcularTotalesPorCategoriaYMes(CategoriaGasto categoria, YearMonth mes) {
+
+		List<Movimiento> movimientos = listarPorUsuario();
+
+		BigDecimal total = BigDecimal.ZERO;
+
+		for (Movimiento m : movimientos) {
+
+			if (m.getCategoria() != null && m.getCategoria().equals(categoria) && m.getFecha() != null
+					&& YearMonth.from(m.getFecha()).equals(mes) && m.getMonto() != null) {
+
+				total = total.add(m.getMonto());
+			}
+		}
+
+		return total;
+	}
+
+	public Map<CategoriaGasto, BigDecimal> calcularTotalesPorCategoriaYMes(YearMonth mes) {
+
+		List<Movimiento> movimiento = listarPorUsuario();
+
+		Map<CategoriaGasto, BigDecimal> totales = new EnumMap<>(CategoriaGasto.class);
+
+		// inicializar todas en cero
+		for (CategoriaGasto c : CategoriaGasto.values()) {
+			totales.put(c, BigDecimal.ZERO);
+		}
+
+		for (Movimiento m : movimiento) {
+
+			if (m.getFecha() == null || m.getMonto() == null || m.getCategoria() == null) {
+				continue;
+			}
+
+			if (YearMonth.from(m.getFecha()).equals(mes)) {
+				CategoriaGasto categoria = m.getCategoria();
+				totales.put(categoria, totales.get(categoria).add(m.getMonto()));
+			}
+		}
+
+		return totales;
+	}
+
+	public LinkedHashMap<CategoriaGasto, BigDecimal> rankingCategoriasPorMes(YearMonth mes) {
+
+		List<Movimiento> movimiento = listarPorUsuario();
+
+		Map<CategoriaGasto, BigDecimal> acumulado = new HashMap<CategoriaGasto, BigDecimal>();
+
+		for (Movimiento m : movimiento) {
+			if (m.getFecha() != null && YearMonth.from(m.getFecha()).equals(mes) && m.getMonto() != null) {
+				acumulado.merge(m.getCategoria(), m.getMonto(), BigDecimal::add);
+			}
+		}
+
+		return acumulado.entrySet().stream().sorted(Map.Entry.<CategoriaGasto, BigDecimal>comparingByValue().reversed())
+				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (a, b) -> a, LinkedHashMap::new));
+	}
+
+	public Map<CategoriaGasto, BigDecimal> obtenerTotalesPorPeriodo(Integer usuarioId, YearMonth periodo) {
+		LocalDate inicio = periodo.atDay(1);
+		LocalDate fin = periodo.atEndOfMonth();
+
+		List<Movimiento> movimientos = listarPorUsuarioYPeriodo(inicio, fin);
+
+		Map<CategoriaGasto, BigDecimal> totales = new HashMap<>();
+
+		for (Movimiento m : movimientos) {
+			totales.merge(m.getCategoria(), m.getMonto(), BigDecimal::add);
+		}
+
+		return totales;
+
+	}
+
+	public BigDecimal obtenerTotalDelMes(YearMonth periodo) {
+		LocalDate inicio = periodo.atDay(1);
+		LocalDate fin = periodo.atEndOfMonth();
+
+		List<Movimiento> gastos = listarPorUsuarioYPeriodo(inicio, fin);
+
+		return gastos.stream().map(Movimiento::getMonto).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+	}
+
 }

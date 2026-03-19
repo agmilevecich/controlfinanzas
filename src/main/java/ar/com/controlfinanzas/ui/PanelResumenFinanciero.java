@@ -21,13 +21,13 @@ import org.jfree.data.general.DefaultPieDataset;
 
 import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.CategoriaGasto;
-import ar.com.controlfinanzas.model.Gasto;
+import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.TipoInversion;
 import ar.com.controlfinanzas.model.Usuario;
-import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.IngresoService;
 import ar.com.controlfinanzas.service.InversionService;
+import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.util.NumeroUtils;
 
 public class PanelResumenFinanciero extends JPanel {
@@ -38,7 +38,7 @@ public class PanelResumenFinanciero extends JPanel {
 	private static final long serialVersionUID = 1L;
 
 	private final InversionService inversionService;
-	private final GastoService gastoService;
+	private final MovimientoService movimientoService;
 	private final IngresoService ingresoService;
 
 	private JLabel lblTotalInversiones;
@@ -50,11 +50,11 @@ public class PanelResumenFinanciero extends JPanel {
 
 	private Usuario usuario;
 
-	public PanelResumenFinanciero(InversionService inversionService, GastoService gastoService,
+	public PanelResumenFinanciero(InversionService inversionService, MovimientoService movimientoService,
 			IngresoService ingresoService) {
 
 		this.inversionService = inversionService;
-		this.gastoService = gastoService;
+		this.movimientoService = movimientoService;
 		this.ingresoService = ingresoService;
 		this.usuario = SesionUsuario.getUsuarioActual();
 
@@ -96,8 +96,8 @@ public class PanelResumenFinanciero extends JPanel {
 			// ============================
 
 			BigDecimal totalInversiones = inversionService.calcularCapitalTotal(usuario.getUsuarioID());
-			BigDecimal totalGastosHistorico = gastoService.calcularTotalHistorico(usuario.getUsuarioID());
-			BigDecimal gastosMes = gastoService.calcularTotalPorMes(usuario.getUsuarioID(), mesActual);
+			BigDecimal totalGastosHistorico = movimientoService.calcularTotalHistorico(usuario.getUsuarioID());
+			BigDecimal gastosMes = movimientoService.calcularTotalPorMes(usuario.getUsuarioID(), mesActual);
 
 			if (totalInversiones == null) {
 				totalInversiones = BigDecimal.ZERO;
@@ -119,13 +119,11 @@ public class PanelResumenFinanciero extends JPanel {
 
 			BigDecimal resultadoAcumulado = totalIngresosHistorico.subtract(totalGastosHistorico);
 			BigDecimal resultadoMes = ingresosMes.subtract(gastosMes);
-			BigDecimal totalSupermercado = gastoService.calcularTotalPorCategoria(usuario.getUsuarioID(),
-					CategoriaGasto.SUPERMERCADO);
-			BigDecimal supermercadoMes = gastoService.calcularTotalesPorCategoriaYMes(usuario.getUsuarioID(),
-					CategoriaGasto.SUPERMERCADO, mesActual);
+			BigDecimal totalSupermercado = movimientoService.calcularTotalPorCategoria(CategoriaGasto.SUPERMERCADO);
+			BigDecimal supermercadoMes = movimientoService.calcularTotalesPorCategoriaYMes(CategoriaGasto.SUPERMERCADO,
+					mesActual);
 
-			LinkedHashMap<CategoriaGasto, BigDecimal> ranking = gastoService
-					.rankingCategoriasPorMes(usuario.getUsuarioID(), mesActual);
+			LinkedHashMap<CategoriaGasto, BigDecimal> ranking = movimientoService.rankingCategoriasPorMes(mesActual);
 
 			lblTotalInversiones.setText("Total Inversiones: $"
 					+ NumeroUtils.formatearMonedaARS(NumeroUtils.redondearMoneda(totalInversiones)));
@@ -169,19 +167,19 @@ public class PanelResumenFinanciero extends JPanel {
 			// GRÁFICO GASTOS POR CATEGORÍA (MES ACTUAL)
 			// ============================
 
-			List<Gasto> gastos = gastoService.listarPorUsuario(usuario.getUsuarioID());
+			List<Movimiento> movimientos = movimientoService.listarPorUsuario();
 
 			DefaultPieDataset datasetGastos = new DefaultPieDataset();
 			Map<CategoriaGasto, BigDecimal> sumaPorCategoria = new HashMap<>();
 
-			for (Gasto g : gastos) {
+			for (Movimiento m : movimientos) {
 
-				if (g.getFecha() != null && YearMonth.from(g.getFecha()).equals(mesActual)) {
+				if (m.getFecha() != null && YearMonth.from(m.getFecha()).equals(mesActual)) {
 
-					BigDecimal monto = g.getMonto() != null ? g.getMonto() : BigDecimal.ZERO;
+					BigDecimal monto = m.getMonto() != null ? m.getMonto() : BigDecimal.ZERO;
 
-					sumaPorCategoria.put(g.getCategoria(),
-							sumaPorCategoria.getOrDefault(g.getCategoria(), BigDecimal.ZERO).add(monto));
+					sumaPorCategoria.put(m.getCategoria(),
+							sumaPorCategoria.getOrDefault(m.getCategoria(), BigDecimal.ZERO).add(monto));
 				}
 			}
 

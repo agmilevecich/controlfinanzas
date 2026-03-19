@@ -42,7 +42,6 @@ import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.TarjetaCredito;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.CuentaService;
-import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.service.TarjetaCreditoService;
 import ar.com.controlfinanzas.ui.dashboard.PanelResumenTarjeta;
@@ -72,7 +71,6 @@ public class PanelGastos extends JPanel {
 	private JPanel panelGraficos;
 	private JSplitPane split;
 
-	private final GastoService gastoService;
 	private final CuentaService cuentaService;
 	private final MovimientoService movimientoService;
 
@@ -92,10 +90,9 @@ public class PanelGastos extends JPanel {
 	private JLabel lblCuotas;
 	private JLabel lblInteres;
 
-	public PanelGastos(GastoService gastoService, CuentaService cuentaService, MovimientoService movimientoService,
+	public PanelGastos(CuentaService cuentaService, MovimientoService movimientoService,
 			TarjetaCreditoService tarjetaCreditoService, PanelResumenTarjeta panelResumenTarjeta) {
 
-		this.gastoService = gastoService;
 		this.cuentaService = cuentaService;
 		this.movimientoService = movimientoService;
 		this.tarjetaCreditoService = tarjetaCreditoService;

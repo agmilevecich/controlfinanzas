@@ -20,9 +20,9 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.data.general.DefaultPieDataset;
 
 import ar.com.controlfinanzas.model.CategoriaGasto;
-import ar.com.controlfinanzas.model.Gasto;
+import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.model.SesionUsuario;
-import ar.com.controlfinanzas.service.GastoService;
+import ar.com.controlfinanzas.service.MovimientoService;
 
 public class PanelResumenGastos extends JPanel {
 
@@ -31,7 +31,7 @@ public class PanelResumenGastos extends JPanel {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private final GastoService gastoService;
+	private final MovimientoService movimientoService;
 
 	private JTable tabla;
 	private DefaultTableModel model;
@@ -43,8 +43,8 @@ public class PanelResumenGastos extends JPanel {
 	// 🔴 datos en memoria (clave)
 	private Map<CategoriaGasto, BigDecimal> totales = new EnumMap<>(CategoriaGasto.class);
 
-	public PanelResumenGastos(GastoService gastoService) {
-		this.gastoService = gastoService;
+	public PanelResumenGastos(MovimientoService movimientoService) {
+		this.movimientoService = movimientoService;
 
 		setLayout(new BorderLayout());
 
@@ -79,15 +79,15 @@ public class PanelResumenGastos extends JPanel {
 		LocalDate inicio = mesActual.atDay(1);
 		LocalDate fin = mesActual.atEndOfMonth();
 
-		List<Gasto> gastos = gastoService.listarPorUsuarioYPeriodo(usuarioId, inicio, fin);
+		List<Movimiento> movimientos = movimientoService.listarPorUsuarioYPeriodo(inicio, fin);
 
-		for (Gasto g : gastos) {
+		for (Movimiento m : movimientos) {
 
-			if (g.getCategoria() == null || g.getMonto() == null) {
+			if (m.getCategoria() == null || m.getMonto() == null) {
 				continue;
 			}
 
-			totales.put(g.getCategoria(), totales.getOrDefault(g.getCategoria(), BigDecimal.ZERO).add(g.getMonto()));
+			totales.put(m.getCategoria(), totales.getOrDefault(m.getCategoria(), BigDecimal.ZERO).add(m.getMonto()));
 		}
 	}
 

@@ -13,13 +13,11 @@ import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Posicion;
 import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.Usuario;
-import ar.com.controlfinanzas.repository.GastoRepository;
 import ar.com.controlfinanzas.repository.InversionRepositoryJPA;
 import ar.com.controlfinanzas.repository.interfaces.InversionRepository;
 import ar.com.controlfinanzas.service.AlertaService;
 import ar.com.controlfinanzas.service.BancoService;
 import ar.com.controlfinanzas.service.CuentaService;
-import ar.com.controlfinanzas.service.GastoService;
 import ar.com.controlfinanzas.service.IngresoService;
 import ar.com.controlfinanzas.service.InversionService;
 import ar.com.controlfinanzas.service.MovimientoService;
@@ -54,8 +52,6 @@ public class DashboardFrame extends JFrame {
 	private final InversionService inversionService;
 	private final InversionController inversionController;
 
-	private final GastoRepository gastoRepository;
-	private final GastoService gastoService;
 	private final PanelResumenGastos panelResumenGastos;
 
 	private final IngresoService ingresoService;
@@ -81,16 +77,14 @@ public class DashboardFrame extends JFrame {
 		this.inversionRepository = new InversionRepositoryJPA(em);
 		this.inversionService = new InversionService(inversionRepository);
 		this.inversionController = new InversionController(inversionService);
-		this.gastoRepository = new GastoRepository(em);
-		this.gastoService = new GastoService(gastoRepository);
-		this.panelResumenGastos = new PanelResumenGastos(gastoService);
+		this.panelResumenGastos = new PanelResumenGastos(movimientoService);
 		this.panelTarjetaCredito = new PanelTarjetaCredito(em);
 		this.bancoService = new BancoService(em);
 		this.ingresoService = new IngresoService(em);
 		this.tarjetaCreditoService = new TarjetaCreditoService(em);
 		this.usuario = SesionUsuario.getUsuarioActual();
 
-		panelResumen = new PanelResumenFinanciero(inversionService, gastoService, ingresoService);
+		panelResumen = new PanelResumenFinanciero(inversionService, movimientoService, ingresoService);
 
 		setTitle("Control Finanzas");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -103,7 +97,7 @@ public class DashboardFrame extends JFrame {
 		// ===============================
 		PanelBancos panelBancos = new PanelBancos(bancoService);
 		PanelResumenTarjeta panelResumenTarjeta = new PanelResumenTarjeta(cuentaService, em);
-		PanelGastos panelGastos = new PanelGastos(gastoService, cuentaService, movimientoService, tarjetaCreditoService,
+		PanelGastos panelGastos = new PanelGastos(cuentaService, movimientoService, tarjetaCreditoService,
 				panelResumenTarjeta);
 		panelGastos.setActualizaGastos(() -> {
 			panelMovimientos.cargarMovimientos();
