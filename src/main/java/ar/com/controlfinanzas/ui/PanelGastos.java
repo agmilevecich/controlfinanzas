@@ -2,7 +2,6 @@ package ar.com.controlfinanzas.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -32,9 +31,6 @@ import javax.swing.table.DefaultTableModel;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
-import org.jfree.chart.axis.CategoryAxis;
-import org.jfree.chart.axis.CategoryLabelPositions;
-import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
@@ -51,6 +47,7 @@ import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.service.TarjetaCreditoService;
 import ar.com.controlfinanzas.ui.dashboard.PanelResumenTarjeta;
 import ar.com.controlfinanzas.ui.render.ComboRendererGenerico;
+import ar.com.controlfinanzas.util.ChartUtils;
 import ar.com.controlfinanzas.util.FechaUtils;
 import ar.com.controlfinanzas.util.NumeroUtils;
 
@@ -398,6 +395,7 @@ public class PanelGastos extends JPanel {
 		actualizarGraficoPie();
 		actualizarGraficoBarras();
 		actualizarGraficoDeudaPorMes();
+		actualizarGraficoSaldo();
 		panelGraficos.revalidate();
 		panelGraficos.repaint();
 	}
@@ -416,6 +414,8 @@ public class PanelGastos extends JPanel {
 			dataset.setValue(e.getKey(), e.getValue());
 		}
 		JFreeChart chart = ChartFactory.createPieChart("Gastos por Categoría", dataset, true, true, false);
+		ChartUtils.aplicarEstiloBasico(chart);
+
 		ChartPanel chartPanel = new ChartPanel(chart);
 		chartPanel.setPreferredSize(new Dimension(400, 300));
 		panelGraficos.add(chartPanel);
@@ -454,11 +454,7 @@ public class PanelGastos extends JPanel {
 		}
 
 		JFreeChart chart = ChartFactory.createBarChart("Gastos Mensuales", "Mes", "Monto", dataset);
-		CategoryPlot plot = chart.getCategoryPlot();
-		CategoryAxis axis = plot.getDomainAxis();
-
-		axis.setTickLabelFont(new Font("Arial", Font.PLAIN, 10)); // tamaño de meses
-		axis.setCategoryLabelPositions(CategoryLabelPositions.createUpRotationLabelPositions(Math.PI / 4));
+		ChartUtils.aplicarEstiloBasico(chart);
 
 		ChartPanel chartPanel = new ChartPanel(chart);
 		chartPanel.setPreferredSize(new Dimension(400, 300));
@@ -513,11 +509,47 @@ public class PanelGastos extends JPanel {
 		}
 
 		JFreeChart chart = ChartFactory.createBarChart("Proyección de Deuda por Mes", "Mes", "Monto", dataset);
+		ChartUtils.aplicarEstiloBasico(chart);
 
 		ChartPanel chartPanel = new ChartPanel(chart);
 		chartPanel.setPreferredSize(new Dimension(500, 300));
 
 		panelGraficos.add(chartPanel);
+	}
+
+	private void actualizarGraficoSaldo() {
+
+		List<Object[]> datos = movimientoService.obtenerSaldoAcumuladoPorMes();
+
+		if (datos == null || datos.isEmpty()) {
+			return;
+		}
+
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		BigDecimal saldoAcumulado = BigDecimal.ZERO;
+
+		for (Object[] row : datos) {
+
+			Integer anio = (Integer) row[0];
+			Integer mes = (Integer) row[1];
+			BigDecimal variacion = (BigDecimal) row[2];
+
+			saldoAcumulado = saldoAcumulado.add(variacion);
+
+			String etiqueta = FechaUtils.formatearMesAnio(mes, anio);
+
+			dataset.addValue(saldoAcumulado, "Saldo", etiqueta);
+		}
+
+		JFreeChart chart = ChartFactory.createLineChart("Evolución del Saldo", "Mes", "Saldo", dataset);
+
+		ChartUtils.aplicarEstiloBasico(chart);
+
+		ChartPanel panel = new ChartPanel(chart);
+		panel.setPreferredSize(new Dimension(500, 300));
+
+		panelGraficos.add(panel);
 	}
 
 }

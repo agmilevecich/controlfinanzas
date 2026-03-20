@@ -1,6 +1,7 @@
 package ar.com.controlfinanzas.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -17,12 +18,14 @@ import javax.swing.table.DefaultTableModel;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PiePlot;
 import org.jfree.data.general.DefaultPieDataset;
 
 import ar.com.controlfinanzas.model.CategoriaGasto;
 import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.service.MovimientoService;
+import ar.com.controlfinanzas.util.ChartUtils;
 
 public class PanelResumenGastos extends JPanel {
 
@@ -58,6 +61,13 @@ public class PanelResumenGastos extends JPanel {
 		datasetGastos = new DefaultPieDataset();
 
 		JFreeChart chart = ChartFactory.createPieChart("Gastos por Categoría", datasetGastos, true, true, false);
+		ChartUtils.aplicarEstiloBasico(chart);
+
+		PiePlot plot = (PiePlot) chart.getPlot();
+		Map<CategoriaGasto, Color> colores = ChartUtils.coloresCategorias();
+		for (Map.Entry<CategoriaGasto, Color> entry : colores.entrySet()) {
+			plot.setSectionPaint(entry.getKey().name(), entry.getValue());
+		}
 
 		chartPanelGastos = new ChartPanel(chart);
 		chartPanelGastos.setPreferredSize(new Dimension(600, 300));

@@ -28,6 +28,7 @@ import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.IngresoService;
 import ar.com.controlfinanzas.service.InversionService;
 import ar.com.controlfinanzas.service.MovimientoService;
+import ar.com.controlfinanzas.util.ChartUtils;
 import ar.com.controlfinanzas.util.NumeroUtils;
 
 public class PanelResumenFinanciero extends JPanel {
@@ -160,6 +161,7 @@ public class PanelResumenFinanciero extends JPanel {
 			}
 
 			JFreeChart chartInv = ChartFactory.createBarChart("Inversiones por Tipo", "Tipo", "Monto", datasetInv);
+			ChartUtils.aplicarEstiloBasico(chartInv);
 
 			panelGraficos.add(new ChartPanel(chartInv));
 
@@ -189,6 +191,7 @@ public class PanelResumenFinanciero extends JPanel {
 
 			JFreeChart chartGastos = ChartFactory.createPieChart("Gastos por Categoría (" + mesActual + ")",
 					datasetGastos, true, true, false);
+			ChartUtils.aplicarEstiloBasico(chartGastos);
 
 			panelGraficos.add(new ChartPanel(chartGastos));
 

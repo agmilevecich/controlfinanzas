@@ -476,4 +476,24 @@ public class MovimientoService {
 				.getSingleResult();
 
 	}
+
+	public List<Object[]> obtenerSaldoAcumuladoPorMes() {
+
+		return em.createQuery("""
+				    SELECT
+				        YEAR(m.fecha),
+				        MONTH(m.fecha),
+				        SUM(
+				            CASE
+				                WHEN m.tipo = :ingreso THEN m.monto
+				                WHEN m.tipo = :gasto THEN -m.monto
+				            END
+				        )
+				    FROM Movimiento m
+				    WHERE m.formaPago IS NULL OR m.formaPago <> :credito
+				    GROUP BY YEAR(m.fecha), MONTH(m.fecha)
+				    ORDER BY YEAR(m.fecha), MONTH(m.fecha)
+				""", Object[].class).setParameter("ingreso", TipoMovimiento.INGRESO)
+				.setParameter("gasto", TipoMovimiento.GASTO).setParameter("credito", FormaPago.CREDITO).getResultList();
+	}
 }
