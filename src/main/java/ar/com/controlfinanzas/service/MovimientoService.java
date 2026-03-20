@@ -42,7 +42,20 @@ public class MovimientoService {
 				movimiento.setCuenta(null);
 				movimiento.setPendiente(true);
 			}
+			if (movimiento.getTipo() == TipoMovimiento.GASTO && movimiento.getFormaPago() != FormaPago.CREDITO) {
 
+				Cuenta cuenta = movimiento.getCuenta();
+
+				if (cuenta == null && movimiento.getFormaPago() != FormaPago.CREDITO) {
+					throw new RuntimeException("La cuenta es obligatoria");
+				}
+
+				BigDecimal saldo = obtenerSaldoCuenta(cuenta);
+
+				if (saldo.compareTo(movimiento.getMonto()) < 0) {
+					throw new RuntimeException("Saldo insuficiente en la cuenta");
+				}
+			}
 			// ✅ DESPUÉS validar
 			movimiento.validar();
 
@@ -129,6 +142,7 @@ public class MovimientoService {
 
 				Movimiento mov = new Movimiento(fechaCuota, desCuotas, montoCuota, TipoMovimiento.GASTO);
 
+				mov.setUsuario(SesionUsuario.getUsuarioActual());
 				mov.setPeriodo(generarPeriodo(mov));
 				mov.setCompraId(compraId.toString());
 				mov.setCategoria(categoria);
@@ -407,10 +421,59 @@ public class MovimientoService {
 		LocalDate inicio = periodo.atDay(1);
 		LocalDate fin = periodo.atEndOfMonth();
 
-		List<Movimiento> gastos = listarPorUsuarioYPeriodo(inicio, fin);
+		List<Movimiento> movimientos = listarPorUsuarioYPeriodo(inicio, fin);
 
-		return gastos.stream().map(Movimiento::getMonto).reduce(BigDecimal.ZERO, BigDecimal::add);
+		return movimientos.stream().map(Movimiento::getMonto).reduce(BigDecimal.ZERO, BigDecimal::add);
 
 	}
 
+	public List<Object[]> obtenerDeudaPorMes() {
+		String jpql = """
+				    SELECT YEAR(m.fecha), MONTH(m.fecha), SUM(m.monto)
+				    FROM Movimiento m
+				    WHERE m.formaPago = :credito
+				    AND m.pendiente = true
+				    AND m.usuario = :usuario
+				    GROUP BY YEAR(m.fecha), MONTH(m.fecha)
+				    ORDER BY YEAR(m.fecha), MONTH(m.fecha)
+				""";
+
+		return em.createQuery(jpql, Object[].class).setParameter("credito", FormaPago.CREDITO)
+				.setParameter("usuario", SesionUsuario.getUsuarioActual()).getResultList();
+	}
+
+	public List<Object[]> obtenerDeudaPorPeriodo() {
+
+		String jpql = """
+				    SELECT m.periodo, SUM(m.monto)
+				    FROM Movimiento m
+				    WHERE m.formaPago = :credito
+				    AND m.pendiente = true
+				    AND m.usuario.usuarioID = :usuarioId
+				    GROUP BY m.periodo
+				    ORDER BY m.periodo
+				""";
+
+		return em.createQuery(jpql, Object[].class).setParameter("credito", FormaPago.CREDITO)
+				.setParameter("usuarioId", SesionUsuario.getUsuarioActual().getUsuarioID()).getResultList();
+	}
+
+	public BigDecimal obtenerSaldoCuenta(Cuenta cuenta) {
+
+		return em.createQuery("""
+				    SELECT COALESCE(
+				        SUM(
+				            CASE
+				                WHEN m.tipo = :ingreso THEN m.monto
+				                WHEN m.tipo = :gasto THEN -m.monto
+				            END
+				        ), 0)
+				    FROM Movimiento m
+				    WHERE m.cuenta = :cuenta
+				    AND (m.formaPago IS NULL OR m.formaPago <> :credito)
+				""", BigDecimal.class).setParameter("cuenta", cuenta).setParameter("ingreso", TipoMovimiento.INGRESO)
+				.setParameter("gasto", TipoMovimiento.GASTO).setParameter("credito", FormaPago.CREDITO)
+				.getSingleResult();
+
+	}
 }

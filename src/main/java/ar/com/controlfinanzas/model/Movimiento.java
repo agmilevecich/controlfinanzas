@@ -235,6 +235,10 @@ public class Movimiento {
 			throw new IllegalStateException("Los gastos deben tener categoría");
 		}
 
+		if (monto == null || monto.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalStateException("El monto debe ser mayor que 0");
+		}
+
 		if (formaPago == FormaPago.CREDITO) {
 			// Movimientos de tarjeta
 			if (tarjeta == null) {

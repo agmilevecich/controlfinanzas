@@ -250,9 +250,7 @@ public class PanelResumenTarjeta extends JPanel {
 
 		} catch (Exception ex) {
 
-			ex.printStackTrace();
-
-			JOptionPane.showMessageDialog(this, "Error al pagar tarjeta");
+			JOptionPane.showMessageDialog(this, ex.getMessage());
 		}
 	}
 

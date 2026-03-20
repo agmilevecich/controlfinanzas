@@ -73,11 +73,8 @@ public class PanelInversionesAvanzado extends JPanel {
 
 	private Usuario usuario;
 
-	private EntityManager em;
-
 	public PanelInversionesAvanzado(InversionController inversionController, PanelVencimiento panelVencimiento,
 			EntityManager em) {
-		this.em = em;
 		this.inversionController = inversionController;
 		this.usuario = SesionUsuario.getUsuarioActual();
 

@@ -19,7 +19,6 @@ import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.util.NumeroUtils;
-import jakarta.persistence.EntityManager;
 
 public class PanelMovimientos extends JPanel {
 
@@ -31,7 +30,6 @@ public class PanelMovimientos extends JPanel {
 
 	// Callback para actualizar PanelCuentas
 	private Runnable actualizarPanelCuentasCallback;
-	private EntityManager em;
 	private CuentaService cuentaService;
 
 	public PanelMovimientos(Cuenta cuenta, CuentaService cuentaService, MovimientoService movimientoService) {

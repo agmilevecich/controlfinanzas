@@ -99,8 +99,32 @@ public class TarjetaCreditoService {
 
 	public void pagarTarjeta(TarjetaCredito tarjeta, Cuenta cuenta, BigDecimal montoPago) {
 
-		if (montoPago.compareTo(BigDecimal.ZERO) <= 0) {
-			return;
+		if (montoPago == null || montoPago.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new RuntimeException("El monto de pago debe ser mayor a 0");
+		}
+
+		if (cuenta == null) {
+			throw new RuntimeException("Debe seleccionar una cuenta");
+		}
+
+		// 🔥 VALIDACIÓN DE SALDO (ANTES DE LA TRANSACCIÓN)
+		BigDecimal saldo = em.createQuery("""
+					    SELECT COALESCE(
+				        SUM(
+				            CASE
+				                WHEN m.tipo = :ingreso THEN m.monto
+				                WHEN m.tipo = :gasto THEN -m.monto
+				            END
+				        ), 0)
+				    FROM Movimiento m
+				    WHERE m.cuenta = :cuenta
+				    AND (m.formaPago IS NULL OR m.formaPago <> :credito)
+				""", BigDecimal.class).setParameter("cuenta", cuenta).setParameter("ingreso", TipoMovimiento.INGRESO)
+				.setParameter("gasto", TipoMovimiento.GASTO).setParameter("credito", FormaPago.CREDITO)
+				.getSingleResult();
+
+		if (saldo.compareTo(montoPago) < 0) {
+			throw new RuntimeException("Saldo insuficiente en la cuenta para realizar el pago");
 		}
 
 		em.getTransaction().begin();
@@ -132,7 +156,6 @@ public class TarjetaCreditoService {
 				restante = BigDecimal.ZERO;
 
 				em.merge(m);
-
 				break;
 			}
 
@@ -143,6 +166,7 @@ public class TarjetaCreditoService {
 			}
 		}
 
+		// 🔥 Si sobra dinero → saldo a favor
 		if (restante.compareTo(BigDecimal.ZERO) > 0) {
 
 			Movimiento saldoFavor = new Movimiento(LocalDate.now(), "Saldo a favor tarjeta " + tarjeta.getNombre(),
@@ -154,14 +178,19 @@ public class TarjetaCreditoService {
 			em.persist(saldoFavor);
 		}
 
+		// 🔥 Movimiento de pago desde la cuenta
 		Movimiento pago = new Movimiento(LocalDate.now(), "Pago tarjeta " + tarjeta.getNombre(), montoPago,
 				TipoMovimiento.GASTO);
 
 		pago.setFormaPago(FormaPago.DEBITO);
 		pago.setCuenta(cuenta);
 		pago.setPendiente(false);
+
 		em.persist(pago);
-		cuenta.getMovimientos().add(pago);
+
+		// opcional (no es obligatorio si JPA está bien mapeado)
+//		cuenta.getMovimientos().add(pago);
+
 		em.getTransaction().commit();
 	}
 

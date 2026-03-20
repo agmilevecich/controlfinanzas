@@ -2,6 +2,7 @@ package ar.com.controlfinanzas.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -13,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.TreeMap;
 
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
@@ -30,6 +32,9 @@ import javax.swing.table.DefaultTableModel;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
 import org.jfree.chart.JFreeChart;
+import org.jfree.chart.axis.CategoryAxis;
+import org.jfree.chart.axis.CategoryLabelPositions;
+import org.jfree.chart.plot.CategoryPlot;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
@@ -46,6 +51,7 @@ import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.service.TarjetaCreditoService;
 import ar.com.controlfinanzas.ui.dashboard.PanelResumenTarjeta;
 import ar.com.controlfinanzas.ui.render.ComboRendererGenerico;
+import ar.com.controlfinanzas.util.FechaUtils;
 import ar.com.controlfinanzas.util.NumeroUtils;
 
 public class PanelGastos extends JPanel {
@@ -236,6 +242,7 @@ public class PanelGastos extends JPanel {
 
 		split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelTabla, scrollGrafico);
 		split.setResizeWeight(0.5);
+		split.setOneTouchExpandable(true);
 		add(split, BorderLayout.CENTER);
 
 		btnSimular.addActionListener(e -> simularCuotas());
@@ -247,7 +254,21 @@ public class PanelGastos extends JPanel {
 	private void simularCuotas() {
 		try {
 			BigDecimal monto = NumeroUtils.parse(txtMonto.getText());
-			int cuotas = txtCuotas.getText().isBlank() ? 1 : Integer.parseInt(txtCuotas.getText());
+			int cuotas;
+
+			try {
+				cuotas = txtCuotas.getText().isBlank() ? 1 : Integer.parseInt(txtCuotas.getText());
+
+				if (cuotas <= 0) {
+					JOptionPane.showMessageDialog(this, "Las cuotas deben ser mayor a 0");
+					return;
+				}
+
+			} catch (NumberFormatException e) {
+				JOptionPane.showMessageDialog(this, "Ingrese un número válido en cuotas");
+				return;
+			}
+
 			BigDecimal interes = txtInteres.getText().isBlank() ? BigDecimal.ZERO
 					: new BigDecimal(txtInteres.getText()).divide(BigDecimal.valueOf(100), 4, RoundingMode.HALF_UP);
 
@@ -265,7 +286,15 @@ public class PanelGastos extends JPanel {
 
 		try {
 			String descripcion = txtDescripcion.getText().trim();
+			if (descripcion.length() == 0) {
+				JOptionPane.showMessageDialog(this, "Debe colocar una descripción");
+				return;
+			}
 			BigDecimal monto = NumeroUtils.parse(txtMonto.getText());
+			if (monto == null || monto.compareTo(BigDecimal.ZERO) <= 0) {
+				JOptionPane.showMessageDialog(this, "El monto debe ser mayor a 0");
+				return;
+			}
 			CategoriaGasto categoria = (CategoriaGasto) cbCategoria.getSelectedItem();
 			if (categoria == null) {
 				JOptionPane.showMessageDialog(this, "Seleccione una categoría");
@@ -313,8 +342,7 @@ public class PanelGastos extends JPanel {
 				panelResumenTarjeta.refrescar();
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			JOptionPane.showMessageDialog(this, "Error al guardar gasto");
+			JOptionPane.showMessageDialog(this, e.getMessage());
 		}
 	}
 
@@ -331,6 +359,8 @@ public class PanelGastos extends JPanel {
 	public void cargarGastos() {
 
 		movimientosCache = movimientoService.listarPorUsuario();
+
+		tableModel.setRowCount(0);
 
 		for (Movimiento m : movimientosCache) {
 
@@ -367,6 +397,7 @@ public class PanelGastos extends JPanel {
 		panelGraficos.removeAll();
 		actualizarGraficoPie();
 		actualizarGraficoBarras();
+		actualizarGraficoDeudaPorMes();
 		panelGraficos.revalidate();
 		panelGraficos.repaint();
 	}
@@ -396,18 +427,42 @@ public class PanelGastos extends JPanel {
 		}
 
 		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
-		Map<Integer, BigDecimal> totales = new HashMap<>();
+
+		Map<String, BigDecimal> totales = new TreeMap<>();
+
 		for (Movimiento m : movimientosCache) {
+
+			int anio = m.getFecha().getYear();
 			int mes = m.getFecha().getMonthValue();
-			totales.put(mes, totales.getOrDefault(mes, BigDecimal.ZERO).add(m.getMonto()));
+
+			String clave = anio + "-" + String.format("%02d", mes);
+
+			totales.put(clave, totales.getOrDefault(clave, BigDecimal.ZERO).add(m.getMonto()));
 		}
-		for (Map.Entry<Integer, BigDecimal> e : totales.entrySet()) {
-			String nombreMes = java.time.Month.of(e.getKey()).getDisplayName(TextStyle.SHORT, Locale.getDefault());
-			dataset.addValue(e.getValue(), "Gastos", nombreMes);
+
+		for (Map.Entry<String, BigDecimal> e : totales.entrySet()) {
+
+			String[] partes = e.getKey().split("-");
+			int anio = Integer.parseInt(partes[0]);
+			int mes = Integer.parseInt(partes[1]);
+
+			String nombreMes = java.time.Month.of(mes).getDisplayName(TextStyle.SHORT, Locale.getDefault());
+
+			String etiqueta = nombreMes + " " + anio;
+
+			dataset.addValue(e.getValue(), "Gastos", etiqueta);
 		}
+
 		JFreeChart chart = ChartFactory.createBarChart("Gastos Mensuales", "Mes", "Monto", dataset);
+		CategoryPlot plot = chart.getCategoryPlot();
+		CategoryAxis axis = plot.getDomainAxis();
+
+		axis.setTickLabelFont(new Font("Arial", Font.PLAIN, 10)); // tamaño de meses
+		axis.setCategoryLabelPositions(CategoryLabelPositions.createUpRotationLabelPositions(Math.PI / 4));
+
 		ChartPanel chartPanel = new ChartPanel(chart);
 		chartPanel.setPreferredSize(new Dimension(400, 300));
+
 		panelGraficos.add(chartPanel);
 	}
 
@@ -418,6 +473,7 @@ public class PanelGastos extends JPanel {
 	public void refrescar() {
 		cargarGastos();
 		actualizarGraficos();
+		actualizarGraficoDeudaPorMes();
 		actualizarCuenta();
 		actualizarTarjetaCredito();
 	}
@@ -433,4 +489,35 @@ public class PanelGastos extends JPanel {
 		lblTotalFinanciado.setVisible(visible);
 		lblValorCuota.setVisible(visible);
 	}
+
+	private void actualizarGraficoDeudaPorMes() {
+
+		List<Object[]> datos = movimientoService.obtenerDeudaPorMes();
+
+		if (datos == null || datos.isEmpty()) {
+			JLabel label = new JLabel("No hay deuda registrada");
+			panelGraficos.add(label);
+			return;
+		}
+
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		for (Object[] row : datos) {
+			Integer anio = (Integer) row[0];
+			Integer mes = (Integer) row[1];
+			BigDecimal total = (BigDecimal) row[2];
+
+			String etiqueta = FechaUtils.formatearMesAnio(mes, anio);
+
+			dataset.addValue(total, "Deuda", etiqueta);
+		}
+
+		JFreeChart chart = ChartFactory.createBarChart("Proyección de Deuda por Mes", "Mes", "Monto", dataset);
+
+		ChartPanel chartPanel = new ChartPanel(chart);
+		chartPanel.setPreferredSize(new Dimension(500, 300));
+
+		panelGraficos.add(chartPanel);
+	}
+
 }
