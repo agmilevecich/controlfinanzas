@@ -34,4 +34,5 @@ public class ServicioAlertas {
 
 		return new ResultadoAlertaInversion(inversion, EstadoInversion.VIGENTE, diasRestantes);
 	}
+
 }

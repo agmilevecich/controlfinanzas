@@ -6,6 +6,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+import ar.com.controlfinanzas.alerts.generator.GeneradorAlertas;
 import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.Alerta;
 import ar.com.controlfinanzas.model.Cuenta;
@@ -134,9 +135,13 @@ public class AlertaManager {
 
 		List<Alerta> alertas = new ArrayList<>();
 
-		alertas.addAll(generarAlertasInversiones(inversiones));
-		alertas.addAll(generarAlertasCuentas(cuentas));
-		alertas.addAll(generarAlertaGastoMensual(movimientoService, usuario));
+		// 🔌 Nuevo sistema desacoplado (sin romper lo existente)
+		List<GeneradorAlertas> generadores = List.of(() -> generarAlertasInversiones(inversiones),
+				() -> generarAlertasCuentas(cuentas), () -> generarAlertaGastoMensual(movimientoService, usuario));
+
+		for (GeneradorAlertas g : generadores) {
+			alertas.addAll(g.generar());
+		}
 
 		return alertas;
 	}
