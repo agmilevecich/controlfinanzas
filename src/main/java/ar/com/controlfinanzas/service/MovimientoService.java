@@ -496,4 +496,36 @@ public class MovimientoService {
 				""", Object[].class).setParameter("ingreso", TipoMovimiento.INGRESO)
 				.setParameter("gasto", TipoMovimiento.GASTO).setParameter("credito", FormaPago.CREDITO).getResultList();
 	}
+
+	public BigDecimal calcularTotalMesActual(Integer usuarioId) {
+
+		YearMonth mesActual = YearMonth.now();
+
+		return em.createQuery("""
+				SELECT COALESCE(SUM(m.monto), 0)
+				FROM Movimiento m
+				WHERE m.usuario.usuarioID = :usuarioId
+				AND m.tipo = :tipo
+				AND FUNCTION('YEAR', m.fecha) = :anio
+				AND FUNCTION('MONTH', m.fecha) = :mes
+				""", BigDecimal.class).setParameter("usuarioId", usuarioId).setParameter("tipo", TipoMovimiento.GASTO)
+				.setParameter("anio", mesActual.getYear()).setParameter("mes", mesActual.getMonthValue())
+				.getSingleResult();
+	}
+
+	public BigDecimal calcularTotalMesAnterior(Integer usuarioId) {
+
+		YearMonth mesAnterior = YearMonth.now().minusMonths(1);
+
+		return em.createQuery("""
+				SELECT COALESCE(SUM(m.monto), 0)
+				FROM Movimiento m
+				WHERE m.usuario.usuarioID = :usuarioId
+				AND m.tipo = :tipo
+				AND FUNCTION('YEAR', m.fecha) = :anio
+				AND FUNCTION('MONTH', m.fecha) = :mes
+				""", BigDecimal.class).setParameter("usuarioId", usuarioId).setParameter("tipo", TipoMovimiento.GASTO)
+				.setParameter("anio", mesAnterior.getYear()).setParameter("mes", mesAnterior.getMonthValue())
+				.getSingleResult();
+	}
 }

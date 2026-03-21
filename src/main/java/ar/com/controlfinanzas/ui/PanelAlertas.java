@@ -2,6 +2,7 @@ package ar.com.controlfinanzas.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
@@ -43,8 +44,7 @@ public class PanelAlertas extends JPanel {
 
 		actualizarResumen(alertas);
 
-		alertas.stream().sorted((a1, a2) -> prioridad(a1.getNivel()) - prioridad(a2.getNivel()))
-				.forEach(this::appendAlerta);
+		alertas.stream().sorted(Comparator.comparingInt(a -> prioridad(a.getNivel()))).forEach(this::appendAlerta);
 	}
 
 	private void actualizarResumen(List<Alerta> alertas) {
@@ -63,32 +63,37 @@ public class PanelAlertas extends JPanel {
 	}
 
 	private void appendAlerta(Alerta alerta) {
+
 		Color color;
 		String prefijo;
 
 		switch (alerta.getNivel()) {
 		case HOY:
-			color = Color.RED;
-			prefijo = "[HOY] ";
+			color = new Color(192, 0, 0); // rojo fuerte
+			prefijo = "🔴 HOY → ";
 			break;
+
 		case CRITICA:
-			color = Color.ORANGE;
-			prefijo = "[CRÍTICA] ";
+			color = new Color(255, 140, 0); // naranja
+			prefijo = "🟠 CRÍTICA → ";
 			break;
+
 		case PROXIMA:
-			color = Color.BLUE;
-			prefijo = "[PRÓXIMA] ";
+			color = new Color(0, 102, 204); // azul
+			prefijo = "🔵 PRÓXIMA → ";
 			break;
+
 		case INFO:
 		default:
 			color = Color.GRAY;
-			prefijo = "[INFO] ";
+			prefijo = "⚪ INFO → ";
 		}
 
 		append(prefijo + alerta.getMensaje() + "\n", color);
 	}
 
 	private void append(String texto, Color color) {
+
 		SimpleAttributeSet attrs = new SimpleAttributeSet();
 		StyleConstants.setForeground(attrs, color);
 		StyleConstants.setBold(attrs, true);
@@ -96,11 +101,12 @@ public class PanelAlertas extends JPanel {
 		try {
 			textPane.getDocument().insertString(textPane.getDocument().getLength(), texto, attrs);
 		} catch (Exception e) {
-			// no-op
+			e.printStackTrace(); // mejor ver errores en consola
 		}
 	}
 
 	private int prioridad(Alerta.Nivel nivel) {
+
 		if (nivel == null) {
 			return 99;
 		}

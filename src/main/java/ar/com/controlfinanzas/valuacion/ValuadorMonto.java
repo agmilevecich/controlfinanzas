@@ -13,6 +13,12 @@ public class ValuadorMonto implements ValuadorInversion {
 
 	@Override
 	public BigDecimal calcularIngresoMensual(Inversion inv) {
+
+		if (inv.getTasaAnual() == null || inv.getSaldo() == null
+				|| inv.getTasaAnual().compareTo(BigDecimal.ZERO) == 0) {
+			return BigDecimal.ZERO;
+		}
+
 		// interés mensual aproximado
 		BigDecimal tasaMensual = inv.getTasaAnual().divide(BigDecimal.valueOf(12), RoundingMode.HALF_UP);
 		return inv.getSaldo().multiply(tasaMensual);

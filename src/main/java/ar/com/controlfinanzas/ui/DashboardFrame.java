@@ -7,15 +7,16 @@ import java.util.List;
 import javax.swing.JFrame;
 import javax.swing.JTabbedPane;
 
+import ar.com.controlfinanzas.alerts.AlertaManager;
 import ar.com.controlfinanzas.controller.InversionController;
 import ar.com.controlfinanzas.domain.inversion.Inversion;
+import ar.com.controlfinanzas.model.Alerta;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Posicion;
 import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.repository.InversionRepositoryJPA;
 import ar.com.controlfinanzas.repository.interfaces.InversionRepository;
-import ar.com.controlfinanzas.service.AlertaService;
 import ar.com.controlfinanzas.service.BancoService;
 import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.IngresoService;
@@ -47,7 +48,7 @@ public class DashboardFrame extends JFrame {
 	private PanelResumenFinanciero panelResumen;
 	private PanelVencimientosGraficos panelVencimientosGraficos;
 
-	private final AlertaService alertaService;
+	private final AlertaManager alertaManager;
 	private final InversionRepository inversionRepository;
 	private final InversionService inversionService;
 	private final InversionController inversionController;
@@ -72,8 +73,9 @@ public class DashboardFrame extends JFrame {
 	public DashboardFrame(CuentaService cuentaService, MovimientoService movimientoService, EntityManager em) {
 		this.em = em;
 		this.cuentaService = cuentaService;
+		this.movimientoService = movimientoService;
 
-		this.alertaService = new AlertaService();
+		this.alertaManager = new AlertaManager();
 		this.inversionRepository = new InversionRepositoryJPA(em);
 		this.inversionService = new InversionService(inversionRepository);
 		this.inversionController = new InversionController(inversionService);
@@ -97,8 +99,10 @@ public class DashboardFrame extends JFrame {
 		// ===============================
 		PanelBancos panelBancos = new PanelBancos(bancoService);
 		PanelResumenTarjeta panelResumenTarjeta = new PanelResumenTarjeta(cuentaService, em);
+
 		PanelGastos panelGastos = new PanelGastos(cuentaService, movimientoService, tarjetaCreditoService,
 				panelResumenTarjeta);
+
 		panelGastos.setActualizaGastos(() -> {
 			panelMovimientos.cargarMovimientos();
 			panelCuentas.cargarCuentas();
@@ -108,6 +112,7 @@ public class DashboardFrame extends JFrame {
 			panelGastos.actualizarTarjetaCredito();
 			panelResumenTarjeta.refrescar();
 		});
+
 		panelAlertas = new PanelAlertas();
 		panelVencimiento = new PanelVencimiento();
 		panelVencimientosGraficos = new PanelVencimientosGraficos(List.of());
@@ -119,23 +124,23 @@ public class DashboardFrame extends JFrame {
 		panelCuentas = new PanelCuentas(cuentaService, movimientoService, bancoService);
 		panelMovimientos = new PanelMovimientos(null, cuentaService, movimientoService);
 
-		// Sincronizamos selección de cuenta
+		// Sincronización entre paneles
 		panelCuentas.setCuentaSeleccionadaListener(cuenta -> panelMovimientos.actualizarCuenta(cuenta));
+
 		panelCuentas.setActualizarCuentas(() -> {
+			refrescarEstadoFinanciero();
 			panelGastos.refrescar();
 			panelTarjetaCredito.actualizarBancos();
 		});
 
 		panelResumenTarjeta.setActualizar(() -> {
-
 			panelMovimientos.cargarMovimientos();
-
 		});
 
-		// Callback para actualizar PanelCuentas al agregar movimiento
 		panelMovimientos.setActualizarPanelCuentasCallback(() -> {
 			panelCuentas.cargarCuentas();
 			panelTarjetaCredito.actualizarBancos();
+			refrescarEstadoFinanciero();
 		});
 
 		panelCartera = new PanelCartera();
@@ -172,7 +177,7 @@ public class DashboardFrame extends JFrame {
 	public void refrescarEstadoFinanciero() {
 		cargarInversiones();
 		cargarPosiciones();
-		cargarCuentas(); // carga cuentas y actualiza saldo
+		cargarCuentas();
 		actualizarAlertas();
 		actualizarVencimientos();
 		actualizarResumen();
@@ -221,7 +226,11 @@ public class DashboardFrame extends JFrame {
 	}
 
 	private void actualizarAlertas() {
-		panelAlertas.actualizarAlertas(alertaService.generarAlertasInversiones(inversiones));
+
+		List<Alerta> alertas = alertaManager.generarTodas(inversiones, cuentas, movimientoService, usuario);
+
+		panelAlertas.actualizarAlertas(alertas);
+
 	}
 
 	private void actualizarVencimientos() {
