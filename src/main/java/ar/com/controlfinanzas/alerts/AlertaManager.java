@@ -149,23 +149,38 @@ public class AlertaManager {
 
 		for (TarjetaCredito tarjeta : tarjetas) {
 
+			BigDecimal deuda = tarjetaService.calcularDeudaTotal(tarjeta);
+
+			// 🚫 SI NO HAY DEUDA → NO ALERTAR
+			if (deuda == null || deuda.compareTo(BigDecimal.ZERO) <= 0) {
+				continue;
+			}
+
 			LocalDate vencimiento = tarjetaService.calcularProximoVencimiento(tarjeta);
 
 			long dias = java.time.temporal.ChronoUnit.DAYS.between(hoy, vencimiento);
 
+			BigDecimal minimo = tarjetaService.calcularPagoMinimo(tarjeta);
+
 			if (dias == 0) {
 
-				alertas.add(new Alerta("Tarjeta vence hoy", tarjeta.getNombre() + " vence hoy", hoy,
+				alertas.add(new Alerta("Tarjeta vence hoy",
+						tarjeta.getNombre() + " vence hoy | Deuda: $" + deuda + " | Mínimo: $" + minimo, hoy,
 						Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.HOY));
 
 			} else if (dias <= 3) {
 
-				alertas.add(new Alerta("Tarjeta por vencer", tarjeta.getNombre() + " vence en " + dias + " días", hoy,
-						Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.CRITICA));
+				alertas.add(
+						new Alerta(
+								"Tarjeta por vencer", tarjeta.getNombre() + " vence en " + dias + " días | Deuda: $"
+										+ deuda + " | Mínimo: $" + minimo,
+								hoy, Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.CRITICA));
 
 			} else if (dias <= 7) {
 
-				alertas.add(new Alerta("Tarjeta próxima a vencer", tarjeta.getNombre() + " vence en " + dias + " días",
+				alertas.add(new Alerta(
+						"Tarjeta próxima a vencer", tarjeta.getNombre() + " vence en " + dias + " días | Deuda: $"
+								+ deuda + " | Mínimo: $" + minimo,
 						hoy, Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.PROXIMA));
 			}
 		}
