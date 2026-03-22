@@ -18,6 +18,7 @@ public class Alerta {
 	private LocalDate fecha;
 	private TipoAlerta tipo;
 	private Nivel nivel;
+	private Runnable runnable;
 
 	// Constructor EXISTENTE (para no romper nada)
 	public Alerta(String titulo, String mensaje, LocalDate fecha, TipoAlerta tipo) {
@@ -56,5 +57,13 @@ public class Alerta {
 
 	public Nivel getNivel() {
 		return nivel;
+	}
+
+	public void setAccion(Runnable runnable) {
+		this.runnable = runnable;
+	}
+
+	public Runnable getAccion() {
+		return this.runnable;
 	}
 }

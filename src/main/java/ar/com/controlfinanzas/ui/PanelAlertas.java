@@ -2,6 +2,10 @@ package ar.com.controlfinanzas.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.EnumMap;
 import java.util.List;
@@ -21,6 +25,9 @@ public class PanelAlertas extends JPanel {
 	private JTextPane textPane;
 	private JLabel resumenLabel;
 
+	// 🔥 NUEVO: mantener referencia de alertas
+	private List<Alerta> alertasActuales = new ArrayList<>();
+
 	public PanelAlertas() {
 		setLayout(new BorderLayout());
 
@@ -29,12 +36,40 @@ public class PanelAlertas extends JPanel {
 
 		textPane = new JTextPane();
 		textPane.setEditable(false);
+		textPane.setCursor(new Cursor(Cursor.HAND_CURSOR)); // 👈 cursor clickeable
+
+		// 🔥 CLICK SOBRE ALERTAS
+		textPane.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mouseClicked(MouseEvent e) {
+
+				try {
+					int pos = textPane.viewToModel2D(e.getPoint());
+					int linea = textPane.getDocument().getDefaultRootElement().getElementIndex(pos);
+
+					if (linea >= 0 && linea < alertasActuales.size()) {
+						Alerta alerta = alertasActuales.get(linea);
+
+						if (alerta.getAccion() != null) {
+							alerta.getAccion().run();
+						}
+					}
+
+				} catch (Exception ex) {
+					ex.printStackTrace();
+				}
+			}
+		});
 
 		add(new JScrollPane(textPane), BorderLayout.CENTER);
 	}
 
 	public void actualizarAlertas(List<Alerta> alertas) {
+
 		textPane.setText("");
+
+		// 🔥 guardar referencia ordenada
+		alertasActuales.clear();
 
 		if (alertas == null || alertas.isEmpty()) {
 			resumenLabel.setText("Sin alertas activas");
@@ -44,7 +79,10 @@ public class PanelAlertas extends JPanel {
 
 		actualizarResumen(alertas);
 
-		alertas.stream().sorted(Comparator.comparingInt(a -> prioridad(a.getNivel()))).forEach(this::appendAlerta);
+		alertas.stream().sorted(Comparator.comparingInt(a -> prioridad(a.getNivel()))).forEach(alerta -> {
+			alertasActuales.add(alerta); // 👈 clave para mapear click
+			appendAlerta(alerta);
+		});
 	}
 
 	private void actualizarResumen(List<Alerta> alertas) {
@@ -69,17 +107,17 @@ public class PanelAlertas extends JPanel {
 
 		switch (alerta.getNivel()) {
 		case HOY:
-			color = new Color(192, 0, 0); // rojo fuerte
+			color = new Color(192, 0, 0);
 			prefijo = "🔴 HOY → ";
 			break;
 
 		case CRITICA:
-			color = new Color(255, 140, 0); // naranja
+			color = new Color(255, 140, 0);
 			prefijo = "🟠 CRÍTICA → ";
 			break;
 
 		case PROXIMA:
-			color = new Color(0, 102, 204); // azul
+			color = new Color(0, 102, 204);
 			prefijo = "🔵 PRÓXIMA → ";
 			break;
 
@@ -101,7 +139,7 @@ public class PanelAlertas extends JPanel {
 		try {
 			textPane.getDocument().insertString(textPane.getDocument().getLength(), texto, attrs);
 		} catch (Exception e) {
-			e.printStackTrace(); // mejor ver errores en consola
+			e.printStackTrace();
 		}
 	}
 

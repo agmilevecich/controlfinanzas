@@ -75,13 +75,14 @@ public class DashboardFrame extends JFrame {
 	private BancoService bancoService;
 	private PanelMargen panelMargen;
 	private Usuario usuario;
+	private JTabbedPane tabs;
 
 	public DashboardFrame(CuentaService cuentaService, MovimientoService movimientoService, EntityManager em) {
 		this.em = em;
 		this.cuentaService = cuentaService;
 		this.movimientoService = movimientoService;
 
-		this.alertaManager = new AlertaManager();
+		this.alertaManager = new AlertaManager(this);
 		this.inversionRepository = new InversionRepositoryJPA(em);
 		this.inversionService = new InversionService(inversionRepository);
 		this.inversionController = new InversionController(inversionService);
@@ -160,7 +161,7 @@ public class DashboardFrame extends JFrame {
 		// ===============================
 		// Tabs
 		// ===============================
-		JTabbedPane tabs = new JTabbedPane();
+		tabs = new JTabbedPane();
 		tabs.addTab("Resumen", panelResumen);
 		tabs.addTab("Resumen Gastos", panelResumenGastos);
 		tabs.addTab("Gastos", panelGastos);
@@ -276,5 +277,26 @@ public class DashboardFrame extends JFrame {
 
 	public void onInversionesActualizadas() {
 		refrescarEstadoFinanciero();
+	}
+
+	// ===============================
+	// 🧭 NAVEGACIÓN DESDE ALERTAS
+	// ===============================
+	public void irAMovimientos() {
+		irATab(7); // índice de "Movimientos"
+	}
+
+	public void irATarjetas() {
+		irATab(8); // índice de "Tarjetas"
+	}
+
+	public void irAResumen() {
+		irATab(0); // índice de "Resumen"
+	}
+
+	private void irATab(int index) {
+		if (tabs != null && index >= 0 && index < tabs.getTabCount()) {
+			tabs.setSelectedIndex(index);
+		}
 	}
 }

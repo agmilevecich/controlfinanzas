@@ -15,17 +15,21 @@ import ar.com.controlfinanzas.model.TarjetaCredito;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.service.TarjetaCreditoService;
+import ar.com.controlfinanzas.ui.DashboardFrame;
 
 public class AlertaManager {
 
 	private final ServicioAlertas servicioAlertas;
 
+	private DashboardFrame dashboardFrame;
+
 	// 🔧 CONFIGURACIÓN SIMPLE (después lo hacemos configurable)
 	private static final BigDecimal SALDO_CRITICO = new BigDecimal("1000");
 	private static final BigDecimal SALDO_BAJO = new BigDecimal("5000");
 
-	public AlertaManager() {
+	public AlertaManager(DashboardFrame dashboardFrame) {
 		this.servicioAlertas = new ServicioAlertas(new ConfiguracionAlertas());
+		this.dashboardFrame = dashboardFrame;
 	}
 
 	// ===============================
@@ -85,15 +89,18 @@ public class AlertaManager {
 			// 🔴 CRÍTICO
 			if (saldo.compareTo(SALDO_CRITICO) <= 0) {
 
-				alertas.add(new Alerta("Saldo crítico", cuenta.getNombre() + " tiene saldo crítico: $" + saldo,
-						LocalDate.now(), Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.CRITICA));
+				Alerta alerta = new Alerta("Saldo crítico", cuenta.getNombre() + " tiene saldo crítico: $" + saldo,
+						LocalDate.now(), Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.CRITICA);
+				alerta.setAccion(() -> dashboardFrame.irAMovimientos());
+				alertas.add(alerta);
 
 			}
 			// 🟠 BAJO
 			else if (saldo.compareTo(SALDO_BAJO) <= 0) {
-
-				alertas.add(new Alerta("Saldo bajo", cuenta.getNombre() + " tiene saldo bajo: $" + saldo,
-						LocalDate.now(), Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.PROXIMA));
+				Alerta alerta = new Alerta("Saldo bajo", cuenta.getNombre() + " tiene saldo bajo: $" + saldo,
+						LocalDate.now(), Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.PROXIMA);
+				alerta.setAccion(() -> dashboardFrame.irAMovimientos());
+				alertas.add(alerta);
 			}
 		}
 
@@ -164,9 +171,11 @@ public class AlertaManager {
 
 			if (dias == 0) {
 
-				alertas.add(new Alerta("Tarjeta vence hoy",
+				Alerta alerta = new Alerta("Tarjeta vence hoy",
 						tarjeta.getNombre() + " vence hoy | Deuda: $" + deuda + " | Mínimo: $" + minimo, hoy,
-						Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.HOY));
+						Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.HOY);
+				alerta.setAccion(() -> dashboardFrame.irATarjetas());
+				alertas.add(alerta);
 
 			} else if (dias <= 3) {
 
