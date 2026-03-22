@@ -81,20 +81,6 @@ public class PanelTarjetaCredito extends JPanel {
 
 		gbc.gridx = 0;
 		gbc.gridy++;
-		formulario.add(new JLabel("Día de Cierre:"), gbc);
-		txtDiaCierre = new JSpinner(new SpinnerNumberModel(1, 1, 31, 1));
-		gbc.gridx = 1;
-		formulario.add(txtDiaCierre, gbc);
-
-		gbc.gridx = 0;
-		gbc.gridy++;
-		formulario.add(new JLabel("Día de Vencimiento:"), gbc);
-		txtDiaVencimiento = new JSpinner(new SpinnerNumberModel(1, 1, 31, 1));
-		gbc.gridx = 1;
-		formulario.add(txtDiaVencimiento, gbc);
-
-		gbc.gridx = 0;
-		gbc.gridy++;
 		formulario.add(new JLabel("Cuenta asociada:"), gbc);
 		gbc.gridx = 1;
 		comboBanco = new JComboBox<>();
@@ -117,6 +103,31 @@ public class PanelTarjetaCredito extends JPanel {
 		comboBanco.repaint();
 		formulario.add(comboBanco, gbc);
 
+		gbc.gridx = 0;
+		gbc.gridy++;
+		formulario.add(new JLabel("Día de Cierre:"), gbc);
+		txtDiaCierre = new JSpinner(new SpinnerNumberModel(1, 1, 31, 1));
+		JSpinner.NumberEditor editorCierre = new JSpinner.NumberEditor(txtDiaCierre);
+		txtDiaCierre.setEditor(editorCierre);
+		editorCierre.getTextField().setColumns(2);
+		gbc.gridx = 1;
+		gbc.fill = GridBagConstraints.NONE;
+		gbc.anchor = GridBagConstraints.WEST;
+		formulario.add(txtDiaCierre, gbc);
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+
+		gbc.gridx = 0;
+		gbc.gridy++;
+		formulario.add(new JLabel("Día de Vencimiento:"), gbc);
+		txtDiaVencimiento = new JSpinner(new SpinnerNumberModel(1, 1, 31, 1));
+		JSpinner.NumberEditor editorVencimiento = new JSpinner.NumberEditor(txtDiaVencimiento);
+		txtDiaVencimiento.setEditor(editorVencimiento);
+		editorVencimiento.getTextField().setColumns(2);
+		gbc.gridx = 1;
+		gbc.fill = GridBagConstraints.NONE;
+		gbc.anchor = GridBagConstraints.WEST;
+		formulario.add(txtDiaVencimiento, gbc);
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 		gbc.gridx = 0;
 		gbc.gridy++;
 		gbc.gridwidth = 2;
