@@ -133,8 +133,10 @@ public class AlertaManager {
 
 		if (porcentaje.compareTo(BigDecimal.valueOf(30)) > 0) {
 
-			alertas.add(new Alerta("Gasto elevado", "Estás gastando " + porcentaje + "% más que el mes pasado",
-					LocalDate.now(), Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.PROXIMA));
+			Alerta alerta = new Alerta("Gasto elevado", "Estás gastando " + porcentaje + "% más que el mes pasado",
+					LocalDate.now(), Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.PROXIMA);
+			alerta.setAccion(() -> dashboardFrame.irAMovimientos());
+			alertas.add(alerta);
 		}
 
 		return alertas;
@@ -224,8 +226,10 @@ public class AlertaManager {
 		// 👉 si este mes no hay ingresos en absoluto
 		if (ingresosMesActual.compareTo(BigDecimal.ZERO) == 0) {
 
-			alertas.add(new Alerta("Ingresos faltantes", "Aún no registraste ingresos este mes", LocalDate.now(),
-					Alerta.TipoAlerta.INGRESO, Alerta.Nivel.CRITICA));
+			Alerta alerta = new Alerta("Ingresos faltantes", "Aún no registraste ingresos este mes", LocalDate.now(),
+					Alerta.TipoAlerta.INGRESO, Alerta.Nivel.CRITICA);
+			alerta.setAccion(() -> dashboardFrame.irAMovimientos());
+			alertas.add(alerta);
 
 			return alertas;
 		}
@@ -238,9 +242,11 @@ public class AlertaManager {
 
 		if (porcentaje.compareTo(BigDecimal.valueOf(50)) < 0) {
 
-			alertas.add(new Alerta("Ingresos bajos",
+			Alerta alerta = new Alerta("Ingresos bajos",
 					"Este mes ingresaste solo el " + porcentaje + "% respecto al mes pasado", LocalDate.now(),
-					Alerta.TipoAlerta.INGRESO, Alerta.Nivel.CRITICA));
+					Alerta.TipoAlerta.INGRESO, Alerta.Nivel.CRITICA);
+			alerta.setAccion(() -> dashboardFrame.irAMovimientos());
+			alertas.add(alerta);
 		}
 
 		return alertas;
@@ -282,8 +288,11 @@ public class AlertaManager {
 		if (ingresos.compareTo(BigDecimal.ZERO) <= 0) {
 
 			if (gastos.compareTo(BigDecimal.ZERO) > 0 || deudaTarjetas.compareTo(BigDecimal.ZERO) > 0) {
-				alertas.add(new Alerta("Sin ingresos", "Tenés gastos o deudas este mes pero no registraste ingresos",
-						LocalDate.now(), Alerta.TipoAlerta.FINANZAS, Alerta.Nivel.CRITICA));
+				Alerta alerta = new Alerta("Sin ingresos",
+						"Tenés gastos o deudas este mes pero no registraste ingresos", LocalDate.now(),
+						Alerta.TipoAlerta.FINANZAS, Alerta.Nivel.CRITICA);
+				alerta.setAccion(() -> dashboardFrame.irAResumen());
+				alertas.add(alerta);
 			}
 
 			return alertas;
@@ -291,10 +300,11 @@ public class AlertaManager {
 
 		// 🔴 margen negativo
 		if (margen.compareTo(BigDecimal.ZERO) < 0) {
-
-			alertas.add(
-					new Alerta("Margen negativo", "Estás gastando más de lo que ingresás. Diferencia: $" + margen.abs(),
-							LocalDate.now(), Alerta.TipoAlerta.FINANZAS, Alerta.Nivel.CRITICA));
+			Alerta alerta = new Alerta("Margen negativo",
+					"Estás gastando más de lo que ingresás. Diferencia: $" + margen.abs(), LocalDate.now(),
+					Alerta.TipoAlerta.FINANZAS, Alerta.Nivel.CRITICA);
+			alerta.setAccion(() -> dashboardFrame.irAResumen());
+			alertas.add(alerta);
 
 			return alertas;
 		}
@@ -303,9 +313,10 @@ public class AlertaManager {
 		BigDecimal porcentaje = margen.divide(ingresos, 2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100));
 
 		if (porcentaje.compareTo(BigDecimal.valueOf(20)) < 0) {
-
-			alertas.add(new Alerta("Margen bajo", "Te queda solo un " + porcentaje + "% de margen este mes",
-					LocalDate.now(), Alerta.TipoAlerta.FINANZAS, Alerta.Nivel.PROXIMA));
+			Alerta alerta = new Alerta("Margen bajo", "Te queda solo un " + porcentaje + "% de margen este mes",
+					LocalDate.now(), Alerta.TipoAlerta.FINANZAS, Alerta.Nivel.PROXIMA);
+			alerta.setAccion(() -> dashboardFrame.irAResumen());
+			alertas.add(alerta);
 		}
 
 		return alertas;
