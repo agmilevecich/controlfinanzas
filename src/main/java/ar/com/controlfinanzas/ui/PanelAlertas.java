@@ -2,7 +2,6 @@ package ar.com.controlfinanzas.ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
@@ -36,7 +35,6 @@ public class PanelAlertas extends JPanel {
 
 		textPane = new JTextPane();
 		textPane.setEditable(false);
-		textPane.setCursor(new Cursor(Cursor.HAND_CURSOR)); // 👈 cursor clickeable
 
 		// 🔥 CLICK SOBRE ALERTAS
 		textPane.addMouseListener(new MouseAdapter() {
@@ -58,6 +56,30 @@ public class PanelAlertas extends JPanel {
 				} catch (Exception ex) {
 					ex.printStackTrace();
 				}
+			}
+		});
+
+		textPane.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+			@Override
+			public void mouseMoved(java.awt.event.MouseEvent e) {
+
+				int pos = textPane.viewToModel2D(e.getPoint());
+
+				var root = textPane.getDocument().getDefaultRootElement();
+				int linea = root.getElementIndex(pos);
+
+				if (linea >= 0 && linea < alertasActuales.size()) {
+
+					Alerta alerta = alertasActuales.get(linea);
+
+					if (alerta.getAccion() != null) {
+						textPane.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+						return;
+					}
+				}
+
+				// cursor normal
+				textPane.setCursor(new java.awt.Cursor(java.awt.Cursor.DEFAULT_CURSOR));
 			}
 		});
 
