@@ -11,8 +11,10 @@ import ar.com.controlfinanzas.domain.inversion.Inversion;
 import ar.com.controlfinanzas.model.Alerta;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.EstadoInversion;
+import ar.com.controlfinanzas.model.TarjetaCredito;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.MovimientoService;
+import ar.com.controlfinanzas.service.TarjetaCreditoService;
 
 public class AlertaManager {
 
@@ -98,6 +100,10 @@ public class AlertaManager {
 		return alertas;
 	}
 
+	// ===============================
+	// 🆕 ALERTAS DE GASTOS MENSUALES
+	// ===============================
+
 	public List<Alerta> generarAlertaGastoMensual(MovimientoService movimientoService, Usuario usuario) {
 
 		List<Alerta> alertas = new ArrayList<>();
@@ -128,16 +134,56 @@ public class AlertaManager {
 	}
 
 	// ===============================
-	// 🧠 MÉTODO CENTRAL (TODO JUNTO)
+	// 🆕 ALERTAS DE TARJETAS
 	// ===============================
-	public List<Alerta> generarTodas(List<Inversion> inversiones, List<Cuenta> cuentas,
-			MovimientoService movimientoService, Usuario usuario) {
+
+	public List<Alerta> generarAlertasTarjetas(List<TarjetaCredito> tarjetas, TarjetaCreditoService tarjetaService) {
 
 		List<Alerta> alertas = new ArrayList<>();
 
-		// 🔌 Nuevo sistema desacoplado (sin romper lo existente)
+		if (tarjetas == null || tarjetas.isEmpty()) {
+			return alertas;
+		}
+
+		LocalDate hoy = LocalDate.now();
+
+		for (TarjetaCredito tarjeta : tarjetas) {
+
+			LocalDate vencimiento = tarjetaService.calcularProximoVencimiento(tarjeta);
+
+			long dias = java.time.temporal.ChronoUnit.DAYS.between(hoy, vencimiento);
+
+			if (dias == 0) {
+
+				alertas.add(new Alerta("Tarjeta vence hoy", tarjeta.getNombre() + " vence hoy", hoy,
+						Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.HOY));
+
+			} else if (dias <= 3) {
+
+				alertas.add(new Alerta("Tarjeta por vencer", tarjeta.getNombre() + " vence en " + dias + " días", hoy,
+						Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.CRITICA));
+
+			} else if (dias <= 7) {
+
+				alertas.add(new Alerta("Tarjeta próxima a vencer", tarjeta.getNombre() + " vence en " + dias + " días",
+						hoy, Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.PROXIMA));
+			}
+		}
+
+		return alertas;
+	}
+
+	// ===============================
+	// 🧠 MÉTODO CENTRAL (TODO JUNTO)
+	// ===============================
+	public List<Alerta> generarTodas(List<Inversion> inversiones, List<Cuenta> cuentas, List<TarjetaCredito> tarjetas,
+			MovimientoService movimientoService, TarjetaCreditoService tarjetaCreditoService, Usuario usuario) {
+
+		List<Alerta> alertas = new ArrayList<>();
+
 		List<GeneradorAlertas> generadores = List.of(() -> generarAlertasInversiones(inversiones),
-				() -> generarAlertasCuentas(cuentas), () -> generarAlertaGastoMensual(movimientoService, usuario));
+				() -> generarAlertasCuentas(cuentas), () -> generarAlertaGastoMensual(movimientoService, usuario),
+				() -> generarAlertasTarjetas(tarjetas, tarjetaCreditoService));
 
 		for (GeneradorAlertas g : generadores) {
 			alertas.addAll(g.generar());

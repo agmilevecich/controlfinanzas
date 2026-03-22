@@ -74,6 +74,23 @@ public class TarjetaCreditoService {
 		return LocalDate.of(fecha.getYear(), fecha.getMonth(), dia);
 	}
 
+	public LocalDate calcularProximoVencimiento(TarjetaCredito tarjeta) {
+
+		LocalDate hoy = LocalDate.now();
+
+		int dia = Math.min(tarjeta.getDiaVencimiento(), hoy.lengthOfMonth());
+		LocalDate vencimientoEsteMes = LocalDate.of(hoy.getYear(), hoy.getMonth(), dia);
+
+		if (hoy.isAfter(vencimientoEsteMes)) {
+			// ya pasó → siguiente mes
+			LocalDate mesSiguiente = hoy.plusMonths(1);
+			int diaAjustado = Math.min(tarjeta.getDiaVencimiento(), mesSiguiente.lengthOfMonth());
+			return LocalDate.of(mesSiguiente.getYear(), mesSiguiente.getMonth(), diaAjustado);
+		}
+
+		return vencimientoEsteMes;
+	}
+
 	public List<Movimiento> getMovimientosCiclo(TarjetaCredito tarjeta) {
 
 		LocalDate inicio = obtenerInicioCiclo(tarjeta);

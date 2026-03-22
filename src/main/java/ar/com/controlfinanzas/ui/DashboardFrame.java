@@ -14,6 +14,7 @@ import ar.com.controlfinanzas.model.Alerta;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Posicion;
 import ar.com.controlfinanzas.model.SesionUsuario;
+import ar.com.controlfinanzas.model.TarjetaCredito;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.repository.InversionRepositoryJPA;
 import ar.com.controlfinanzas.repository.interfaces.InversionRepository;
@@ -65,6 +66,7 @@ public class DashboardFrame extends JFrame {
 	private PanelCuentas panelCuentas;
 	private PanelMovimientos panelMovimientos;
 	private TarjetaCreditoService tarjetaCreditoService;
+	private List<TarjetaCredito> tarjetas;
 	private PanelTarjetaCredito panelTarjetaCredito;
 	private EntityManager em;
 	private BancoService bancoService;
@@ -85,6 +87,7 @@ public class DashboardFrame extends JFrame {
 		this.ingresoService = new IngresoService(em);
 		this.tarjetaCreditoService = new TarjetaCreditoService(em);
 		this.usuario = SesionUsuario.getUsuarioActual();
+		this.tarjetas = tarjetaCreditoService.getTarjetasUsuario(usuario.getUsuarioID());
 
 		panelResumen = new PanelResumenFinanciero(inversionService, movimientoService, ingresoService);
 
@@ -227,7 +230,8 @@ public class DashboardFrame extends JFrame {
 
 	private void actualizarAlertas() {
 
-		List<Alerta> alertas = alertaManager.generarTodas(inversiones, cuentas, movimientoService, usuario);
+		List<Alerta> alertas = alertaManager.generarTodas(inversiones, cuentas, tarjetas, movimientoService,
+				tarjetaCreditoService, usuario);
 
 		panelAlertas.actualizarAlertas(alertas);
 
