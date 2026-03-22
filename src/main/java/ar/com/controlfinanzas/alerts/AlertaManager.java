@@ -189,6 +189,40 @@ public class AlertaManager {
 	}
 
 	// ===============================
+	// 🧠 INGRESOS FALTANTE
+	// ===============================
+	public List<Alerta> generarAlertaIngresosFaltantes(MovimientoService movimientoService, Usuario usuario) {
+
+		List<Alerta> alertas = new ArrayList<>();
+
+		BigDecimal ingresosMesActual = movimientoService.calcularIngresosMesActual(usuario.getUsuarioID());
+		BigDecimal ingresosMesAnterior = movimientoService.calcularIngresosMesAnterior(usuario.getUsuarioID());
+
+		if (ingresosMesActual == null || ingresosMesAnterior == null) {
+			return alertas;
+		}
+
+		// 👉 si el mes pasado no hubo ingresos relevantes, no alertar
+		if (ingresosMesAnterior.compareTo(new BigDecimal("50000")) < 0) {
+			return alertas;
+		}
+
+		// 👉 si este mes ya ingresó al menos el 50%, no molestar
+		BigDecimal porcentaje = ingresosMesActual.divide(ingresosMesAnterior, 2, RoundingMode.HALF_UP)
+				.multiply(BigDecimal.valueOf(100));
+
+		if (porcentaje.compareTo(BigDecimal.valueOf(50)) < 0) {
+
+			alertas.add(new Alerta("Ingresos faltantes",
+					"Este mes ingresaste solo el " + porcentaje + "% respecto al mes pasado", LocalDate.now(),
+					Alerta.TipoAlerta.INGRESO, // si no tenés este tipo, usamos VENCIMIENTO
+					Alerta.Nivel.CRITICA));
+		}
+
+		return alertas;
+	}
+
+	// ===============================
 	// 🧠 MÉTODO CENTRAL (TODO JUNTO)
 	// ===============================
 	public List<Alerta> generarTodas(List<Inversion> inversiones, List<Cuenta> cuentas, List<TarjetaCredito> tarjetas,
@@ -198,7 +232,8 @@ public class AlertaManager {
 
 		List<GeneradorAlertas> generadores = List.of(() -> generarAlertasInversiones(inversiones),
 				() -> generarAlertasCuentas(cuentas), () -> generarAlertaGastoMensual(movimientoService, usuario),
-				() -> generarAlertasTarjetas(tarjetas, tarjetaCreditoService));
+				() -> generarAlertasTarjetas(tarjetas, tarjetaCreditoService),
+				() -> generarAlertaIngresosFaltantes(movimientoService, usuario));
 
 		for (GeneradorAlertas g : generadores) {
 			alertas.addAll(g.generar());

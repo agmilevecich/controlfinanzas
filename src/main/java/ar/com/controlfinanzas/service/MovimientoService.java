@@ -528,4 +528,34 @@ public class MovimientoService {
 				.setParameter("anio", mesAnterior.getYear()).setParameter("mes", mesAnterior.getMonthValue())
 				.getSingleResult();
 	}
+
+	public BigDecimal calcularIngresosMesActual(Integer usuarioId) {
+
+		LocalDate inicio = LocalDate.now().withDayOfMonth(1);
+		LocalDate fin = inicio.plusMonths(1).minusDays(1);
+
+		return em.createQuery("""
+				SELECT COALESCE(SUM(m.monto), 0)
+				FROM Movimiento m
+				WHERE m.usuario.usuarioID = :usuarioId
+				AND m.tipo = :tipo
+				AND m.fecha BETWEEN :inicio AND :fin
+				""", BigDecimal.class).setParameter("usuarioId", usuarioId).setParameter("tipo", TipoMovimiento.INGRESO)
+				.setParameter("inicio", inicio).setParameter("fin", fin).getSingleResult();
+	}
+
+	public BigDecimal calcularIngresosMesAnterior(Integer usuarioId) {
+
+		LocalDate inicio = LocalDate.now().minusMonths(1).withDayOfMonth(1);
+		LocalDate fin = inicio.plusMonths(1).minusDays(1);
+
+		return em.createQuery("""
+				SELECT COALESCE(SUM(m.monto), 0)
+				FROM Movimiento m
+				WHERE m.usuario.usuarioID = :usuarioId
+				AND m.tipo = :tipo
+				AND m.fecha BETWEEN :inicio AND :fin
+				""", BigDecimal.class).setParameter("usuarioId", usuarioId).setParameter("tipo", TipoMovimiento.INGRESO)
+				.setParameter("inicio", inicio).setParameter("fin", fin).getSingleResult();
+	}
 }

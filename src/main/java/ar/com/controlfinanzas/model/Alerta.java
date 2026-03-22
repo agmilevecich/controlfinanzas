@@ -5,7 +5,7 @@ import java.time.LocalDate;
 public class Alerta {
 
 	public enum TipoAlerta {
-		VENCIMIENTO
+		INGRESO, VENCIMIENTO
 	}
 
 	// NUEVO: nivel de urgencia
