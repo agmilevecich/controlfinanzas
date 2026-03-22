@@ -1,7 +1,9 @@
 package ar.com.controlfinanzas.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Dimension;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 import javax.swing.JFrame;
@@ -26,6 +28,7 @@ import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.service.PosicionService;
 import ar.com.controlfinanzas.service.ResumenService;
 import ar.com.controlfinanzas.service.TarjetaCreditoService;
+import ar.com.controlfinanzas.ui.components.PanelMargen;
 import ar.com.controlfinanzas.ui.dashboard.PanelBancos;
 import ar.com.controlfinanzas.ui.dashboard.PanelCuentas;
 import ar.com.controlfinanzas.ui.dashboard.PanelMovimientos;
@@ -70,6 +73,7 @@ public class DashboardFrame extends JFrame {
 	private PanelTarjetaCredito panelTarjetaCredito;
 	private EntityManager em;
 	private BancoService bancoService;
+	private PanelMargen panelMargen;
 	private Usuario usuario;
 
 	public DashboardFrame(CuentaService cuentaService, MovimientoService movimientoService, EntityManager em) {
@@ -148,6 +152,8 @@ public class DashboardFrame extends JFrame {
 
 		panelCartera = new PanelCartera();
 		panelResumenKPIs = new PanelResumen();
+		panelMargen = new PanelMargen();
+		panelMargen.setPreferredSize(new Dimension(300, 20));
 
 		inversionController.addListener(this::onInversionesActualizadas);
 
@@ -167,6 +173,7 @@ public class DashboardFrame extends JFrame {
 		tabs.addTab("KPIs", panelResumenKPIs);
 		tabs.addTab("Resumen Tarjeta", panelResumenTarjeta);
 		tabs.addTab("Vencimientos", panelVencimientosGraficos);
+		tabs.addTab("Margen", panelMargen);
 		tabs.addTab("Alertas", panelAlertas);
 
 		add(tabs, BorderLayout.CENTER);
@@ -185,6 +192,27 @@ public class DashboardFrame extends JFrame {
 		actualizarVencimientos();
 		actualizarResumen();
 		actualizarKPIs();
+		actualizarMargen();
+	}
+
+	private void actualizarMargen() {
+		BigDecimal ingresos = movimientoService.calcularIngresosMesActual(usuario.getUsuarioID());
+		BigDecimal gastos = movimientoService.calcularTotalMesActual(usuario.getUsuarioID());
+
+		BigDecimal deuda = BigDecimal.ZERO;
+		for (TarjetaCredito t : tarjetas) {
+			deuda = deuda.add(tarjetaCreditoService.calcularDeudaTotal(t));
+		}
+
+		BigDecimal margen = ingresos.subtract(gastos).subtract(deuda);
+
+		BigDecimal porcentaje = BigDecimal.ZERO;
+
+		if (ingresos.compareTo(BigDecimal.ZERO) > 0) {
+			porcentaje = margen.divide(ingresos, 2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100));
+		}
+
+		panelMargen.setPorcentaje(porcentaje);
 	}
 
 	private void cargarInversiones() {

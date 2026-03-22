@@ -202,21 +202,101 @@ public class AlertaManager {
 			return alertas;
 		}
 
+		// 🚫 evitar división por cero
+		if (ingresosMesAnterior.compareTo(BigDecimal.ZERO) <= 0) {
+			return alertas;
+		}
+
 		// 👉 si el mes pasado no hubo ingresos relevantes, no alertar
 		if (ingresosMesAnterior.compareTo(new BigDecimal("50000")) < 0) {
 			return alertas;
 		}
 
-		// 👉 si este mes ya ingresó al menos el 50%, no molestar
+		// 👉 si este mes no hay ingresos en absoluto
+		if (ingresosMesActual.compareTo(BigDecimal.ZERO) == 0) {
+
+			alertas.add(new Alerta("Ingresos faltantes", "Aún no registraste ingresos este mes", LocalDate.now(),
+					Alerta.TipoAlerta.INGRESO, Alerta.Nivel.CRITICA));
+
+			return alertas;
+		}
+
+		// 👉 cálculo seguro
+
+		// 🚫 evitar división por cero
 		BigDecimal porcentaje = ingresosMesActual.divide(ingresosMesAnterior, 2, RoundingMode.HALF_UP)
 				.multiply(BigDecimal.valueOf(100));
 
 		if (porcentaje.compareTo(BigDecimal.valueOf(50)) < 0) {
 
-			alertas.add(new Alerta("Ingresos faltantes",
+			alertas.add(new Alerta("Ingresos bajos",
 					"Este mes ingresaste solo el " + porcentaje + "% respecto al mes pasado", LocalDate.now(),
-					Alerta.TipoAlerta.INGRESO, // si no tenés este tipo, usamos VENCIMIENTO
-					Alerta.Nivel.CRITICA));
+					Alerta.TipoAlerta.INGRESO, Alerta.Nivel.CRITICA));
+		}
+
+		return alertas;
+	}
+
+	// ===============================
+	// 🧠 ALERTA MARGEN FALTANTE
+	// ===============================
+	public List<Alerta> generarAlertaMargenFinanciero(MovimientoService movimientoService,
+			TarjetaCreditoService tarjetaService, List<TarjetaCredito> tarjetas, Usuario usuario) {
+
+		List<Alerta> alertas = new ArrayList<>();
+
+		BigDecimal ingresos = movimientoService.calcularIngresosMesActual(usuario.getUsuarioID());
+		BigDecimal gastos = movimientoService.calcularTotalMesActual(usuario.getUsuarioID());
+
+		if (ingresos == null) {
+			ingresos = BigDecimal.ZERO;
+		}
+		if (gastos == null) {
+			gastos = BigDecimal.ZERO;
+		}
+
+		// 💳 deuda total de tarjetas
+		BigDecimal deudaTarjetas = BigDecimal.ZERO;
+
+		if (tarjetas != null) {
+			for (TarjetaCredito t : tarjetas) {
+				BigDecimal deuda = tarjetaService.calcularDeudaTotal(t);
+				if (deuda != null && deuda.compareTo(BigDecimal.ZERO) > 0) {
+					deudaTarjetas = deudaTarjetas.add(deuda);
+				}
+			}
+		}
+
+		BigDecimal margen = ingresos.subtract(gastos).subtract(deudaTarjetas);
+
+		// 🚫 CASO CLAVE: evitar división por cero
+		if (ingresos.compareTo(BigDecimal.ZERO) <= 0) {
+
+			if (gastos.compareTo(BigDecimal.ZERO) > 0 || deudaTarjetas.compareTo(BigDecimal.ZERO) > 0) {
+				alertas.add(new Alerta("Sin ingresos", "Tenés gastos o deudas este mes pero no registraste ingresos",
+						LocalDate.now(), Alerta.TipoAlerta.FINANZAS, Alerta.Nivel.CRITICA));
+			}
+
+			return alertas;
+		}
+
+		// 🔴 margen negativo
+		if (margen.compareTo(BigDecimal.ZERO) < 0) {
+
+			alertas.add(
+					new Alerta("Margen negativo", "Estás gastando más de lo que ingresás. Diferencia: $" + margen.abs(),
+							LocalDate.now(), Alerta.TipoAlerta.FINANZAS, Alerta.Nivel.CRITICA));
+
+			return alertas;
+		}
+
+		// ⚠️ margen bajo
+		BigDecimal porcentaje = margen.divide(ingresos, 2, RoundingMode.HALF_UP).multiply(BigDecimal.valueOf(100));
+
+		if (porcentaje.compareTo(BigDecimal.valueOf(20)) < 0) {
+
+			alertas.add(new Alerta("Margen bajo", "Te queda solo un " + porcentaje + "% de margen este mes",
+					LocalDate.now(), Alerta.TipoAlerta.FINANZAS, Alerta.Nivel.PROXIMA));
 		}
 
 		return alertas;
@@ -233,7 +313,8 @@ public class AlertaManager {
 		List<GeneradorAlertas> generadores = List.of(() -> generarAlertasInversiones(inversiones),
 				() -> generarAlertasCuentas(cuentas), () -> generarAlertaGastoMensual(movimientoService, usuario),
 				() -> generarAlertasTarjetas(tarjetas, tarjetaCreditoService),
-				() -> generarAlertaIngresosFaltantes(movimientoService, usuario));
+				() -> generarAlertaIngresosFaltantes(movimientoService, usuario),
+				() -> generarAlertaMargenFinanciero(movimientoService, tarjetaCreditoService, tarjetas, usuario));
 
 		for (GeneradorAlertas g : generadores) {
 			alertas.addAll(g.generar());
