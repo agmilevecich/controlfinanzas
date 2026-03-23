@@ -156,4 +156,8 @@ public class PanelCuentas extends JPanel {
 		this.cuentaSeleccionadaListener = listener;
 	}
 
+	public void seleccionarCuenta(Cuenta cuenta) {
+		listaCuentas.setSelectedValue(cuenta, true);
+	}
+
 }

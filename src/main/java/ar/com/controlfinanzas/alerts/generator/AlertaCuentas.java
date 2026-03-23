@@ -43,7 +43,7 @@ public class AlertaCuentas implements GeneradorAlertas {
 
 				Alerta alerta = new Alerta("Saldo crítico", cuenta.getNombre() + " tiene saldo crítico: $" + saldo,
 						LocalDate.now(), Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.CRITICA);
-				alerta.setAccion(() -> dashboardFrame.irAMovimientos());
+				alerta.setAccion(() -> dashboardFrame.irAMovimientos(cuenta));
 				alertas.add(alerta);
 
 			}
@@ -51,7 +51,7 @@ public class AlertaCuentas implements GeneradorAlertas {
 			else if (saldo.compareTo(SALDO_BAJO) <= 0) {
 				Alerta alerta = new Alerta("Saldo bajo", cuenta.getNombre() + " tiene saldo bajo: $" + saldo,
 						LocalDate.now(), Alerta.TipoAlerta.VENCIMIENTO, Alerta.Nivel.PROXIMA);
-				alerta.setAccion(() -> dashboardFrame.irAMovimientos());
+				alerta.setAccion(() -> dashboardFrame.irAMovimientos(cuenta));
 				alertas.add(alerta);
 			}
 		}

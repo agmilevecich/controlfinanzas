@@ -35,6 +35,7 @@ public class PanelAlertas extends JPanel {
 
 		textPane = new JTextPane();
 		textPane.setEditable(false);
+		textPane.setFocusable(false);
 
 		// 🔥 CLICK SOBRE ALERTAS
 		textPane.addMouseListener(new MouseAdapter() {
