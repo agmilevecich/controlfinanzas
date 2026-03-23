@@ -294,9 +294,14 @@ public class DashboardFrame extends JFrame {
 		irATab(0); // índice de "Resumen"
 	}
 
+	public void irAInversiones() {
+		irATab(3);
+	}
+
 	private void irATab(int index) {
 		if (tabs != null && index >= 0 && index < tabs.getTabCount()) {
 			tabs.setSelectedIndex(index);
 		}
 	}
+
 }
