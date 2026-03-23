@@ -39,13 +39,12 @@ public class AlertaManager {
 		List<Alerta> alertas = new ArrayList<>();
 
 		List<GeneradorAlertas> generadores = List.of(
-				() -> new AlertasInversiones(inversiones, servicioAlertas, dashboardFrame).generar(),
-				() -> new AlertaCuentas(cuentas, dashboardFrame).generar(),
-				() -> new AlertaGastoMensual(movimientoService, usuario, dashboardFrame).generar(),
-				() -> new AlertaTarjetas(tarjetas, tarjetaCreditoService, dashboardFrame).generar(),
-				() -> new AlertaIngresoFaltante(movimientoService, usuario, dashboardFrame).generar(),
-				() -> new AlertaMargenFinanciero(movimientoService, tarjetaCreditoService, tarjetas, usuario,
-						dashboardFrame).generar());
+				new AlertasInversiones(inversiones, servicioAlertas, dashboardFrame),
+				new AlertaCuentas(cuentas, dashboardFrame),
+				new AlertaGastoMensual(movimientoService, usuario, dashboardFrame),
+				new AlertaTarjetas(tarjetas, tarjetaCreditoService, dashboardFrame),
+				new AlertaIngresoFaltante(movimientoService, usuario, dashboardFrame), new AlertaMargenFinanciero(
+						movimientoService, tarjetaCreditoService, tarjetas, usuario, dashboardFrame));
 
 		for (GeneradorAlertas g : generadores) {
 			alertas.addAll(g.generar());
