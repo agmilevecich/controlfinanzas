@@ -283,8 +283,9 @@ public class DashboardFrame extends JFrame {
 	// 🧭 NAVEGACIÓN DESDE ALERTAS
 	// ===============================
 	public void irAMovimientos(Cuenta cuenta) {
-		panelCuentas.seleccionarCuenta(cuenta);
 		irATab(7); // índice de "Movimientos"
+		panelCuentas.seleccionarCuenta(cuenta);
+		panelMovimientos.abrirNuevoMovimientoConDestino(cuenta);
 	}
 
 	public void irAMovimientos() {
