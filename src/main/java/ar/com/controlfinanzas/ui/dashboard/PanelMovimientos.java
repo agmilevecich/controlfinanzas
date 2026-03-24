@@ -1,23 +1,33 @@
 package ar.com.controlfinanzas.ui.dashboard;
 
 import java.awt.BorderLayout;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
+import javax.swing.BorderFactory;
 import javax.swing.DefaultListModel;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
+import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.MovimientoService;
+import ar.com.controlfinanzas.ui.dialog.TransferenciaDialog;
 import ar.com.controlfinanzas.util.NumeroUtils;
 
 public class PanelMovimientos extends JPanel {
@@ -90,32 +100,179 @@ public class PanelMovimientos extends JPanel {
 			return;
 		}
 
-		BigDecimal monto = pedirMonto();
-		if (monto == null) {
-			return;
-		}
+		JDialog dialog = new JDialog((JFrame) null, "Nuevo Movimiento", true);
+		dialog.setSize(350, 250);
+		dialog.setLocationRelativeTo(this);
+		dialog.setLayout(new BorderLayout());
 
-		TipoMovimiento tipo = pedirTipoMovimiento();
-		if (tipo == null) {
-			return;
-		}
+		JPanel panel = new JPanel(new GridBagLayout());
+		panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-		String descripcion = pedirDescripcion();
-		if (descripcion == null) {
-			return;
-		}
+		GridBagConstraints gbc = new GridBagConstraints();
+		gbc.insets = new Insets(5, 5, 5, 5);
 
-		if (tipo == TipoMovimiento.TRANSFERENCIA) {
-			procesarTransferencia(monto, descripcion);
-		} else {
-			procesarIngreso(monto, descripcion);
-		}
+		// ===============================
+		// MONTO
+		// ===============================
+		gbc.gridx = 0;
+		gbc.gridy = 0;
+		gbc.anchor = GridBagConstraints.EAST;
+		panel.add(new JLabel("Monto:"), gbc);
 
-		if (actualizarPanelCuentasCallback != null) {
-			actualizarPanelCuentasCallback.run();
-		}
+		JTextField txtMonto = new JTextField(10); // 🔥 tamaño controlado
 
-		cargarMovimientos();
+		gbc.gridx = 1;
+		gbc.gridy = 0;
+		gbc.weightx = 0;
+		gbc.fill = GridBagConstraints.NONE;
+		gbc.anchor = GridBagConstraints.WEST;
+		panel.add(txtMonto, gbc);
+
+		// ===============================
+		// TIPO
+		// ===============================
+		gbc.gridx = 0;
+		gbc.gridy = 1;
+		gbc.anchor = GridBagConstraints.EAST;
+		panel.add(new JLabel("Tipo:"), gbc);
+
+		JComboBox<TipoMovimiento> comboTipo = new JComboBox<>(
+				new TipoMovimiento[] { TipoMovimiento.INGRESO, TipoMovimiento.TRANSFERENCIA });
+
+		gbc.gridx = 1;
+		gbc.gridy = 1;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		panel.add(comboTipo, gbc);
+
+		// ===============================
+		// DESCRIPCIÓN
+		// ===============================
+		gbc.gridx = 0;
+		gbc.gridy = 2;
+		gbc.anchor = GridBagConstraints.EAST;
+		panel.add(new JLabel("Descripción:"), gbc);
+
+		JTextField txtDescripcion = new JTextField(15);
+
+		gbc.gridx = 1;
+		gbc.gridy = 2;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		panel.add(txtDescripcion, gbc);
+
+		dialog.add(panel, BorderLayout.CENTER);
+
+		// ===============================
+		// BOTONES
+		// ===============================
+		JPanel panelBotones = new JPanel();
+
+		JButton btnAceptar = new JButton("Aceptar");
+		JButton btnCancelar = new JButton("Cancelar");
+
+		panelBotones.add(btnAceptar);
+		panelBotones.add(btnCancelar);
+
+		dialog.add(panelBotones, BorderLayout.SOUTH);
+
+		// ===============================
+		// ACCIONES
+		// ===============================
+		btnAceptar.addActionListener(e -> {
+
+			String montoStr = txtMonto.getText();
+
+			if (montoStr.isEmpty()) {
+				JOptionPane.showMessageDialog(dialog, "Ingrese un monto");
+				return;
+			}
+
+			BigDecimal monto;
+			try {
+				monto = NumeroUtils.parse(montoStr);
+			} catch (Exception ex) {
+				JOptionPane.showMessageDialog(dialog, "Monto inválido");
+				return;
+			}
+
+			TipoMovimiento tipo = (TipoMovimiento) comboTipo.getSelectedItem();
+			String descripcion = txtDescripcion.getText();
+
+			if (descripcion == null || descripcion.trim().isEmpty()) {
+				JOptionPane.showMessageDialog(dialog, "Ingrese una descripción");
+				return;
+			}
+
+			// ===============================
+			// TRANSFERENCIA
+			// ===============================
+			if (tipo == TipoMovimiento.TRANSFERENCIA) {
+
+				if (cuentaSeleccionada == null) {
+					JOptionPane.showMessageDialog(dialog, "No hay cuenta origen seleccionada");
+					return;
+				}
+
+				BigDecimal saldoOrigen = cuentaSeleccionada.getSaldo();
+
+				if (monto.compareTo(saldoOrigen) > 0) {
+					JOptionPane.showMessageDialog(dialog, "Saldo insuficiente");
+					return;
+				}
+
+				List<Cuenta> cuentasDestino = cuentaService.getCuentasUsuario(cuentaSeleccionada.getUsuario());
+
+				cuentasDestino.removeIf(
+						c -> c.equals(cuentaSeleccionada) || !c.getMoneda().equals(cuentaSeleccionada.getMoneda()));
+
+				if (cuentasDestino.isEmpty()) {
+					JOptionPane.showMessageDialog(dialog, "No hay cuentas destino disponibles");
+					return;
+				}
+
+				Cuenta destino;
+
+				if (cuentaDestinoPreseleccionada != null) {
+					destino = cuentaDestinoPreseleccionada;
+					cuentaDestinoPreseleccionada = null;
+				} else {
+					destino = (Cuenta) JOptionPane.showInputDialog(dialog, "Seleccione cuenta destino", "Destino",
+							JOptionPane.QUESTION_MESSAGE, null, cuentasDestino.toArray(), cuentasDestino.get(0));
+				}
+
+				if (destino == null) {
+					return;
+				}
+
+				Movimiento movOrigen = new Movimiento(LocalDate.now(), descripcion, monto,
+						TipoMovimiento.TRANSFERENCIA);
+				movOrigen.setDescripcion(descripcion + " -> " + destino.getNombre());
+				movOrigen.setCuenta(cuentaSeleccionada);
+				movimientoService.registrarMovimiento(movOrigen);
+
+				Movimiento movDestino = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.INGRESO);
+				movDestino.setDescripcion(descripcion + " <- " + cuentaSeleccionada.getNombre());
+				movDestino.setCuenta(destino);
+				movimientoService.registrarMovimiento(movDestino);
+
+			} else {
+
+				Movimiento mov = new Movimiento(LocalDate.now(), descripcion, monto, tipo);
+				mov.setCuenta(cuentaSeleccionada);
+				movimientoService.registrarMovimiento(mov);
+			}
+
+			if (actualizarPanelCuentasCallback != null) {
+				actualizarPanelCuentasCallback.run();
+			}
+
+			cargarMovimientos();
+
+			dialog.dispose();
+		});
+
+		btnCancelar.addActionListener(e -> dialog.dispose());
+
+		dialog.setVisible(true);
 	}
 
 	private BigDecimal pedirMonto() {
@@ -233,9 +390,71 @@ public class PanelMovimientos extends JPanel {
 	}
 
 	// 🔥 NUEVO MÉTODO
-	public void abrirNuevoMovimientoConDestino(Cuenta cuentaDestino) {
-		this.cuentaDestinoPreseleccionada = cuentaDestino;
-		btnAgregar.doClick();
+
+	public void abrirTransferenciaConDestino(Cuenta destino) {
+
+		JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+
+		TransferenciaDialog dialog = new TransferenciaDialog(frame, destino, cuentaService, movimientoService, () -> {
+			if (actualizarPanelCuentasCallback != null) {
+				actualizarPanelCuentasCallback.run();
+			}
+			cargarMovimientos();
+		});
+
+		dialog.setVisible(true);
+	}
+
+	private void crearTransferenciaDirecta() {
+
+		if (cuentaDestinoPreseleccionada == null) {
+			return;
+		}
+
+		Cuenta destino = cuentaDestinoPreseleccionada;
+
+		BigDecimal monto = pedirMonto();
+		if (monto == null) {
+			return;
+		}
+
+		String descripcion = pedirDescripcion();
+		if (descripcion == null) {
+			return;
+		}
+
+		JOptionPane.showMessageDialog(this, "Seleccioná una cuenta desde donde transferir a " + destino.getNombre());
+
+		Cuenta origen = elegirCuentaOrigen(destino);
+		if (origen == null) {
+			return;
+		}
+
+		if (monto.compareTo(origen.getSaldo()) > 0) {
+			JOptionPane.showMessageDialog(this,
+					"Saldo insuficiente: " + NumeroUtils.formatearMonedaARS(origen.getSaldo()));
+			return;
+		}
+
+		// Movimiento origen
+		Movimiento movOrigen = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.TRANSFERENCIA);
+		movOrigen.setDescripcion(descripcion + " -> " + destino.getNombre());
+		movOrigen.setCuenta(origen);
+		movimientoService.registrarMovimiento(movOrigen);
+
+		// Movimiento destino
+		Movimiento movDestino = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.INGRESO);
+		movDestino.setDescripcion(descripcion + " <- " + origen.getNombre());
+		movDestino.setCuenta(destino);
+		movimientoService.registrarMovimiento(movDestino);
+
+		cuentaDestinoPreseleccionada = null;
+
+		if (actualizarPanelCuentasCallback != null) {
+			actualizarPanelCuentasCallback.run();
+		}
+
+		cargarMovimientos();
 	}
 
 	public void abrirNuevoMovimiento() {

@@ -285,7 +285,7 @@ public class DashboardFrame extends JFrame {
 	public void irAMovimientos(Cuenta cuenta) {
 		irATab(7); // índice de "Movimientos"
 		panelCuentas.seleccionarCuenta(cuenta);
-		panelMovimientos.abrirNuevoMovimientoConDestino(cuenta);
+		panelMovimientos.abrirTransferenciaConDestino(cuenta);
 	}
 
 	public void irAMovimientos() {
