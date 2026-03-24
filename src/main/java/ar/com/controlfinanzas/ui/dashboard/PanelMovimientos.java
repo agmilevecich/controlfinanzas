@@ -90,133 +90,146 @@ public class PanelMovimientos extends JPanel {
 			return;
 		}
 
-		String montoStr = JOptionPane.showInputDialog(this, "Monto:");
-		if (montoStr == null || montoStr.isEmpty()) {
+		BigDecimal monto = pedirMonto();
+		if (monto == null) {
 			return;
 		}
 
-		BigDecimal monto;
-		try {
-			monto = NumeroUtils.parse(montoStr);
-		} catch (NumberFormatException e) {
-			JOptionPane.showMessageDialog(this, "Monto inválido");
-			return;
-		}
-
-		TipoMovimiento tipo = (TipoMovimiento) JOptionPane.showInputDialog(this, "Tipo de movimiento:",
-				"Tipo Movimiento", JOptionPane.QUESTION_MESSAGE, null,
-				new TipoMovimiento[] { TipoMovimiento.INGRESO, TipoMovimiento.TRANSFERENCIA }, TipoMovimiento.INGRESO);
-
+		TipoMovimiento tipo = pedirTipoMovimiento();
 		if (tipo == null) {
 			return;
 		}
 
-		String descripcion = JOptionPane.showInputDialog(this, "Descripción:");
-		if (descripcion == null || descripcion.trim().isEmpty()) {
-			JOptionPane.showMessageDialog(this, "La descripción no puede estar en blanco");
+		String descripcion = pedirDescripcion();
+		if (descripcion == null) {
 			return;
 		}
 
-		// ===============================
-		// 🔁 TRANSFERENCIA
-		// ===============================
 		if (tipo == TipoMovimiento.TRANSFERENCIA) {
-
-			Cuenta origen;
-			Cuenta destino;
-
-			// 🔥 CASO: viene desde alerta (ya hay destino)
-			if (cuentaDestinoPreseleccionada != null) {
-
-				destino = cuentaDestinoPreseleccionada;
-
-				// Elegir cuenta origen
-				List<Cuenta> cuentasOrigen = cuentaService.getCuentasUsuario(destino.getUsuario());
-
-				cuentasOrigen.removeIf(c -> c.equals(destino) || !c.getMoneda().equals(destino.getMoneda()));
-
-				if (cuentasOrigen.isEmpty()) {
-					JOptionPane.showMessageDialog(this, "No hay cuentas disponibles para transferir.");
-					return;
-				}
-
-				JOptionPane.showMessageDialog(this,
-						"Seleccioná una cuenta desde donde transferir fondos a " + destino.getNombre());
-
-				origen = (Cuenta) JOptionPane.showInputDialog(this, "Seleccione cuenta origen:", "Cuenta Origen",
-						JOptionPane.QUESTION_MESSAGE, null, cuentasOrigen.toArray(), cuentasOrigen.get(0));
-
-				if (origen == null) {
-					return;
-				}
-
-				cuentaDestinoPreseleccionada = null; // limpiar
-
-			} else {
-
-				// flujo normal
-				origen = cuentaSeleccionada;
-
-				List<Cuenta> cuentasDestino = cuentaService.getCuentasUsuario(origen.getUsuario());
-
-				cuentasDestino.removeIf(c -> c.equals(origen) || !c.getMoneda().equals(origen.getMoneda()));
-
-				if (cuentasDestino.isEmpty()) {
-					JOptionPane.showMessageDialog(this,
-							"No hay otra cuenta disponible con la misma moneda para transferir.");
-					return;
-				}
-
-				destino = (Cuenta) JOptionPane.showInputDialog(this, "Seleccione cuenta destino:", "Cuenta Destino",
-						JOptionPane.QUESTION_MESSAGE, null, cuentasDestino.toArray(), cuentasDestino.get(0));
-
-				if (destino == null) {
-					return;
-				}
-			}
-
-			// 💰 Validación saldo
-			BigDecimal saldoOrigen = origen.getSaldo();
-			if (monto.compareTo(saldoOrigen) > 0) {
-				JOptionPane.showMessageDialog(this, "No puede transferir más de lo que tiene en la cuenta: "
-						+ NumeroUtils.formatearMonedaARS(saldoOrigen));
-				return;
-			}
-
-			// 🔁 Movimiento origen
-			Movimiento movOrigen = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.TRANSFERENCIA);
-			movOrigen.setDescripcion(descripcion + " -> " + destino.getNombre());
-			movOrigen.setCuenta(origen);
-			movimientoService.registrarMovimiento(movOrigen);
-
-			// 🔁 Movimiento destino
-			Movimiento movDestino = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.INGRESO);
-			movDestino.setDescripcion(descripcion + " <- " + origen.getNombre());
-			movDestino.setCuenta(destino);
-			movimientoService.registrarMovimiento(movDestino);
-
+			procesarTransferencia(monto, descripcion);
 		} else {
-			// ===============================
-			// 💰 INGRESO NORMAL
-			// ===============================
-
-			Cuenta cuenta = (cuentaDestinoPreseleccionada != null) ? cuentaDestinoPreseleccionada : cuentaSeleccionada;
-
-			Movimiento mov = new Movimiento(LocalDate.now(), descripcion, monto, tipo);
-			mov.setDescripcion(descripcion);
-			mov.setCuenta(cuenta);
-
-			movimientoService.registrarMovimiento(mov);
-
-			cuentaDestinoPreseleccionada = null;
+			procesarIngreso(monto, descripcion);
 		}
 
-		// 🔄 refrescar UI
 		if (actualizarPanelCuentasCallback != null) {
 			actualizarPanelCuentasCallback.run();
 		}
 
 		cargarMovimientos();
+	}
+
+	private BigDecimal pedirMonto() {
+		String montoStr = JOptionPane.showInputDialog(this, "Monto:");
+		if (montoStr == null || montoStr.isEmpty()) {
+			return null;
+		}
+
+		try {
+			return NumeroUtils.parse(montoStr);
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "Monto inválido");
+			return null;
+		}
+	}
+
+	private TipoMovimiento pedirTipoMovimiento() {
+		return (TipoMovimiento) JOptionPane.showInputDialog(this, "Tipo de movimiento:", "Tipo Movimiento",
+				JOptionPane.QUESTION_MESSAGE, null,
+				new TipoMovimiento[] { TipoMovimiento.INGRESO, TipoMovimiento.TRANSFERENCIA }, TipoMovimiento.INGRESO);
+	}
+
+	private String pedirDescripcion() {
+		String desc = JOptionPane.showInputDialog(this, "Descripción:");
+		if (desc == null || desc.trim().isEmpty()) {
+			JOptionPane.showMessageDialog(this, "La descripción no puede estar en blanco");
+			return null;
+		}
+		return desc;
+	}
+
+	private void procesarTransferencia(BigDecimal monto, String descripcion) {
+
+		Cuenta origen;
+		Cuenta destino;
+
+		if (cuentaDestinoPreseleccionada != null) {
+			destino = cuentaDestinoPreseleccionada;
+
+			JOptionPane.showMessageDialog(this,
+					"Seleccioná una cuenta desde donde transferir fondos a " + destino.getNombre());
+
+			origen = elegirCuentaOrigen(destino);
+			if (origen == null) {
+				return;
+			}
+
+			cuentaDestinoPreseleccionada = null;
+
+		} else {
+			origen = cuentaSeleccionada;
+			destino = elegirCuentaDestino(origen);
+			if (destino == null) {
+				return;
+			}
+		}
+
+		if (monto.compareTo(origen.getSaldo()) > 0) {
+			JOptionPane.showMessageDialog(this,
+					"Saldo insuficiente: " + NumeroUtils.formatearMonedaARS(origen.getSaldo()));
+			return;
+		}
+
+		Movimiento movOrigen = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.TRANSFERENCIA);
+		movOrigen.setDescripcion(descripcion + " -> " + destino.getNombre());
+		movOrigen.setCuenta(origen);
+		movimientoService.registrarMovimiento(movOrigen);
+
+		Movimiento movDestino = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.INGRESO);
+		movDestino.setDescripcion(descripcion + " <- " + origen.getNombre());
+		movDestino.setCuenta(destino);
+		movimientoService.registrarMovimiento(movDestino);
+	}
+
+	private void procesarIngreso(BigDecimal monto, String descripcion) {
+
+		Cuenta cuenta = (cuentaDestinoPreseleccionada != null) ? cuentaDestinoPreseleccionada : cuentaSeleccionada;
+
+		Movimiento mov = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.INGRESO);
+		mov.setCuenta(cuenta);
+
+		movimientoService.registrarMovimiento(mov);
+
+		cuentaDestinoPreseleccionada = null;
+	}
+
+	private Cuenta elegirCuentaOrigen(Cuenta destino) {
+
+		List<Cuenta> cuentas = cuentaService.getCuentasUsuario(destino.getUsuario());
+
+		cuentas.removeIf(c -> c.equals(destino) || !c.getMoneda().equals(destino.getMoneda()));
+
+		if (cuentas.isEmpty()) {
+			JOptionPane.showMessageDialog(this, "No hay cuentas disponibles");
+			return null;
+		}
+
+		return (Cuenta) JOptionPane.showInputDialog(this, "Seleccione cuenta origen:", "Cuenta Origen",
+				JOptionPane.QUESTION_MESSAGE, null, cuentas.toArray(), cuentas.get(0));
+	}
+
+	private Cuenta elegirCuentaDestino(Cuenta origen) {
+
+		List<Cuenta> cuentas = cuentaService.getCuentasUsuario(origen.getUsuario());
+
+		cuentas.removeIf(c -> c.equals(origen) || !c.getMoneda().equals(origen.getMoneda()));
+
+		if (cuentas.isEmpty()) {
+			JOptionPane.showMessageDialog(this, "No hay cuentas disponibles");
+			return null;
+		}
+
+		return (Cuenta) JOptionPane.showInputDialog(this, "Seleccione cuenta destino:", "Cuenta Destino",
+				JOptionPane.QUESTION_MESSAGE, null, cuentas.toArray(), cuentas.get(0));
 	}
 
 	// 🔥 NUEVO MÉTODO
