@@ -31,6 +31,7 @@ import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.util.NumeroUtils;
+import ar.com.controlfinanzas.util.SwingUtils;
 
 public class TransferenciaDialog extends JDialog {
 
@@ -79,6 +80,7 @@ public class TransferenciaDialog extends JDialog {
 		panelForm.add(new JLabel("Monto:"), gbc);
 
 		txtMonto = new JTextField(10);
+		SwingUtils.configurarCampoNumerico(txtMonto);
 		txtMonto.setHorizontalAlignment(JTextField.RIGHT);
 		txtMonto.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
@@ -349,4 +351,5 @@ public class TransferenciaDialog extends JDialog {
 			lblSaldo.setText("Saldo: -");
 		}
 	}
+
 }
