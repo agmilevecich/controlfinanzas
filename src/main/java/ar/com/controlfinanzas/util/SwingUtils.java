@@ -43,7 +43,7 @@ public class SwingUtils {
 				});
 	}
 
-	public static void configurarCampoDecimal(JTextField textField) {
+	public static void configurarCampoDecimal(JTextField textField, int maxDecimales) {
 		((AbstractDocument) textField.getDocument()).setDocumentFilter(new DocumentFilter() {
 
 			@Override
@@ -61,26 +61,37 @@ public class SwingUtils {
 
 				String nuevoTexto = actual.substring(0, offset) + text + actual.substring(offset + length);
 
-				if (esDecimalValido(nuevoTexto)) {
+				if (esDecimalValido(nuevoTexto, maxDecimales)) {
 					super.replace(fb, offset, length, text, attrs);
 				}
 			}
 
-			private boolean esDecimalValido(String text) {
+			private boolean esDecimalValido(String text, int maxDecimales) {
 				if (text.isEmpty()) {
 					return true;
 				}
 
-				// Permitir solo números, coma o punto
+				// Solo números, coma o punto
 				if (!text.matches("[0-9.,]*")) {
 					return false;
 				}
 
 				// Solo un separador decimal
-				int countComa = text.length() - text.replace(",", "").length();
-				int countPunto = text.length() - text.replace(".", "").length();
+				int separadores = text.length() - text.replace(",", "").length() + text.length()
+						- text.replace(".", "").length();
 
-				return (countComa + countPunto) <= 1;
+				if (separadores > 1) {
+					return false;
+				}
+
+				// Si hay decimal, validar cantidad de decimales
+				String[] partes = text.split("[.,]");
+
+				if (partes.length == 2) {
+					return partes[1].length() <= maxDecimales;
+				}
+
+				return true;
 			}
 		});
 	}
