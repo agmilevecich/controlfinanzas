@@ -1,10 +1,13 @@
 package ar.com.controlfinanzas.ui.dialog;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.FocusEvent;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -19,6 +22,8 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
 import ar.com.controlfinanzas.model.Cuenta;
@@ -29,6 +34,7 @@ import ar.com.controlfinanzas.util.NumeroUtils;
 
 public class TransferenciaDialog extends JDialog {
 
+	private JLabel lblSaldo;
 	private JTextField txtMonto;
 	private JTextField txtDescripcion;
 	private JComboBox<Cuenta> comboOrigen;
@@ -37,6 +43,9 @@ public class TransferenciaDialog extends JDialog {
 	private MovimientoService movimientoService;
 	private CuentaService cuentaService;
 	private Runnable onSuccess;
+	private JButton btnTransferir;
+	private JButton btnCancelar;
+	private JButton btnUsarSaldo;
 
 	public TransferenciaDialog(JFrame parent, Cuenta destino, CuentaService cuentaService,
 			MovimientoService movimientoService, Runnable onSuccess) {
@@ -46,6 +55,7 @@ public class TransferenciaDialog extends JDialog {
 		this.movimientoService = movimientoService;
 		this.cuentaService = cuentaService;
 		this.onSuccess = onSuccess;
+		this.lblSaldo = new JLabel();
 
 		setSize(400, 260);
 		setLocationRelativeTo(parent);
@@ -70,10 +80,45 @@ public class TransferenciaDialog extends JDialog {
 
 		txtMonto = new JTextField(10);
 		txtMonto.setHorizontalAlignment(JTextField.RIGHT);
+		txtMonto.getDocument().addDocumentListener(new DocumentListener() {
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				validarMonto();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				validarMonto();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				validarMonto();
+			}
+		});
+
+		txtMonto.addFocusListener(new java.awt.event.FocusAdapter() {
+			@Override
+			public void focusLost(FocusEvent e) {
+				formatearMonto();
+			}
+		});
 
 		// 🔥 contenedor que NO se estira
 		JPanel panelMonto = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		panelMonto.add(txtMonto);
+
+		btnUsarSaldo = new JButton("Usar Saldo");
+
+		btnUsarSaldo.addActionListener(e -> {
+			Cuenta origen = (Cuenta) comboOrigen.getSelectedItem();
+
+			if (origen != null) {
+				BigDecimal saldo = origen.getSaldo();
+				txtMonto.setText(NumeroUtils.redondearMoneda(saldo).toString()); // sin formato por ahora
+			}
+		});
+		panelMonto.add(btnUsarSaldo);
 
 		gbc.gridx = 1;
 		gbc.gridy = 0;
@@ -112,6 +157,9 @@ public class TransferenciaDialog extends JDialog {
 		panelForm.add(new JLabel("Desde cuenta:"), gbc);
 
 		comboOrigen = new JComboBox<>();
+		comboOrigen.addActionListener(e -> {
+			actualizarSaldoLabel();
+		});
 		cargarCuentasOrigen();
 
 		gbc.gridx = 1;
@@ -120,11 +168,24 @@ public class TransferenciaDialog extends JDialog {
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		panelForm.add(comboOrigen, gbc);
 
+		gbc.gridx = 1;
+		gbc.gridy = 3; // 👈 ojo, corrés lo que sigue
+		gbc.weightx = 1;
+		gbc.anchor = GridBagConstraints.WEST;
+		gbc.fill = GridBagConstraints.NONE;
+
+		lblSaldo = new JLabel("Saldo: -");
+		lblSaldo.setForeground(Color.GRAY);
+		lblSaldo.setFont(lblSaldo.getFont().deriveFont(Font.PLAIN, 11));
+		lblSaldo.setVerticalTextPosition(JLabel.TOP);
+
+		panelForm.add(lblSaldo, gbc);
+
 		// ===============================
 		// DESTINO (solo label)
 		// ===============================
 		gbc.gridx = 0;
-		gbc.gridy = 3;
+		gbc.gridy = 4;
 		gbc.weightx = 0;
 		gbc.fill = GridBagConstraints.NONE;
 		gbc.anchor = GridBagConstraints.EAST;
@@ -134,7 +195,7 @@ public class TransferenciaDialog extends JDialog {
 		lblDestino.setFont(lblDestino.getFont().deriveFont(java.awt.Font.BOLD));
 
 		gbc.gridx = 1;
-		gbc.gridy = 3;
+		gbc.gridy = 4;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		panelForm.add(lblDestino, gbc);
 
@@ -145,8 +206,9 @@ public class TransferenciaDialog extends JDialog {
 		// ===============================
 		JPanel panelBotones = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
-		JButton btnTransferir = new JButton("Transferir");
-		JButton btnCancelar = new JButton("Cancelar");
+		btnTransferir = new JButton("Transferir");
+		btnTransferir.setEnabled(false);
+		btnCancelar = new JButton("Cancelar");
 
 		panelBotones.add(btnCancelar);
 		panelBotones.add(btnTransferir);
@@ -161,6 +223,16 @@ public class TransferenciaDialog extends JDialog {
 
 		// foco inicial
 		SwingUtilities.invokeLater(() -> txtMonto.requestFocus());
+		actualizarSaldoLabel();
+	}
+
+	private void formatearMonto() {
+		BigDecimal monto = obtenerMontoValido();
+
+		if (monto != null) {
+			BigDecimal formateado = NumeroUtils.redondearMoneda(monto);
+			txtMonto.setText(formateado.toString());
+		}
 	}
 
 	private void cargarCuentasOrigen() {
@@ -221,5 +293,60 @@ public class TransferenciaDialog extends JDialog {
 		}
 
 		dispose();
+	}
+
+	private BigDecimal obtenerMontoValido() {
+		try {
+			String texto = txtMonto.getText().trim();
+
+			if (texto.isEmpty()) {
+				return null;
+			}
+
+			BigDecimal monto = NumeroUtils.parse(texto);
+
+			// 👇 CLAVE: validar después del parse
+			if (monto.compareTo(BigDecimal.ZERO) <= 0) {
+				return null;
+			}
+
+			return monto;
+
+		} catch (Exception e) {
+			return null;
+		}
+	}
+
+	private void validarMonto() {
+		BigDecimal monto = obtenerMontoValido();
+		Cuenta origen = (Cuenta) comboOrigen.getSelectedItem();
+
+		boolean valido = false;
+
+		if (monto != null && origen != null) {
+			BigDecimal saldo = origen.getSaldo();
+
+			if (saldo != null && monto.compareTo(saldo) <= 0) {
+				valido = true;
+			}
+		}
+
+		btnTransferir.setEnabled(valido);
+
+		if (valido) {
+			txtMonto.setForeground(Color.BLACK);
+		} else {
+			txtMonto.setForeground(Color.RED);
+		}
+	}
+
+	private void actualizarSaldoLabel() {
+		Cuenta origen = (Cuenta) comboOrigen.getSelectedItem();
+
+		if (origen != null) {
+			lblSaldo.setText("Saldo: " + NumeroUtils.formatearMonedaARS(origen.getSaldo()));
+		} else {
+			lblSaldo.setText("Saldo: -");
+		}
 	}
 }
