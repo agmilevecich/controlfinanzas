@@ -13,12 +13,17 @@ import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import ar.com.controlfinanzas.domain.finanzas.TipoCuenta;
+import ar.com.controlfinanzas.model.Banco;
 import ar.com.controlfinanzas.model.Moneda;
+import ar.com.controlfinanzas.model.SesionUsuario;
+import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.util.NumeroUtils;
 import ar.com.controlfinanzas.util.SwingUtils;
 
@@ -32,8 +37,13 @@ public class CuentaDialog extends JDialog {
 	private JButton btnGuardar;
 	private JButton btnCancelar;
 
-	public CuentaDialog(JFrame parent) {
+	private CuentaService cuentaService;
+	private Runnable onSuccess;
+
+	public CuentaDialog(JFrame parent, CuentaService cuentaService, Runnable onSuccess) {
 		super(parent, "Nueva Cuenta", true);
+		this.cuentaService = cuentaService;
+		this.onSuccess = onSuccess;
 
 		setSize(400, 300);
 		setLocationRelativeTo(parent);
@@ -128,6 +138,7 @@ public class CuentaDialog extends JDialog {
 
 		btnGuardar = new JButton("Guardar");
 		btnGuardar.setEnabled(false);
+		btnGuardar.addActionListener(e -> guardarCuenta());
 		btnCancelar = new JButton("Cancelar");
 
 		panelBotones.add(btnCancelar);
@@ -144,20 +155,48 @@ public class CuentaDialog extends JDialog {
 		btnGuardar.addActionListener(e -> dispose());
 	}
 
+	private void guardarCuenta() {
+
+		try {
+			String nombre = txtNombre.getText().trim();
+
+			TipoCuenta tipo = (TipoCuenta) comboTipo.getSelectedItem();
+			Moneda moneda = (Moneda) comboMoneda.getSelectedItem();
+
+			BigDecimal saldoInicial = NumeroUtils.parse(txtSaldoInicial.getText());
+
+			// 👇 si no tenés banco todavía, podés pasar null o uno por defecto
+			Banco banco = null;
+
+			cuentaService.crearCuenta(SesionUsuario.getUsuarioActual(), // ⚠️ o el usuario actual
+					nombre, banco, "Saldo inicial", tipo, moneda, saldoInicial, 0.0, // interesDiario (por ahora)
+					java.time.LocalDate.now());
+
+			if (onSuccess != null) {
+				onSuccess.run();
+			}
+
+			dispose();
+
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, e.getMessage());
+		}
+	}
+
 	private DocumentListener SimpleListenner() {
 		return new javax.swing.event.DocumentListener() {
 			@Override
-			public void insertUpdate(javax.swing.event.DocumentEvent e) {
+			public void insertUpdate(DocumentEvent e) {
 				validarFormulario();
 			}
 
 			@Override
-			public void removeUpdate(javax.swing.event.DocumentEvent e) {
+			public void removeUpdate(DocumentEvent e) {
 				validarFormulario();
 			}
 
 			@Override
-			public void changedUpdate(javax.swing.event.DocumentEvent e) {
+			public void changedUpdate(DocumentEvent e) {
 				validarFormulario();
 			}
 		};
