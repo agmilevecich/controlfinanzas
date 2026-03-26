@@ -1,6 +1,11 @@
 package ar.com.controlfinanzas.util;
 
+import java.math.BigDecimal;
+
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.text.AbstractDocument;
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -92,6 +97,69 @@ public class SwingUtils {
 				}
 
 				return true;
+			}
+		});
+	}
+
+	public static void configurarCampoMoneda(JTextField textField) {
+
+		// 1. filtro (el que ya tenés)
+		configurarCampoDecimal(textField, 2);
+
+		// 2. formateo en vivo
+		final boolean[] formateando = { false };
+
+		textField.getDocument().addDocumentListener(new DocumentListener() {
+
+			private void actualizar() {
+
+				if (formateando[0]) {
+					return;
+				}
+
+				// 👇 NO formatear mientras el usuario escribe
+				if (textField.hasFocus()) {
+					return;
+				}
+
+				SwingUtilities.invokeLater(() -> {
+					try {
+						formateando[0] = true;
+
+						String texto = textField.getText();
+						if (texto == null || texto.isEmpty()) {
+							return;
+						}
+
+						String limpio = texto.replace(".", "").replace(",", ".");
+
+						BigDecimal valor = new BigDecimal(limpio);
+
+						String formateado = NumeroUtils.formatearMonedaARS(valor);
+
+						textField.setText(formateado);
+
+					} catch (Exception e) {
+						// ignorar
+					} finally {
+						formateando[0] = false;
+					}
+				});
+			}
+
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				actualizar();
+			}
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				actualizar();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				actualizar();
 			}
 		});
 	}

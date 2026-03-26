@@ -80,7 +80,7 @@ public class TransferenciaDialog extends JDialog {
 		panelForm.add(new JLabel("Monto:"), gbc);
 
 		txtMonto = new JTextField(10);
-		SwingUtils.configurarCampoDecimal(txtMonto, 2);
+		SwingUtils.configurarCampoMoneda(txtMonto);
 		txtMonto.setHorizontalAlignment(JTextField.RIGHT);
 		txtMonto.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
