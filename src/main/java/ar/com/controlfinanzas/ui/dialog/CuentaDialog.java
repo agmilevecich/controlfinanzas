@@ -6,6 +6,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.math.BigDecimal;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -23,6 +24,7 @@ import ar.com.controlfinanzas.domain.finanzas.TipoCuenta;
 import ar.com.controlfinanzas.model.Banco;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.SesionUsuario;
+import ar.com.controlfinanzas.service.BancoService;
 import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.util.NumeroUtils;
 import ar.com.controlfinanzas.util.SwingUtils;
@@ -33,17 +35,20 @@ public class CuentaDialog extends JDialog {
 	private JTextField txtSaldoInicial;
 	private JComboBox<TipoCuenta> comboTipo;
 	private JComboBox<Moneda> comboMoneda;
+	private JComboBox<Banco> comboBanco;
 
 	private JButton btnGuardar;
 	private JButton btnCancelar;
 
 	private CuentaService cuentaService;
+	private BancoService bancoService;
 	private Runnable onSuccess;
 
-	public CuentaDialog(JFrame parent, CuentaService cuentaService, Runnable onSuccess) {
-		super(parent, "Nueva Cuenta", true);
-		this.cuentaService = cuentaService;
+	public CuentaDialog(JFrame parent, CuentaService cuentaService, BancoService bancoService, Runnable onSuccess) {
+
 		this.onSuccess = onSuccess;
+		this.cuentaService = cuentaService;
+		this.bancoService = bancoService;
 
 		setSize(400, 300);
 		setLocationRelativeTo(parent);
@@ -73,10 +78,27 @@ public class CuentaDialog extends JDialog {
 		panelForm.add(txtNombre, gbc);
 
 		// ===============================
-		// TIPO
+		// BANCO
 		// ===============================
 		gbc.gridx = 0;
 		gbc.gridy = 1;
+		gbc.anchor = GridBagConstraints.EAST;
+		panelForm.add(new JLabel("Banco:"), gbc);
+
+		comboBanco = new JComboBox<>();
+		cargarBancos();
+
+		gbc.gridx = 1;
+		gbc.gridy = 1;
+		gbc.weightx = 1;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		panelForm.add(comboBanco, gbc);
+
+		// ===============================
+		// TIPO
+		// ===============================
+		gbc.gridx = 0;
+		gbc.gridy = 2;
 		gbc.weightx = 0;
 		gbc.fill = GridBagConstraints.NONE;
 		gbc.anchor = GridBagConstraints.EAST;
@@ -85,7 +107,7 @@ public class CuentaDialog extends JDialog {
 		comboTipo = new JComboBox<>(TipoCuenta.values());
 
 		gbc.gridx = 1;
-		gbc.gridy = 1;
+		gbc.gridy = 3;
 		gbc.weightx = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		panelForm.add(comboTipo, gbc);
@@ -166,7 +188,7 @@ public class CuentaDialog extends JDialog {
 			BigDecimal saldoInicial = NumeroUtils.parse(txtSaldoInicial.getText());
 
 			// 👇 si no tenés banco todavía, podés pasar null o uno por defecto
-			Banco banco = null;
+			Banco banco = (Banco) comboBanco.getSelectedItem();
 
 			cuentaService.crearCuenta(SesionUsuario.getUsuarioActual(), // ⚠️ o el usuario actual
 					nombre, banco, "Saldo inicial", tipo, moneda, saldoInicial, 0.0, // interesDiario (por ahora)
@@ -231,5 +253,14 @@ public class CuentaDialog extends JDialog {
 		}
 
 		btnGuardar.setEnabled(valido);
+	}
+
+	private void cargarBancos() {
+
+		List<Banco> bancos = bancoService.getBancosUsuario(SesionUsuario.getUsuarioActual()); // o como lo tengas
+
+		for (Banco b : bancos) {
+			comboBanco.addItem(b);
+		}
 	}
 }
