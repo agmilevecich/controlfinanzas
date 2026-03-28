@@ -22,6 +22,7 @@ import javax.swing.event.DocumentListener;
 
 import ar.com.controlfinanzas.domain.finanzas.TipoCuenta;
 import ar.com.controlfinanzas.model.Banco;
+import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.service.BancoService;
@@ -40,13 +41,17 @@ public class CuentaDialog extends JDialog {
 	private JButton btnGuardar;
 	private JButton btnCancelar;
 
+	private Cuenta cuenta;
+
 	private CuentaService cuentaService;
 	private BancoService bancoService;
 	private Runnable onSuccess;
 
-	public CuentaDialog(JFrame parent, CuentaService cuentaService, BancoService bancoService, Runnable onSuccess) {
+	public CuentaDialog(JFrame parent, Cuenta cuenta, CuentaService cuentaService, BancoService bancoService,
+			Runnable onSuccess) {
 
 		this.onSuccess = onSuccess;
+		this.cuenta = cuenta;
 		this.cuentaService = cuentaService;
 		this.bancoService = bancoService;
 
@@ -82,6 +87,7 @@ public class CuentaDialog extends JDialog {
 		// ===============================
 		gbc.gridx = 0;
 		gbc.gridy = 1;
+		gbc.fill = GridBagConstraints.NONE;
 		gbc.anchor = GridBagConstraints.EAST;
 		panelForm.add(new JLabel("Banco:"), gbc);
 
@@ -107,7 +113,7 @@ public class CuentaDialog extends JDialog {
 		comboTipo = new JComboBox<>(TipoCuenta.values());
 
 		gbc.gridx = 1;
-		gbc.gridy = 3;
+		gbc.gridy = 2;
 		gbc.weightx = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		panelForm.add(comboTipo, gbc);
@@ -116,19 +122,20 @@ public class CuentaDialog extends JDialog {
 		// SALDO INICIAL
 		// ===============================
 		gbc.gridx = 0;
-		gbc.gridy = 2;
+		gbc.gridy = 3;
 		gbc.weightx = 0;
 		gbc.fill = GridBagConstraints.NONE;
 		gbc.anchor = GridBagConstraints.EAST;
 		panelForm.add(new JLabel("Saldo inicial:"), gbc);
 
 		txtSaldoInicial = new JTextField(10);
+		txtSaldoInicial.setEnabled(cuenta == null);
 		txtSaldoInicial.setHorizontalAlignment(JTextField.RIGHT);
 		txtSaldoInicial.getDocument().addDocumentListener(SimpleListenner());
 		SwingUtils.configurarCampoNumerico(txtSaldoInicial);
 
 		gbc.gridx = 1;
-		gbc.gridy = 2;
+		gbc.gridy = 3;
 		gbc.weightx = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		panelForm.add(txtSaldoInicial, gbc);
@@ -137,16 +144,15 @@ public class CuentaDialog extends JDialog {
 		// MONEDA
 		// ===============================
 		gbc.gridx = 0;
-		gbc.gridy = 3;
+		gbc.gridy = 4;
 		gbc.weightx = 0;
 		gbc.fill = GridBagConstraints.NONE;
 		gbc.anchor = GridBagConstraints.EAST;
 		panelForm.add(new JLabel("Moneda:"), gbc);
 
 		comboMoneda = new JComboBox<>(Moneda.values());
-
 		gbc.gridx = 1;
-		gbc.gridy = 3;
+		gbc.gridy = 4;
 		gbc.weightx = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		panelForm.add(comboMoneda, gbc);
@@ -175,6 +181,17 @@ public class CuentaDialog extends JDialog {
 
 		// (guardar todavía no hace nada)
 		btnGuardar.addActionListener(e -> dispose());
+
+		if (cuenta != null) {
+			txtNombre.setText(cuenta.getNombre());
+			seleccionarBanco(cuenta.getBanco());
+			seleccionarTipo(cuenta.getTipoCuenta());
+			comboMoneda.setSelectedItem(cuenta.getMoneda());
+			comboMoneda.setEnabled(puedeCambiarMoneda());
+			if (!puedeCambiarMoneda()) {
+				comboMoneda.setToolTipText("No puede cambiar la moneda porque la cuenta tiene saldo");
+			}
+		}
 	}
 
 	private void guardarCuenta() {
@@ -190,9 +207,14 @@ public class CuentaDialog extends JDialog {
 			// 👇 si no tenés banco todavía, podés pasar null o uno por defecto
 			Banco banco = (Banco) comboBanco.getSelectedItem();
 
-			cuentaService.crearCuenta(SesionUsuario.getUsuarioActual(), // ⚠️ o el usuario actual
-					nombre, banco, "Saldo inicial", tipo, moneda, saldoInicial, 0.0, // interesDiario (por ahora)
-					java.time.LocalDate.now());
+			if (cuenta == null) {
+				cuentaService.crearCuenta(SesionUsuario.getUsuarioActual(), // ⚠️ o el usuario actual
+						nombre, banco, "Saldo inicial", tipo, moneda, saldoInicial, 0.0, // interesDiario (por ahora)
+						java.time.LocalDate.now());
+			} else {
+				cuenta.actualizarDatos(nombre, tipo, moneda, banco);
+				cuentaService.actualizarCuenta(cuenta);
+			}
 
 			if (onSuccess != null) {
 				onSuccess.run();
@@ -234,22 +256,29 @@ public class CuentaDialog extends JDialog {
 			valido = false;
 		}
 
-		// 👇 validar saldo
-		try {
-			String texto = txtSaldoInicial.getText().trim();
-
-			if (texto.isEmpty()) {
-				valido = false;
-			} else {
-				BigDecimal saldo = NumeroUtils.parse(texto);
-
-				if (saldo.compareTo(BigDecimal.ZERO) < 0) {
-					valido = false;
-				}
-			}
-
-		} catch (Exception e) {
+		// 👇 validar banco
+		if (comboBanco.getSelectedItem() == null) {
 			valido = false;
+		}
+
+		// 👇 SOLO validar saldo si es NUEVA cuenta
+		if (cuenta == null) {
+			try {
+				String texto = txtSaldoInicial.getText().trim();
+
+				if (texto.isEmpty()) {
+					valido = false;
+				} else {
+					BigDecimal saldo = NumeroUtils.parse(texto);
+
+					if (saldo.compareTo(BigDecimal.ZERO) < 0) {
+						valido = false;
+					}
+				}
+
+			} catch (Exception e) {
+				valido = false;
+			}
 		}
 
 		btnGuardar.setEnabled(valido);
@@ -262,5 +291,35 @@ public class CuentaDialog extends JDialog {
 		for (Banco b : bancos) {
 			comboBanco.addItem(b);
 		}
+	}
+
+	private void seleccionarTipo(TipoCuenta tipoCuenta) {
+		for (int i = 0; i < comboTipo.getItemCount(); i++) {
+			TipoCuenta t = comboTipo.getItemAt(i);
+
+			if (t == tipoCuenta) { // 👈 enums se comparan con ==
+				comboTipo.setSelectedIndex(i);
+				return;
+			}
+		}
+	}
+
+	private void seleccionarBanco(Banco bancoCuenta) {
+		for (int i = 0; i < comboBanco.getItemCount(); i++) {
+			Banco b = comboBanco.getItemAt(i);
+
+			if (b.getId().equals(bancoCuenta.getId())) {
+				comboBanco.setSelectedIndex(i);
+				return;
+			}
+		}
+	}
+
+	private boolean puedeCambiarMoneda() {
+		if (cuenta == null) {
+			return true; // cuenta nueva → siempre permitido
+		}
+
+		return cuenta.getSaldo().compareTo(BigDecimal.ZERO) == 0;
 	}
 }

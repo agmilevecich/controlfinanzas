@@ -42,6 +42,23 @@ public class Banco {
 	}
 
 	@Override
+	public boolean equals(Object o) {
+		if (this == o) {
+			return true;
+		}
+		if (!(o instanceof Banco)) {
+			return false;
+		}
+		Banco banco = (Banco) o;
+		return id != null && id.equals(banco.id);
+	}
+
+	@Override
+	public int hashCode() {
+		return getClass().hashCode();
+	}
+
+	@Override
 	public String toString() {
 		return nombre;
 	}

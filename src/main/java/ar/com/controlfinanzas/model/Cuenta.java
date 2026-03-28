@@ -32,7 +32,7 @@ public class Cuenta {
 	private String nombre;
 
 	@Enumerated(EnumType.STRING)
-	private TipoCuenta tipo;
+	private TipoCuenta tipoCuenta;
 
 	@Enumerated(EnumType.STRING)
 	private Moneda moneda;
@@ -61,7 +61,7 @@ public class Cuenta {
 
 		this.nombre = nombre;
 		this.banco = banco;
-		this.tipo = tipo;
+		this.tipoCuenta = tipo;
 		this.moneda = moneda;
 		this.interesDiario = interesDiario;
 		this.fechaInicio = fechaInicio;
@@ -125,8 +125,8 @@ public class Cuenta {
 		return !fecha.isBefore(fechaInicio);
 	}
 
-	public TipoCuenta getTipo() {
-		return tipo;
+	public TipoCuenta getTipoCuenta() {
+		return tipoCuenta;
 	}
 
 	public Usuario getUsuario() {
@@ -135,6 +135,20 @@ public class Cuenta {
 
 	public Banco getBanco() {
 		return banco;
+	}
+
+	public void actualizarDatos(String nombre, TipoCuenta tipoCuenta, Moneda moneda, Banco banco) {
+		this.nombre = nombre;
+		this.tipoCuenta = tipoCuenta;
+		this.moneda = moneda;
+		this.banco = banco;
+	}
+
+	public boolean puedeCambiarMoneda(Moneda nuevaMoneda) {
+		if (this.moneda.equals(nuevaMoneda)) {
+			return true;
+		}
+		return getSaldo().compareTo(BigDecimal.ZERO) == 0;
 	}
 
 	@Override

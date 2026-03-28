@@ -40,6 +40,7 @@ public class CuentaService {
 		// Si hay capital inicial lo registramos como movimiento
 		if (capitalInicial != null && capitalInicial.compareTo(BigDecimal.ZERO) > 0) {
 			Movimiento movInicial = new Movimiento(fechaInicio, descripcion, capitalInicial, TipoMovimiento.INGRESO);
+			cuenta.getMovimientos().add(movInicial);
 			movInicial.setCuenta(cuenta);
 			em.persist(movInicial);
 		}
@@ -53,5 +54,25 @@ public class CuentaService {
 			double interesDiario, LocalDate fechaInicio) {
 
 		return crearCuenta(usuario, nombre, banco, "", tipo, moneda, BigDecimal.ZERO, interesDiario, fechaInicio);
+	}
+
+	public void actualizarCuenta(Cuenta cuenta) {
+
+		Cuenta cuentaPersistida = em.find(Cuenta.class, cuenta.getId());
+
+		if (cuentaPersistida == null) {
+			throw new RuntimeException("La cuenta no existe");
+		}
+
+		if (!cuentaPersistida.puedeCambiarMoneda(cuenta.getMoneda())) {
+			throw new RuntimeException("No se puede cambiar la moneda con saldo en cuenta");
+		}
+
+		em.getTransaction().begin();
+
+		cuentaPersistida.actualizarDatos(cuenta.getNombre(), cuenta.getTipoCuenta(), cuenta.getMoneda(),
+				cuenta.getBanco());
+
+		em.getTransaction().commit();
 	}
 }
