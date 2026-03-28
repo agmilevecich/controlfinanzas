@@ -9,6 +9,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.TextStyle;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -133,7 +134,8 @@ public class PanelGastos extends JPanel {
 
 		btnSimular = new JButton("Simular");
 
-		cbCategoria = new JComboBox<>(CategoriaGasto.values());
+		cbCategoria = new JComboBox<>(Arrays.stream(CategoriaGasto.values()).filter(c -> c != CategoriaGasto.AJUSTE)
+				.toArray(CategoriaGasto[]::new));
 		cbCategoria.insertItemAt(null, 0);
 		cbCategoria.setRenderer(new ComboRendererGenerico<>("Seleccione una categoría", CategoriaGasto::toString));
 		cbCategoria.setSelectedIndex(0);
@@ -361,6 +363,10 @@ public class PanelGastos extends JPanel {
 
 		for (Movimiento m : movimientosCache) {
 
+			if (m.getCategoria() == CategoriaGasto.AJUSTE) {
+				continue;
+			}
+
 			String cuentaNombre = "-";
 
 			if (m.getFormaPago() == FormaPago.CREDITO) {
@@ -408,6 +414,11 @@ public class PanelGastos extends JPanel {
 		DefaultPieDataset dataset = new DefaultPieDataset();
 		Map<CategoriaGasto, BigDecimal> totales = new HashMap<>();
 		for (Movimiento m : movimientosCache) {
+
+			if (m.getCategoria() == CategoriaGasto.AJUSTE) {
+				continue;
+			}
+
 			totales.put(m.getCategoria(), totales.getOrDefault(m.getCategoria(), BigDecimal.ZERO).add(m.getMonto()));
 		}
 		for (Map.Entry<CategoriaGasto, BigDecimal> e : totales.entrySet()) {
@@ -431,6 +442,10 @@ public class PanelGastos extends JPanel {
 		Map<String, BigDecimal> totales = new TreeMap<>();
 
 		for (Movimiento m : movimientosCache) {
+
+			if (m.getCategoria() == CategoriaGasto.AJUSTE) {
+				continue;
+			}
 
 			int anio = m.getFecha().getYear();
 			int mes = m.getFecha().getMonthValue();

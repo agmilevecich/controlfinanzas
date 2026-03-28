@@ -42,11 +42,12 @@ public class MovimientoService {
 				movimiento.setCuenta(null);
 				movimiento.setPendiente(true);
 			}
-			if (movimiento.getTipo() == TipoMovimiento.GASTO && movimiento.getFormaPago() != FormaPago.CREDITO) {
+			if (movimiento.getTipo() == TipoMovimiento.GASTO && movimiento.getFormaPago() != FormaPago.CREDITO
+					&& movimiento.getCategoria() != CategoriaGasto.AJUSTE) {
 
 				Cuenta cuenta = movimiento.getCuenta();
 
-				if (cuenta == null && movimiento.getFormaPago() != FormaPago.CREDITO) {
+				if (cuenta == null) {
 					throw new RuntimeException("La cuenta es obligatoria");
 				}
 
@@ -557,5 +558,27 @@ public class MovimientoService {
 				AND m.fecha BETWEEN :inicio AND :fin
 				""", BigDecimal.class).setParameter("usuarioId", usuarioId).setParameter("tipo", TipoMovimiento.INGRESO)
 				.setParameter("inicio", inicio).setParameter("fin", fin).getSingleResult();
+	}
+
+	public void ajustarSaldo(Cuenta cuenta, BigDecimal nuevoSaldo) {
+
+		BigDecimal saldoActual = obtenerSaldoCuenta(cuenta);
+
+		BigDecimal diferencia = nuevoSaldo.subtract(saldoActual);
+
+		if (diferencia.compareTo(BigDecimal.ZERO) == 0) {
+			return; // no hay nada que hacer
+		}
+
+		TipoMovimiento tipo = diferencia.compareTo(BigDecimal.ZERO) > 0 ? TipoMovimiento.INGRESO : TipoMovimiento.GASTO;
+
+		BigDecimal monto = diferencia.abs();
+
+		Movimiento ajuste = new Movimiento(java.time.LocalDate.now(), "Ajuste de saldo", monto, tipo);
+		ajuste.setCategoria(CategoriaGasto.AJUSTE);
+		ajuste.setCuenta(cuenta);
+		ajuste.setUsuario(SesionUsuario.getUsuarioActual());
+
+		registrarMovimiento(ajuste);
 	}
 }

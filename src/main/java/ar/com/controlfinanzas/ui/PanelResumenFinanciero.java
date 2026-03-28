@@ -176,6 +176,10 @@ public class PanelResumenFinanciero extends JPanel {
 
 			for (Movimiento m : movimientos) {
 
+				if (m.getCategoria() == CategoriaGasto.AJUSTE) {
+					continue;
+				}
+
 				if (m.getFecha() != null && YearMonth.from(m.getFecha()).equals(mesActual)) {
 
 					BigDecimal monto = m.getMonto() != null ? m.getMonto() : BigDecimal.ZERO;

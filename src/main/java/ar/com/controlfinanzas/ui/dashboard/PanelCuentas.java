@@ -1,6 +1,7 @@
 package ar.com.controlfinanzas.ui.dashboard;
 
 import java.awt.BorderLayout;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -22,6 +23,7 @@ import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.ui.PanelBotones;
 import ar.com.controlfinanzas.ui.dialog.CuentaDialog;
+import ar.com.controlfinanzas.util.NumeroUtils;
 
 public class PanelCuentas extends JPanel {
 
@@ -80,6 +82,32 @@ public class PanelCuentas extends JPanel {
 		// Botón crear cuenta
 		botones.getBotones()[0].setText("Crear Cuenta");
 		botones.getBotones()[0].addActionListener(e -> crearCuentaDialog());
+		botones.getBotones()[1].setText("Ajustar Saldo");
+		botones.getBotones()[1].addActionListener(e -> {
+
+			Cuenta cuenta = listaCuentas.getSelectedValue();
+
+			if (cuenta == null) {
+				return;
+			}
+
+			String input = JOptionPane.showInputDialog(this, "Nuevo saldo:");
+
+			if (input == null || input.isBlank()) {
+				return;
+			}
+
+			try {
+				BigDecimal nuevoSaldo = NumeroUtils.parse(input);
+
+				movimientoService.ajustarSaldo(cuenta, nuevoSaldo);
+
+				cargarCuentas();
+
+			} catch (Exception ex) {
+				JOptionPane.showMessageDialog(this, "Monto inválido");
+			}
+		});
 
 		add(botones, BorderLayout.SOUTH);
 

@@ -217,7 +217,8 @@ public class Movimiento {
 	}
 
 	public BigDecimal getRestante() {
-		return monto.subtract(montoPagado);
+		BigDecimal restante = monto.subtract(montoPagado);
+		return restante.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : restante;
 	}
 
 	public Usuario getUsuario() {
@@ -237,6 +238,10 @@ public class Movimiento {
 
 		if (monto == null || monto.compareTo(BigDecimal.ZERO) <= 0) {
 			throw new IllegalStateException("El monto debe ser mayor que 0");
+		}
+
+		if (tipo == TipoMovimiento.GASTO && monto.compareTo(BigDecimal.ZERO) < 0) {
+			throw new IllegalStateException("Los gastos no pueden tener monto negativo");
 		}
 
 		if (formaPago == FormaPago.CREDITO) {
