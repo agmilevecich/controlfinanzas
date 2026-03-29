@@ -3,6 +3,8 @@ package ar.com.controlfinanzas.domain.finanzas;
 import java.math.BigDecimal;
 import java.util.List;
 
+import ar.com.controlfinanzas.model.Movimiento;
+
 public class CalculadoraSaldo {
 
 	public BigDecimal calcularSaldo(Cuenta cuenta, List<Movimiento> movimientos) {
@@ -11,27 +13,18 @@ public class CalculadoraSaldo {
 
 		for (Movimiento movimiento : movimientos) {
 
+			if (!cuenta.equals(movimiento.getCuenta())) {
+				continue;
+			}
+
 			switch (movimiento.getTipo()) {
 
 			case INGRESO:
-				if (cuenta.equals(movimiento.getCuentaDestino())) {
-					saldo = saldo.add(movimiento.getMonto());
-				}
+				saldo = saldo.add(movimiento.getMonto());
 				break;
 
 			case GASTO:
-				if (cuenta.equals(movimiento.getCuentaOrigen())) {
-					saldo = saldo.subtract(movimiento.getMonto());
-				}
-				break;
-
-			case TRANSFERENCIA:
-				if (cuenta.equals(movimiento.getCuentaOrigen())) {
-					saldo = saldo.subtract(movimiento.getMonto());
-				}
-				if (cuenta.equals(movimiento.getCuentaDestino())) {
-					saldo = saldo.add(movimiento.getMonto());
-				}
+				saldo = saldo.subtract(movimiento.getMonto());
 				break;
 			}
 		}

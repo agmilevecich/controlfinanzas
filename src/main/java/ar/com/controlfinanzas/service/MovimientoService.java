@@ -24,6 +24,7 @@ import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.TarjetaCredito;
 import ar.com.controlfinanzas.model.Usuario;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.TypedQuery;
 
 public class MovimientoService {
@@ -580,5 +581,57 @@ public class MovimientoService {
 		ajuste.setUsuario(SesionUsuario.getUsuarioActual());
 
 		registrarMovimiento(ajuste);
+	}
+
+	public void transferir(Cuenta origen, Cuenta destino, BigDecimal monto, String descripcion, Usuario usuario) {
+
+		if (origen == null || destino == null) {
+			throw new IllegalArgumentException("Cuentas inválidas");
+		}
+
+		if (origen.equals(destino)) {
+			throw new IllegalArgumentException("No podés transferir a la misma cuenta");
+		}
+
+		if (monto == null || monto.compareTo(BigDecimal.ZERO) <= 0) {
+			throw new IllegalArgumentException("Monto inválido");
+		}
+
+		if (origen.getSaldo().compareTo(monto) < 0) {
+			throw new IllegalArgumentException("Saldo insuficiente");
+		}
+
+		Movimiento egreso = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.GASTO);
+		egreso.setDescripcion(descripcion + " -> " + destino.getNombre());
+		egreso.setCuenta(origen);
+		egreso.setUsuario(usuario);
+		egreso.validar();
+
+		JOptionPane.showMessageDialog(null,
+				"Cuenta Origen: " + origen + "\nCuenta Destino: " + destino + "\nDescripción: " + descripcion
+						+ "\nMonto: " + monto + "\nUsuario: " + origen.getUsuario().getUsuarioID());
+
+		Movimiento ingreso = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.INGRESO);
+		ingreso.setDescripcion(descripcion + " <- " + origen.getNombre());
+		ingreso.setCuenta(destino);
+		ingreso.setUsuario(usuario);
+		ingreso.validar();
+
+		EntityTransaction tx = em.getTransaction();
+
+		try {
+			tx.begin();
+
+			em.persist(egreso);
+			em.persist(ingreso);
+
+			tx.commit();
+
+		} catch (Exception e) {
+			if (tx.isActive()) {
+				tx.rollback();
+			}
+			throw e;
+		}
 	}
 }

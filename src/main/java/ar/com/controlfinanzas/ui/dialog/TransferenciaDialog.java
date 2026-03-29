@@ -9,7 +9,6 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.FocusEvent;
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -25,9 +24,7 @@ import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
 import ar.com.controlfinanzas.model.Cuenta;
-import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.util.NumeroUtils;
@@ -35,7 +32,7 @@ import ar.com.controlfinanzas.util.SwingUtils;
 
 public class TransferenciaDialog extends JDialog {
 
-	private JLabel lblSaldo;
+	private JLabel lblSaldo = new JLabel();
 	private JTextField txtMonto;
 	private JTextField txtDescripcion;
 	private JComboBox<Cuenta> comboOrigen;
@@ -44,6 +41,7 @@ public class TransferenciaDialog extends JDialog {
 	private MovimientoService movimientoService;
 	private CuentaService cuentaService;
 	private Runnable onSuccess;
+
 	private JButton btnTransferir;
 	private JButton btnCancelar;
 	private JButton btnUsarSaldo;
@@ -52,11 +50,11 @@ public class TransferenciaDialog extends JDialog {
 			MovimientoService movimientoService, Runnable onSuccess) {
 
 		super(parent, "Transferir fondos", true);
+
 		this.destino = destino;
 		this.movimientoService = movimientoService;
 		this.cuentaService = cuentaService;
 		this.onSuccess = onSuccess;
-		this.lblSaldo = new JLabel();
 
 		setSize(400, 260);
 		setLocationRelativeTo(parent);
@@ -65,9 +63,6 @@ public class TransferenciaDialog extends JDialog {
 		JPanel panelForm = new JPanel(new GridBagLayout());
 		panelForm.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-		// ===============================
-		// BASE CONSTRAINTS
-		// ===============================
 		GridBagConstraints gbc = new GridBagConstraints();
 		gbc.insets = new Insets(6, 6, 6, 6);
 
@@ -82,6 +77,7 @@ public class TransferenciaDialog extends JDialog {
 		txtMonto = new JTextField(10);
 		SwingUtils.configurarCampoMoneda(txtMonto);
 		txtMonto.setHorizontalAlignment(JTextField.RIGHT);
+
 		txtMonto.getDocument().addDocumentListener(new DocumentListener() {
 			@Override
 			public void insertUpdate(DocumentEvent e) {
@@ -106,28 +102,21 @@ public class TransferenciaDialog extends JDialog {
 			}
 		});
 
-		// 🔥 contenedor que NO se estira
 		JPanel panelMonto = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		panelMonto.add(txtMonto);
 
 		btnUsarSaldo = new JButton("Usar Saldo");
-
 		btnUsarSaldo.addActionListener(e -> {
 			Cuenta origen = (Cuenta) comboOrigen.getSelectedItem();
-
 			if (origen != null) {
-				BigDecimal saldo = origen.getSaldo();
-				txtMonto.setText(NumeroUtils.redondearMoneda(saldo).toString()); // sin formato por ahora
+				txtMonto.setText(NumeroUtils.redondearMoneda(origen.getSaldo()).toString());
 			}
 		});
+
 		panelMonto.add(btnUsarSaldo);
 
 		gbc.gridx = 1;
-		gbc.gridy = 0;
-		gbc.weightx = 1;
-		gbc.fill = GridBagConstraints.HORIZONTAL; // el panel se estira, no el campo
-		gbc.anchor = GridBagConstraints.WEST;
-
+		gbc.fill = GridBagConstraints.HORIZONTAL;
 		panelForm.add(panelMonto, gbc);
 
 		// ===============================
@@ -135,16 +124,12 @@ public class TransferenciaDialog extends JDialog {
 		// ===============================
 		gbc.gridx = 0;
 		gbc.gridy = 1;
-		gbc.weightx = 0;
 		gbc.fill = GridBagConstraints.NONE;
-		gbc.anchor = GridBagConstraints.EAST;
 		panelForm.add(new JLabel("Descripción:"), gbc);
 
-		txtDescripcion = new JTextField(10);
+		txtDescripcion = new JTextField(15);
 
 		gbc.gridx = 1;
-		gbc.gridy = 1;
-		gbc.weightx = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		panelForm.add(txtDescripcion, gbc);
 
@@ -153,52 +138,38 @@ public class TransferenciaDialog extends JDialog {
 		// ===============================
 		gbc.gridx = 0;
 		gbc.gridy = 2;
-		gbc.weightx = 0;
-		gbc.fill = GridBagConstraints.NONE;
-		gbc.anchor = GridBagConstraints.EAST;
 		panelForm.add(new JLabel("Desde cuenta:"), gbc);
 
 		comboOrigen = new JComboBox<>();
-		comboOrigen.addActionListener(e -> {
-			actualizarSaldoLabel();
-		});
+		comboOrigen.addActionListener(e -> actualizarSaldoLabel());
 		cargarCuentasOrigen();
 
 		gbc.gridx = 1;
-		gbc.gridy = 2;
-		gbc.weightx = 1;
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 		panelForm.add(comboOrigen, gbc);
 
+		// SALDO
 		gbc.gridx = 1;
-		gbc.gridy = 3; // 👈 ojo, corrés lo que sigue
-		gbc.weightx = 1;
+		gbc.gridy = 3;
 		gbc.anchor = GridBagConstraints.WEST;
-		gbc.fill = GridBagConstraints.NONE;
 
 		lblSaldo = new JLabel("Saldo: -");
 		lblSaldo.setForeground(Color.GRAY);
 		lblSaldo.setFont(lblSaldo.getFont().deriveFont(Font.PLAIN, 11));
-		lblSaldo.setVerticalTextPosition(JLabel.TOP);
 
 		panelForm.add(lblSaldo, gbc);
 
 		// ===============================
-		// DESTINO (solo label)
+		// DESTINO
 		// ===============================
 		gbc.gridx = 0;
 		gbc.gridy = 4;
-		gbc.weightx = 0;
-		gbc.fill = GridBagConstraints.NONE;
-		gbc.anchor = GridBagConstraints.EAST;
 		panelForm.add(new JLabel("Hacia cuenta:"), gbc);
 
 		JLabel lblDestino = new JLabel(destino.getNombre());
-		lblDestino.setFont(lblDestino.getFont().deriveFont(java.awt.Font.BOLD));
+		lblDestino.setFont(lblDestino.getFont().deriveFont(Font.BOLD));
 
 		gbc.gridx = 1;
-		gbc.gridy = 4;
-		gbc.fill = GridBagConstraints.HORIZONTAL;
 		panelForm.add(lblDestino, gbc);
 
 		add(panelForm, BorderLayout.CENTER);
@@ -210,6 +181,7 @@ public class TransferenciaDialog extends JDialog {
 
 		btnTransferir = new JButton("Transferir");
 		btnTransferir.setEnabled(false);
+
 		btnCancelar = new JButton("Cancelar");
 
 		panelBotones.add(btnCancelar);
@@ -223,22 +195,49 @@ public class TransferenciaDialog extends JDialog {
 		btnTransferir.addActionListener(e -> ejecutarTransferencia());
 		btnCancelar.addActionListener(e -> dispose());
 
-		// foco inicial
 		SwingUtilities.invokeLater(() -> txtMonto.requestFocus());
 		actualizarSaldoLabel();
 	}
 
-	private void formatearMonto() {
-		BigDecimal monto = obtenerMontoValido();
+	private void ejecutarTransferencia() {
 
-		if (monto != null) {
-			BigDecimal formateado = NumeroUtils.redondearMoneda(monto);
-			txtMonto.setText(formateado.toString());
+		try {
+			BigDecimal monto = NumeroUtils.parse(txtMonto.getText());
+
+			String descripcion = txtDescripcion.getText();
+
+			if (descripcion == null || descripcion.trim().isEmpty()) {
+				JOptionPane.showMessageDialog(this, "Ingrese una descripción");
+				return;
+			}
+
+			Cuenta origen = (Cuenta) comboOrigen.getSelectedItem();
+
+			if (origen == null) {
+				return;
+			}
+
+			if (monto.compareTo(origen.getSaldo()) > 0) {
+				JOptionPane.showMessageDialog(this,
+						"Saldo insuficiente: " + NumeroUtils.formatearMonedaARS(origen.getSaldo()));
+				return;
+			}
+
+			// 🔥 ACÁ ESTÁ LA CLAVE
+			movimientoService.transferir(origen, destino, monto, descripcion, origen.getUsuario());
+
+			if (onSuccess != null) {
+				onSuccess.run();
+			}
+
+			dispose();
+
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "Monto inválido");
 		}
 	}
 
 	private void cargarCuentasOrigen() {
-
 		List<Cuenta> cuentas = cuentaService.getCuentasUsuario(destino.getUsuario());
 
 		cuentas.removeIf(c -> c.equals(destino) || !c.getMoneda().equals(destino.getMoneda()));
@@ -248,97 +247,29 @@ public class TransferenciaDialog extends JDialog {
 		}
 	}
 
-	private void ejecutarTransferencia() {
-
-		String montoStr = txtMonto.getText();
-		String descripcion = txtDescripcion.getText();
-
-		if (montoStr.isEmpty() || descripcion.isEmpty()) {
-			JOptionPane.showMessageDialog(this, "Completar todos los campos");
-			return;
-		}
-
-		BigDecimal monto;
-		try {
-			monto = NumeroUtils.parse(montoStr);
-		} catch (Exception e) {
-			JOptionPane.showMessageDialog(this, "Monto inválido");
-			return;
-		}
-
-		Cuenta origen = (Cuenta) comboOrigen.getSelectedItem();
-
-		if (origen == null) {
-			return;
-		}
-
-		if (monto.compareTo(origen.getSaldo()) > 0) {
-			JOptionPane.showMessageDialog(this,
-					"Saldo insuficiente: " + NumeroUtils.formatearMonedaARS(origen.getSaldo()));
-			return;
-		}
-
-		// ORIGEN
-		Movimiento movOrigen = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.TRANSFERENCIA);
-		movOrigen.setDescripcion(descripcion + " -> " + destino.getNombre());
-		movOrigen.setCuenta(origen);
-		movimientoService.registrarMovimiento(movOrigen);
-
-		// DESTINO
-		Movimiento movDestino = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.INGRESO);
-		movDestino.setDescripcion(descripcion + " <- " + origen.getNombre());
-		movDestino.setCuenta(destino);
-		movimientoService.registrarMovimiento(movDestino);
-
-		if (onSuccess != null) {
-			onSuccess.run();
-		}
-
-		dispose();
-	}
-
-	private BigDecimal obtenerMontoValido() {
-		try {
-			String texto = txtMonto.getText().trim();
-
-			if (texto.isEmpty()) {
-				return null;
-			}
-
-			BigDecimal monto = NumeroUtils.parse(texto);
-
-			// 👇 CLAVE: validar después del parse
-			if (monto.compareTo(BigDecimal.ZERO) <= 0) {
-				return null;
-			}
-
-			return monto;
-
-		} catch (Exception e) {
-			return null;
-		}
-	}
-
 	private void validarMonto() {
-		BigDecimal monto = obtenerMontoValido();
-		Cuenta origen = (Cuenta) comboOrigen.getSelectedItem();
 
-		boolean valido = false;
+		try {
+			BigDecimal monto = NumeroUtils.parse(txtMonto.getText());
+			Cuenta origen = (Cuenta) comboOrigen.getSelectedItem();
 
-		if (monto != null && origen != null) {
-			BigDecimal saldo = origen.getSaldo();
+			boolean valido = monto.compareTo(BigDecimal.ZERO) > 0 && origen != null
+					&& monto.compareTo(origen.getSaldo()) <= 0;
 
-			if (saldo != null && monto.compareTo(saldo) <= 0) {
-				valido = true;
-			}
-		}
+			btnTransferir.setEnabled(valido);
+			txtMonto.setForeground(valido ? Color.BLACK : Color.RED);
 
-		btnTransferir.setEnabled(valido);
-
-		if (valido) {
-			txtMonto.setForeground(Color.BLACK);
-		} else {
+		} catch (Exception e) {
+			btnTransferir.setEnabled(false);
 			txtMonto.setForeground(Color.RED);
+		}
+	}
+
+	private void formatearMonto() {
+		try {
+			BigDecimal monto = NumeroUtils.parse(txtMonto.getText());
+			txtMonto.setText(NumeroUtils.redondearMoneda(monto).toString());
+		} catch (Exception ignored) {
 		}
 	}
 
@@ -351,5 +282,4 @@ public class TransferenciaDialog extends JDialog {
 			lblSaldo.setText("Saldo: -");
 		}
 	}
-
 }

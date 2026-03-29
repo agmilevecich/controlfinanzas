@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.function.Consumer;
 
 import javax.swing.DefaultListModel;
+import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
@@ -23,6 +24,7 @@ import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.ui.PanelBotones;
 import ar.com.controlfinanzas.ui.dialog.CuentaDialog;
+import ar.com.controlfinanzas.ui.dialog.TransferenciaDialog;
 import ar.com.controlfinanzas.util.NumeroUtils;
 
 public class PanelCuentas extends JPanel {
@@ -109,9 +111,43 @@ public class PanelCuentas extends JPanel {
 			}
 		});
 
+		botones.getBotones()[2].setText("Transferir");
+
+		botones.getBotones()[2].addActionListener(e -> {
+
+			Cuenta cuentaSeleccionada = getCuentaSeleccionada();
+
+			if (cuentaSeleccionada == null) {
+				JOptionPane.showMessageDialog(this, "Seleccione una cuenta destino");
+				return;
+			}
+
+			// 🔥 VALIDACIÓN CLAVE
+			List<Cuenta> cuentas = cuentaService.getCuentasUsuario(usuario);
+
+			cuentas.removeIf(
+					c -> c.equals(cuentaSeleccionada) || !c.getMoneda().equals(cuentaSeleccionada.getMoneda()));
+
+			if (cuentas.isEmpty()) {
+				JOptionPane.showMessageDialog(this, "No hay otras cuentas en la misma moneda para transferir");
+				return;
+			}
+
+			// 👇 recién acá abrís el dialog
+			JFrame frame = (JFrame) SwingUtilities.getWindowAncestor(this);
+
+			new TransferenciaDialog(frame, cuentaSeleccionada, cuentaService, movimientoService, () -> {
+				cargarCuentas();
+			}).setVisible(true);
+
+		});
 		add(botones, BorderLayout.SOUTH);
 
 		cargarCuentas();
+	}
+
+	private Cuenta getCuentaSeleccionada() {
+		return listaCuentas.getSelectedValue();
 	}
 
 	private void abrirDialogoEditarCuenta(Cuenta cuenta) {
@@ -184,4 +220,7 @@ public class PanelCuentas extends JPanel {
 		listaCuentas.setSelectedValue(cuenta, true);
 	}
 
+	public JButton getBotonTransferir() {
+		return botones.getBotones()[2];
+	}
 }

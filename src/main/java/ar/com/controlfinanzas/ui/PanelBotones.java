@@ -10,7 +10,7 @@ public class PanelBotones extends JPanel {
 	private JButton[] botones;
 
 	public PanelBotones() {
-		String[] texto = new String[] { "Agregar", "Eliminar" };
+		String[] texto = new String[] { "Agregar", "Eliminar", "Modificar" };
 		botones = new JButton[texto.length];
 
 		setLayout(new GridLayout(1, texto.length, 5, 10));
