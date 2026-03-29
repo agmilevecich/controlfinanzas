@@ -114,6 +114,9 @@ public class DashboardFrame extends JFrame {
 		panelGastos.setActualizaGastos(() -> {
 			panelMovimientos.cargarMovimientos();
 			panelCuentas.cargarCuentas();
+			panelResumen.actualizarResumen();
+			panelResumenGastos.refrescar(SesionUsuario.getUsuarioActual().getUsuarioID());
+
 		});
 
 		panelTarjetaCredito.setActualizarTarjeta(() -> {

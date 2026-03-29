@@ -1,4 +1,4 @@
-package ar.com.controlfinanzas.domain.finanzas;
+package ar.com.controlfinanzas.model;
 
 public enum TipoCuenta {
 	CAJA_AHORRO("Caja de Ahorros"), CUENTA_CORRIENTE("Cuenta Corriente"), BILLETERA_VIRTUAL("Billetera Virtual"),

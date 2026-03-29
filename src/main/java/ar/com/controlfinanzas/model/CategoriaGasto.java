@@ -4,7 +4,7 @@ public enum CategoriaGasto {
 
 	SUPERMERCADO("Supermercado"), SERVICIOS("Servicios"), ALQUILER("Alquiler"), TRANSPORTE("Transporte"),
 	SALUD("Salud"), EDUCACION("Educación"), ENTRETENIMIENTO("Entretenimiento"), IMPUESTOS("Impuestos"), OTROS("Otros"),
-	AJUSTE("Ajuste");
+	AJUSTE("Ajuste"), TRANSFERENCIA("Transferencia");
 
 	private final String descripcion;
 

@@ -21,9 +21,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 
-import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
+import ar.com.controlfinanzas.model.CategoriaGasto;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Movimiento;
+import ar.com.controlfinanzas.model.TipoMovimiento;
 import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.MovimientoService;
 import ar.com.controlfinanzas.util.NumeroUtils;
@@ -81,8 +82,14 @@ public class PanelMovimientos extends JPanel {
 		List<Movimiento> movimientos = movimientoService.getMovimientosCuenta(cuentaSeleccionada);
 
 		for (Movimiento m : movimientos) {
-			modeloMovimientos.addElement(m.getFecha() + " | " + m.getTipo() + " | " + m.getDescripcion() + " | "
-					+ NumeroUtils.formatearMonedaARS(m.getMonto()));
+
+			modeloMovimientos.addElement(m.getFecha() + " | " + ((m.getTipo() == TipoMovimiento.GASTO
+					&& (m.getCategoria() == CategoriaGasto.AJUSTE || m.getCategoria() == CategoriaGasto.TRANSFERENCIA)
+					|| (m.getTipo() == TipoMovimiento.INGRESO && (m.getCategoria() == CategoriaGasto.AJUSTE
+							|| m.getCategoria() == CategoriaGasto.TRANSFERENCIA)))
+									? m.getCategoria().toString().toUpperCase()
+									: m.getTipo())
+					+ " | " + m.getDescripcion() + " | " + NumeroUtils.formatearMonedaARS(m.getMonto()));
 		}
 
 		lblSaldo.setText("Saldo: " + NumeroUtils.formatearMonedaARS(cuentaSeleccionada.getSaldo()));

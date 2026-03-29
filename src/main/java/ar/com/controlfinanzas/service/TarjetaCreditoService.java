@@ -6,12 +6,12 @@ import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.List;
 
-import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.FormaPago;
 import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.model.ResumenTarjeta;
 import ar.com.controlfinanzas.model.TarjetaCredito;
+import ar.com.controlfinanzas.model.TipoMovimiento;
 import ar.com.controlfinanzas.repository.TarjetaCreditoRepository;
 import jakarta.persistence.EntityManager;
 

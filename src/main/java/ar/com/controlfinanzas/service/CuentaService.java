@@ -4,12 +4,12 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 
-import ar.com.controlfinanzas.domain.finanzas.TipoCuenta;
-import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
 import ar.com.controlfinanzas.model.Banco;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.Movimiento;
+import ar.com.controlfinanzas.model.TipoCuenta;
+import ar.com.controlfinanzas.model.TipoMovimiento;
 import ar.com.controlfinanzas.model.Usuario;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;

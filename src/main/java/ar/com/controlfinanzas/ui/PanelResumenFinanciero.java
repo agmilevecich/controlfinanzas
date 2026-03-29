@@ -176,7 +176,7 @@ public class PanelResumenFinanciero extends JPanel {
 
 			for (Movimiento m : movimientos) {
 
-				if (m.getCategoria() == CategoriaGasto.AJUSTE) {
+				if (m.getCategoria() == CategoriaGasto.AJUSTE || m.getCategoria() == CategoriaGasto.TRANSFERENCIA) {
 					continue;
 				}
 

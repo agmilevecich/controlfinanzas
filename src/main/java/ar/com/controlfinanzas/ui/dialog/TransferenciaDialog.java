@@ -2,6 +2,7 @@ package ar.com.controlfinanzas.ui.dialog;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
@@ -12,11 +13,13 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JDialog;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -56,9 +59,10 @@ public class TransferenciaDialog extends JDialog {
 		this.cuentaService = cuentaService;
 		this.onSuccess = onSuccess;
 
-		setSize(400, 260);
+		setSize(400, 300);
 		setLocationRelativeTo(parent);
 		setLayout(new BorderLayout());
+		setResizable(false);
 
 		JPanel panelForm = new JPanel(new GridBagLayout());
 		panelForm.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
@@ -141,6 +145,22 @@ public class TransferenciaDialog extends JDialog {
 		panelForm.add(new JLabel("Desde cuenta:"), gbc);
 
 		comboOrigen = new JComboBox<>();
+		comboOrigen.setRenderer(new DefaultListCellRenderer() {
+
+			@Override
+			public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
+					boolean cellHasFocus) {
+
+				JLabel lbl = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+				if (value instanceof Cuenta c) {
+					lbl.setText(c.getNombre());
+				}
+
+				return lbl;
+			}
+
+		});
 		comboOrigen.addActionListener(e -> actualizarSaldoLabel());
 		cargarCuentasOrigen();
 
@@ -233,7 +253,7 @@ public class TransferenciaDialog extends JDialog {
 			dispose();
 
 		} catch (Exception e) {
-			JOptionPane.showMessageDialog(this, "Monto inválido");
+			JOptionPane.showMessageDialog(this, e.getMessage());
 		}
 	}
 

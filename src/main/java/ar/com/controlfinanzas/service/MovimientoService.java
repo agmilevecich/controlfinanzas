@@ -14,7 +14,6 @@ import java.util.stream.Collectors;
 
 import javax.swing.JOptionPane;
 
-import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
 import ar.com.controlfinanzas.model.CategoriaGasto;
 import ar.com.controlfinanzas.model.CompraTarjeta;
 import ar.com.controlfinanzas.model.Cuenta;
@@ -22,9 +21,9 @@ import ar.com.controlfinanzas.model.FormaPago;
 import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.TarjetaCredito;
+import ar.com.controlfinanzas.model.TipoMovimiento;
 import ar.com.controlfinanzas.model.Usuario;
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityTransaction;
 import jakarta.persistence.TypedQuery;
 
 public class MovimientoService {
@@ -44,7 +43,8 @@ public class MovimientoService {
 				movimiento.setPendiente(true);
 			}
 			if (movimiento.getTipo() == TipoMovimiento.GASTO && movimiento.getFormaPago() != FormaPago.CREDITO
-					&& movimiento.getCategoria() != CategoriaGasto.AJUSTE) {
+					&& (movimiento.getCategoria() != CategoriaGasto.AJUSTE
+							|| movimiento.getCategoria() != CategoriaGasto.TRANSFERENCIA)) {
 
 				Cuenta cuenta = movimiento.getCuenta();
 
@@ -249,19 +249,22 @@ public class MovimientoService {
 		String jpql = """
 				    SELECT m FROM Movimiento m
 				    WHERE m.usuario = :usuario
-				    AND m.tipo = :tipo
+				    AND m.tipo = :tipo AND m.categoria != :categoria
 				    ORDER BY m.fecha DESC
 				""";
 
 		return em.createQuery(jpql, Movimiento.class).setParameter("usuario", SesionUsuario.getUsuarioActual())
-				.setParameter("tipo", TipoMovimiento.GASTO).getResultList();
+				.setParameter("tipo", TipoMovimiento.GASTO).setParameter("categoria", CategoriaGasto.TRANSFERENCIA)
+				.getResultList();
 	}
 
 	public BigDecimal obtenerTotalPorUsuario(Integer usuarioId) {
 		return em
-				.createQuery("SELECT COALESCE(SUM(g.monto), 0) " + "FROM Gasto g "
-						+ "WHERE g.usuario.usuarioID = :usuarioId", BigDecimal.class)
-				.setParameter("usuarioId", usuarioId).getSingleResult();
+				.createQuery("SELECT COALESCE(SUM(g.monto), 0) " + "FROM movimientos m "
+						+ "WHERE m.usuario.usuarioID = :usuarioId AND m.tipo = :tipo AND categoria != :categoria",
+						BigDecimal.class)
+				.setParameter("usuarioId", usuarioId).setParameter("tipo", TipoMovimiento.GASTO)
+				.setParameter("categoria", CategoriaGasto.TRANSFERENCIA).getSingleResult();
 	}
 
 	public void guardar(Movimiento movimiento) {
@@ -588,50 +591,37 @@ public class MovimientoService {
 		if (origen == null || destino == null) {
 			throw new IllegalArgumentException("Cuentas inválidas");
 		}
-
 		if (origen.equals(destino)) {
 			throw new IllegalArgumentException("No podés transferir a la misma cuenta");
 		}
-
 		if (monto == null || monto.compareTo(BigDecimal.ZERO) <= 0) {
 			throw new IllegalArgumentException("Monto inválido");
 		}
-
 		if (origen.getSaldo().compareTo(monto) < 0) {
 			throw new IllegalArgumentException("Saldo insuficiente");
 		}
 
-		Movimiento egreso = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.GASTO);
-		egreso.setDescripcion(descripcion + " -> " + destino.getNombre());
-		egreso.setCuenta(origen);
-		egreso.setUsuario(usuario);
-		egreso.validar();
+		Movimiento origenMovimiento = new Movimiento(LocalDate.now(),
+				descripcion + " (" + origen.getNombre() + " -> " + destino.getNombre() + ")", monto, // resta
+																										// del
+																										// origen
+				TipoMovimiento.GASTO);
 
-		JOptionPane.showMessageDialog(null,
-				"Cuenta Origen: " + origen + "\nCuenta Destino: " + destino + "\nDescripción: " + descripcion
-						+ "\nMonto: " + monto + "\nUsuario: " + origen.getUsuario().getUsuarioID());
+		String transferenciaId = UUID.randomUUID().toString();
+		origenMovimiento.setCuenta(origen);
+		origenMovimiento.setCategoria(CategoriaGasto.TRANSFERENCIA);
+		origenMovimiento.setTransferenciaId(transferenciaId);
+		origenMovimiento.setUsuario(usuario);
 
-		Movimiento ingreso = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.INGRESO);
-		ingreso.setDescripcion(descripcion + " <- " + origen.getNombre());
-		ingreso.setCuenta(destino);
-		ingreso.setUsuario(usuario);
-		ingreso.validar();
+		Movimiento destinoMovimiento = new Movimiento(LocalDate.now(),
+				descripcion + " (" + origen.getNombre() + " -> " + destino.getNombre() + ")", monto, // suma al destino
+				TipoMovimiento.INGRESO);
 
-		EntityTransaction tx = em.getTransaction();
-
-		try {
-			tx.begin();
-
-			em.persist(egreso);
-			em.persist(ingreso);
-
-			tx.commit();
-
-		} catch (Exception e) {
-			if (tx.isActive()) {
-				tx.rollback();
-			}
-			throw e;
-		}
+		destinoMovimiento.setCuenta(destino);
+		destinoMovimiento.setCategoria(CategoriaGasto.TRANSFERENCIA);
+		destinoMovimiento.setTransferenciaId(transferenciaId);
+		destinoMovimiento.setUsuario(usuario);
+		registrarMovimiento(origenMovimiento);
+		registrarMovimiento(destinoMovimiento);
 	}
 }

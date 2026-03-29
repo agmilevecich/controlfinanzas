@@ -20,11 +20,11 @@ import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import ar.com.controlfinanzas.domain.finanzas.TipoCuenta;
 import ar.com.controlfinanzas.model.Banco;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.Moneda;
 import ar.com.controlfinanzas.model.SesionUsuario;
+import ar.com.controlfinanzas.model.TipoCuenta;
 import ar.com.controlfinanzas.service.BancoService;
 import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.util.NumeroUtils;

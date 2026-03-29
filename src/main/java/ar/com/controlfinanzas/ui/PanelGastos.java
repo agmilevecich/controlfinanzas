@@ -10,10 +10,12 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.TextStyle;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.swing.BoxLayout;
@@ -35,13 +37,13 @@ import org.jfree.chart.JFreeChart;
 import org.jfree.data.category.DefaultCategoryDataset;
 import org.jfree.data.general.DefaultPieDataset;
 
-import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
 import ar.com.controlfinanzas.model.CategoriaGasto;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.FormaPago;
 import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.TarjetaCredito;
+import ar.com.controlfinanzas.model.TipoMovimiento;
 import ar.com.controlfinanzas.model.Usuario;
 import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.MovimientoService;
@@ -134,7 +136,9 @@ public class PanelGastos extends JPanel {
 
 		btnSimular = new JButton("Simular");
 
-		cbCategoria = new JComboBox<>(Arrays.stream(CategoriaGasto.values()).filter(c -> c != CategoriaGasto.AJUSTE)
+		Set<CategoriaGasto> excluidas = EnumSet.of(CategoriaGasto.AJUSTE, CategoriaGasto.TRANSFERENCIA);
+
+		cbCategoria = new JComboBox<>(Arrays.stream(CategoriaGasto.values()).filter(c -> !excluidas.contains(c))
 				.toArray(CategoriaGasto[]::new));
 		cbCategoria.insertItemAt(null, 0);
 		cbCategoria.setRenderer(new ComboRendererGenerico<>("Seleccione una categoría", CategoriaGasto::toString));
@@ -363,7 +367,7 @@ public class PanelGastos extends JPanel {
 
 		for (Movimiento m : movimientosCache) {
 
-			if (m.getCategoria() == CategoriaGasto.AJUSTE) {
+			if (m.getCategoria() == CategoriaGasto.AJUSTE || m.getCategoria() == CategoriaGasto.TRANSFERENCIA) {
 				continue;
 			}
 
@@ -415,7 +419,7 @@ public class PanelGastos extends JPanel {
 		Map<CategoriaGasto, BigDecimal> totales = new HashMap<>();
 		for (Movimiento m : movimientosCache) {
 
-			if (m.getCategoria() == CategoriaGasto.AJUSTE) {
+			if (m.getCategoria() == CategoriaGasto.AJUSTE || m.getCategoria() == CategoriaGasto.TRANSFERENCIA) {
 				continue;
 			}
 
@@ -443,7 +447,7 @@ public class PanelGastos extends JPanel {
 
 		for (Movimiento m : movimientosCache) {
 
-			if (m.getCategoria() == CategoriaGasto.AJUSTE) {
+			if (m.getCategoria() == CategoriaGasto.AJUSTE || m.getCategoria() == CategoriaGasto.TRANSFERENCIA) {
 				continue;
 			}
 

@@ -5,8 +5,6 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-import ar.com.controlfinanzas.domain.finanzas.TipoCuenta;
-import ar.com.controlfinanzas.domain.finanzas.TipoMovimiento;
 import ar.com.controlfinanzas.util.NumeroUtils;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
