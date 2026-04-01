@@ -84,10 +84,8 @@ public class MovimientoService {
 
 	public List<Movimiento> getMovimientosCuenta(Cuenta cuenta) {
 
-		TypedQuery<Movimiento> query = em.createQuery(
-				"SELECT m FROM Movimiento m " + "WHERE m.cuenta = :cuenta "
-						+ "AND (m.formaPago <> :credito or m.formaPago is null) ORDER BY m.fecha DESC",
-				Movimiento.class);
+		TypedQuery<Movimiento> query = em.createQuery("SELECT m FROM Movimiento m " + "WHERE m.cuenta = :cuenta "
+				+ "AND (m.formaPago <> :credito or m.formaPago is null)", Movimiento.class);
 
 		query.setParameter("cuenta", cuenta);
 		query.setParameter("credito", FormaPago.CREDITO);

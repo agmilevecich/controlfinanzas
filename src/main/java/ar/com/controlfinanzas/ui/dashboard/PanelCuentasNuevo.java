@@ -4,7 +4,9 @@ import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Insets;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -18,7 +20,9 @@ import javax.swing.JScrollPane;
 import javax.swing.SwingUtilities;
 
 import ar.com.controlfinanzas.model.Cuenta;
+import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.model.SesionUsuario;
+import ar.com.controlfinanzas.model.TipoMovimiento;
 import ar.com.controlfinanzas.service.BancoService;
 import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.MovimientoService;
@@ -35,6 +39,7 @@ public class PanelCuentasNuevo extends JPanel {
 	private JList<Cuenta> listaCuentas;
 	private DefaultListModel<Cuenta> modelo;
 
+	private JButton btnIngresarSaldo;
 	private JButton btnCrear;
 	private JButton btnAjusteSaldo;
 	private JButton btnEliminar;
@@ -55,27 +60,50 @@ public class PanelCuentasNuevo extends JPanel {
 		listaCuentas = new JList<>(modelo);
 		listaCuentas.setPreferredSize(new Dimension(270, 0));
 		JPanel contenedor = new JPanel(new GridBagLayout());
-		GridBagConstraints gbc = new GridBagConstraints();
-		gbc.gridx = 0;
-		gbc.gridy = 0;
-		gbc.fill = GridBagConstraints.VERTICAL;
-		gbc.weighty = 1.0;
-		contenedor.add(new JScrollPane(listaCuentas), gbc);
+		GridBagConstraints gbcListasCuentas = new GridBagConstraints();
+		gbcListasCuentas.gridx = 0;
+		gbcListasCuentas.gridy = 0;
+		gbcListasCuentas.fill = GridBagConstraints.VERTICAL;
+		gbcListasCuentas.weighty = 1.0;
+		contenedor.add(new JScrollPane(listaCuentas), gbcListasCuentas);
 
 		add(contenedor, BorderLayout.CENTER);
 
-		JPanel panelBotones = new JPanel();
-
+		btnIngresarSaldo = new JButton("Ingresar Saldo");
 		btnCrear = new JButton("Crear cuenta");
 		btnAjusteSaldo = new JButton("Ajuste Saldo");
 		btnEliminar = new JButton("Eliminar");
 		btnTransferir = new JButton("Transferir");
 
-		panelBotones.add(btnCrear);
-		panelBotones.add(btnAjusteSaldo);
-		panelBotones.add(btnEliminar);
-		panelBotones.add(btnTransferir);
+		JPanel panelBotones = new JPanel(new GridBagLayout());
+		GridBagConstraints gbcBotones = new GridBagConstraints();
+		gbcBotones.insets = new Insets(5, 5, 5, 5);
 
+		gbcBotones.gridx = 0;
+		gbcBotones.gridy = 0;
+		gbcBotones.fill = GridBagConstraints.HORIZONTAL;
+		panelBotones.add(btnIngresarSaldo, gbcBotones);
+
+		gbcBotones.gridx = 1;
+		gbcBotones.gridy = 0;
+		gbcBotones.fill = GridBagConstraints.HORIZONTAL;
+		panelBotones.add(btnAjusteSaldo, gbcBotones);
+
+		gbcBotones.gridx = 0;
+		gbcBotones.gridy = 1;
+		gbcBotones.fill = GridBagConstraints.HORIZONTAL;
+		panelBotones.add(btnEliminar, gbcBotones);
+
+		gbcBotones.gridx = 1;
+		gbcBotones.gridy = 1;
+		gbcBotones.fill = GridBagConstraints.HORIZONTAL;
+		panelBotones.add(btnTransferir, gbcBotones);
+
+		gbcBotones.gridx = 0;
+		gbcBotones.gridy = 2;
+		gbcBotones.gridwidth = 2;
+		gbcBotones.fill = GridBagConstraints.HORIZONTAL;
+		panelBotones.add(btnCrear, gbcBotones);
 		add(panelBotones, BorderLayout.SOUTH);
 
 		// =========================
@@ -91,6 +119,7 @@ public class PanelCuentasNuevo extends JPanel {
 			}
 		});
 
+		btnIngresarSaldo.addActionListener(e -> registrarIngreso());
 		btnCrear.addActionListener(e -> crearCuenta());
 		btnAjusteSaldo.addActionListener(e -> {
 			ajusteSaldo(movimientoService);
@@ -104,6 +133,50 @@ public class PanelCuentasNuevo extends JPanel {
 	// =========================
 	// MÉTODOS
 	// =========================
+
+	private void registrarIngreso() {
+
+		Cuenta cuenta = listaCuentas.getSelectedValue();
+
+		if (cuenta == null) {
+			JOptionPane.showMessageDialog(this, "Seleccione una cuenta");
+			return;
+		}
+
+		String inputMonto = JOptionPane.showInputDialog("Monto a ingresar:");
+
+		if (inputMonto == null || inputMonto.trim().isEmpty()) {
+			return;
+		}
+
+		try {
+			BigDecimal monto = NumeroUtils.parse(inputMonto);
+
+			if (monto.compareTo(BigDecimal.ZERO) <= 0) {
+				JOptionPane.showMessageDialog(this, "El monto debe ser mayor a cero");
+				return;
+			}
+
+			String descripcion = JOptionPane.showInputDialog("Descripción:");
+
+			if (descripcion == null || descripcion.trim().isEmpty()) {
+				descripcion = "Ingreso manual";
+			}
+
+			Movimiento mov = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.INGRESO);
+			mov.setCuenta(cuenta);
+			movimientoService.registrarMovimiento(mov);
+
+			cargarCuentas();
+			listaCuentas.setSelectedValue(cuenta, true);
+			if (actualizarCuentas != null) {
+				actualizarCuentas.run();
+			}
+
+		} catch (Exception e) {
+			JOptionPane.showMessageDialog(this, "Monto inválido");
+		}
+	}
 
 	private void ajusteSaldo(MovimientoService movimientoService) {
 		Cuenta cuenta = listaCuentas.getSelectedValue();

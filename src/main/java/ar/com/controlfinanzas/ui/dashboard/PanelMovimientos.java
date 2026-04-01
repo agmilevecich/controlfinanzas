@@ -38,14 +38,11 @@ public class PanelMovimientos extends JPanel {
 	private JLabel lblSaldo;
 
 	private Runnable actualizarPanelCuentasCallback;
-	private CuentaService cuentaService;
 	private JButton btnAgregar;
 
 	public PanelMovimientos(Cuenta cuenta, CuentaService cuentaService, MovimientoService movimientoService) {
 		this.cuentaSeleccionada = cuenta;
 		this.movimientoService = movimientoService;
-		this.cuentaService = cuentaService;
-
 		setLayout(new BorderLayout());
 
 		lblSaldo = new JLabel("Saldo: 0");
