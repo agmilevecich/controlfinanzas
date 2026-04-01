@@ -31,6 +31,7 @@ import ar.com.controlfinanzas.service.TarjetaCreditoService;
 import ar.com.controlfinanzas.ui.components.PanelMargen;
 import ar.com.controlfinanzas.ui.dashboard.PanelBancos;
 import ar.com.controlfinanzas.ui.dashboard.PanelCuentas;
+import ar.com.controlfinanzas.ui.dashboard.PanelCuentasMovimientos;
 import ar.com.controlfinanzas.ui.dashboard.PanelMovimientos;
 import ar.com.controlfinanzas.ui.dashboard.PanelResumen;
 import ar.com.controlfinanzas.ui.dashboard.PanelResumenTarjeta;
@@ -171,8 +172,7 @@ public class DashboardFrame extends JFrame {
 		tabs.addTab("Inversiones", panelInversiones);
 		tabs.addTab("Cartera", panelCartera);
 		tabs.addTab("Bancos", panelBancos);
-		tabs.addTab("Cuentas", panelCuentas);
-		tabs.addTab("Movimientos", panelMovimientos);
+		tabs.addTab("Cuenta", new PanelCuentasMovimientos(cuentaService, movimientoService, bancoService));
 		tabs.add("Tarjetas", panelTarjetaCredito);
 		tabs.addTab("KPIs", panelResumenKPIs);
 		tabs.addTab("Resumen Tarjeta", panelResumenTarjeta);

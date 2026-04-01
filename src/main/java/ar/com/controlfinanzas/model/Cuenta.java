@@ -51,7 +51,7 @@ public class Cuenta {
 	@OneToMany(mappedBy = "cuenta", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<Movimiento> movimientos = new ArrayList<>();
 
-	protected Cuenta() {
+	public Cuenta() {
 	}
 
 	public Cuenta(String nombre, Banco banco, TipoCuenta tipo, Moneda moneda, double interesDiario,
@@ -133,6 +133,46 @@ public class Cuenta {
 
 	public Banco getBanco() {
 		return banco;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
+
+	public void setNombre(String nombre) {
+		this.nombre = nombre;
+	}
+
+	public void setTipoCuenta(TipoCuenta tipoCuenta) {
+		this.tipoCuenta = tipoCuenta;
+	}
+
+	public void setMoneda(Moneda moneda) {
+		this.moneda = moneda;
+	}
+
+	public void setInteresDiario(double interesDiario) {
+		this.interesDiario = interesDiario;
+	}
+
+	public void setFechaInicio(LocalDate fechaInicio) {
+		this.fechaInicio = fechaInicio;
+	}
+
+	public void setBanco(Banco banco) {
+		this.banco = banco;
+	}
+
+	public void setUsuario(Usuario usuario) {
+		this.usuario = usuario;
+	}
+
+	public void setActiva(boolean activa) {
+		this.activa = activa;
+	}
+
+	public void setMovimientos(List<Movimiento> movimientos) {
+		this.movimientos = movimientos;
 	}
 
 	public void actualizarDatos(String nombre, TipoCuenta tipoCuenta, Moneda moneda, Banco banco) {

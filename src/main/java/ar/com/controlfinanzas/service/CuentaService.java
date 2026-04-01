@@ -75,4 +75,37 @@ public class CuentaService {
 
 		em.getTransaction().commit();
 	}
+
+	public void guardar(Cuenta cuenta) {
+
+		em.getTransaction().begin();
+
+		if (cuenta.getId() == null) {
+			em.persist(cuenta);
+		} else {
+			em.merge(cuenta);
+		}
+
+		em.getTransaction().commit();
+	}
+
+	public void eliminar(Long id) {
+
+		Cuenta cuenta = em.find(Cuenta.class, id);
+
+		if (cuenta == null) {
+			throw new RuntimeException("La cuenta no existe");
+		}
+
+		if (!cuenta.getMovimientos().isEmpty()) {
+			throw new RuntimeException("No podés eliminar una cuenta con movimientos");
+		}
+
+		em.getTransaction().begin();
+
+		em.remove(cuenta);
+
+		em.getTransaction().commit();
+	}
+
 }
