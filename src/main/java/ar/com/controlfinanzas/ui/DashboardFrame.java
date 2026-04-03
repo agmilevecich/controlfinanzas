@@ -77,6 +77,7 @@ public class DashboardFrame extends JFrame {
 	private PanelMargen panelMargen;
 	private Usuario usuario;
 	private JTabbedPane tabs;
+	private PanelCuentasMovimientos panelCuentasMovimientos;
 
 	public DashboardFrame(CuentaService cuentaService, MovimientoService movimientoService, EntityManager em) {
 		this.em = em;
@@ -135,7 +136,8 @@ public class DashboardFrame extends JFrame {
 		// NUEVOS: cuentas y movimientos
 		panelCuentas = new PanelCuentas(cuentaService, movimientoService, bancoService);
 		panelMovimientos = new PanelMovimientos(null, cuentaService, movimientoService);
-
+		panelCuentasMovimientos = new PanelCuentasMovimientos(cuentaService, movimientoService, bancoService);
+		panelCuentasMovimientos.setIrAGastos(() -> irATab(2));
 		// Sincronización entre paneles
 		panelCuentas.setCuentaSeleccionadaListener(cuenta -> panelMovimientos.actualizarCuenta(cuenta));
 
@@ -172,7 +174,7 @@ public class DashboardFrame extends JFrame {
 		tabs.addTab("Inversiones", panelInversiones);
 		tabs.addTab("Cartera", panelCartera);
 		tabs.addTab("Bancos", panelBancos);
-		tabs.addTab("Cuenta", new PanelCuentasMovimientos(cuentaService, movimientoService, bancoService));
+		tabs.addTab("Cuenta", panelCuentasMovimientos);
 		tabs.add("Tarjetas", panelTarjetaCredito);
 		tabs.addTab("KPIs", panelResumenKPIs);
 		tabs.addTab("Resumen Tarjeta", panelResumenTarjeta);

@@ -47,6 +47,8 @@ public class PanelCuentasNuevo extends JPanel {
 
 	private Consumer<Cuenta> cuentaSeleccionadaListener;
 	private Runnable actualizarCuentas;
+	private JButton btnIrAGastos;
+	private Runnable irAGastos;
 
 	public PanelCuentasNuevo(CuentaService cuentaService, MovimientoService movimientoService,
 			BancoService bancoService) {
@@ -74,6 +76,7 @@ public class PanelCuentasNuevo extends JPanel {
 		btnAjusteSaldo = new JButton("Ajuste Saldo");
 		btnEliminar = new JButton("Eliminar");
 		btnTransferir = new JButton("Transferir");
+		btnIrAGastos = new JButton("Registrar Gastos");
 
 		JPanel panelBotones = new JPanel(new GridBagLayout());
 		GridBagConstraints gbcBotones = new GridBagConstraints();
@@ -101,9 +104,13 @@ public class PanelCuentasNuevo extends JPanel {
 
 		gbcBotones.gridx = 0;
 		gbcBotones.gridy = 2;
-		gbcBotones.gridwidth = 2;
 		gbcBotones.fill = GridBagConstraints.HORIZONTAL;
 		panelBotones.add(btnCrear, gbcBotones);
+
+		gbcBotones.gridx = 1;
+		gbcBotones.gridy = 2;
+		gbcBotones.fill = GridBagConstraints.HORIZONTAL;
+		panelBotones.add(btnIrAGastos, gbcBotones);
 		add(panelBotones, BorderLayout.SOUTH);
 
 		// =========================
@@ -127,12 +134,21 @@ public class PanelCuentasNuevo extends JPanel {
 		btnEliminar.addActionListener(e -> eliminarCuenta());
 		btnTransferir.addActionListener(e -> transferir());
 
+		btnIrAGastos.addActionListener(e -> irAGastos());
+
 		cargarCuentas();
 	}
 
 	// =========================
 	// MÉTODOS
 	// =========================
+
+	private void irAGastos() {
+
+		if (irAGastos != null) {
+			irAGastos.run();
+		}
+	}
 
 	private void registrarIngreso() {
 
@@ -292,5 +308,9 @@ public class PanelCuentasNuevo extends JPanel {
 
 	public JButton getBotonTransferir() {
 		return btnTransferir;
+	}
+
+	public void setIrAGastos(Runnable irAGastos) {
+		this.irAGastos = irAGastos;
 	}
 }

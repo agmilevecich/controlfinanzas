@@ -50,4 +50,10 @@ public class PanelCuentasMovimientos extends JPanel {
 		panelCuentas.cargarCuentas();
 		panelMovimientos.cargarMovimientos();
 	}
+
+	public void setIrAGastos(Runnable irAGastos) {
+		if (panelCuentas != null) {
+			panelCuentas.setIrAGastos(irAGastos);
+		}
+	}
 }
