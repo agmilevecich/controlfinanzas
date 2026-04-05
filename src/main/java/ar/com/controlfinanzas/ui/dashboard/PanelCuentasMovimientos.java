@@ -1,10 +1,12 @@
 package ar.com.controlfinanzas.ui.dashboard;
 
 import java.awt.BorderLayout;
+import java.util.function.Consumer;
 
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 
+import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.service.BancoService;
 import ar.com.controlfinanzas.service.CuentaService;
 import ar.com.controlfinanzas.service.MovimientoService;
@@ -13,6 +15,7 @@ public class PanelCuentasMovimientos extends JPanel {
 
 	private PanelCuentasNuevo panelCuentas;
 	private PanelMovimientos panelMovimientos;
+	private Consumer<Cuenta> onRegistroGastos;
 
 	public PanelCuentasMovimientos(CuentaService cuentaService, MovimientoService movimientoService,
 			BancoService bancoService) {
@@ -27,6 +30,14 @@ public class PanelCuentasMovimientos extends JPanel {
 		// 🔥 SINCRONIZACIÓN CLAVE
 		panelCuentas.setCuentaSeleccionadaListener(cuenta -> {
 			panelMovimientos.actualizarCuenta(cuenta);
+		});
+
+		panelCuentas.setOnRegistroGastos(cuenta -> {
+
+			if (onRegistroGastos != null) {
+				onRegistroGastos.accept(cuenta);
+			}
+
 		});
 
 		// 🔄 REFRESCO CRUZADO
@@ -55,5 +66,9 @@ public class PanelCuentasMovimientos extends JPanel {
 		if (panelCuentas != null) {
 			panelCuentas.setIrAGastos(irAGastos);
 		}
+	}
+
+	public void setOnRegistroGastos(Consumer<Cuenta> listener) {
+		this.onRegistroGastos = listener;
 	}
 }

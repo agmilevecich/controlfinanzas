@@ -38,6 +38,7 @@ import ar.com.controlfinanzas.ui.dashboard.PanelResumenTarjeta;
 import ar.com.controlfinanzas.ui.dashboard.PanelTarjetaCredito;
 import ar.com.controlfinanzas.ui.inversion.PanelCartera;
 import ar.com.controlfinanzas.ui.inversion.PanelVencimiento;
+import ar.com.controlfinanzas.util.GastoContexto;
 import jakarta.persistence.EntityManager;
 
 public class DashboardFrame extends JFrame {
@@ -112,7 +113,6 @@ public class DashboardFrame extends JFrame {
 
 		PanelGastos panelGastos = new PanelGastos(cuentaService, movimientoService, tarjetaCreditoService,
 				panelResumenTarjeta);
-
 		panelGastos.setActualizaGastos(() -> {
 			panelMovimientos.cargarMovimientos();
 			panelCuentas.cargarCuentas();
@@ -137,7 +137,10 @@ public class DashboardFrame extends JFrame {
 		panelCuentas = new PanelCuentas(cuentaService, movimientoService, bancoService);
 		panelMovimientos = new PanelMovimientos(null, cuentaService, movimientoService);
 		panelCuentasMovimientos = new PanelCuentasMovimientos(cuentaService, movimientoService, bancoService);
-		panelCuentasMovimientos.setIrAGastos(() -> irATab(2));
+		panelCuentasMovimientos.setOnRegistroGastos((cuenta) -> {
+			panelGastos.aplicarContexto(GastoContexto.desdeCuenta(cuenta));
+			tabs.setSelectedComponent(panelGastos);
+		});
 		// Sincronización entre paneles
 		panelCuentas.setCuentaSeleccionadaListener(cuenta -> panelMovimientos.actualizarCuenta(cuenta));
 

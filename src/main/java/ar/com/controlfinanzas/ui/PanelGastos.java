@@ -52,6 +52,7 @@ import ar.com.controlfinanzas.ui.dashboard.PanelResumenTarjeta;
 import ar.com.controlfinanzas.ui.render.ComboRendererGenerico;
 import ar.com.controlfinanzas.util.ChartUtils;
 import ar.com.controlfinanzas.util.FechaUtils;
+import ar.com.controlfinanzas.util.GastoContexto;
 import ar.com.controlfinanzas.util.NumeroUtils;
 
 public class PanelGastos extends JPanel {
@@ -151,6 +152,11 @@ public class PanelGastos extends JPanel {
 		cbFormaPago.insertItemAt(null, 0);
 		cbFormaPago.setRenderer(new ComboRendererGenerico<>("Seleccione una forma de pago", FormaPago::toString));
 		cbFormaPago.setSelectedIndex(0);
+		cbFormaPago.addActionListener(e -> {
+
+			actualizarEstadoComponentes();
+
+		});
 
 		cbTarjetaCredito = new JComboBox<>(modelTarjeta);
 
@@ -569,6 +575,41 @@ public class PanelGastos extends JPanel {
 		panel.setPreferredSize(new Dimension(500, 300));
 
 		panelGraficos.add(panel);
+	}
+
+	public void aplicarContexto(GastoContexto contexto) {
+		if (contexto == null) {
+			return;
+		}
+
+		if (contexto.getFormaPago() != null) {
+			cbFormaPago.setSelectedItem(contexto.getFormaPago());
+		}
+
+		if (contexto.getCuenta() != null) {
+			cbCuenta.setSelectedItem(contexto.getCuenta());
+		}
+
+		if (contexto.getTarjeta() != null) {
+			cbTarjetaCredito.setSelectedItem(contexto.getTarjeta());
+		}
+
+		actualizarEstadoComponentes();
+	}
+
+	private void actualizarEstadoComponentes() {
+		FormaPago forma = (FormaPago) cbFormaPago.getSelectedItem();
+
+		if (forma == FormaPago.DEBITO) {
+			cbCuenta.setEnabled(true);
+			cbTarjetaCredito.setEnabled(false);
+			cbTarjetaCredito.setSelectedItem(null);
+
+		} else if (forma == FormaPago.CREDITO) {
+			cbCuenta.setEnabled(false);
+			cbCuenta.setSelectedItem(null);
+			cbTarjetaCredito.setEnabled(true);
+		}
 	}
 
 }

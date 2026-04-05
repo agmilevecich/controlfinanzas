@@ -49,6 +49,7 @@ public class PanelCuentasNuevo extends JPanel {
 	private Runnable actualizarCuentas;
 	private JButton btnIrAGastos;
 	private Runnable irAGastos;
+	private Consumer<Cuenta> onRegistroGastos;
 
 	public PanelCuentasNuevo(CuentaService cuentaService, MovimientoService movimientoService,
 			BancoService bancoService) {
@@ -134,7 +135,19 @@ public class PanelCuentasNuevo extends JPanel {
 		btnEliminar.addActionListener(e -> eliminarCuenta());
 		btnTransferir.addActionListener(e -> transferir());
 
-		btnIrAGastos.addActionListener(e -> irAGastos());
+		btnIrAGastos.addActionListener(e -> {
+
+			Cuenta cuentaSeleccionada = listaCuentas.getSelectedValue();
+
+			if (cuentaSeleccionada == null) {
+				JOptionPane.showMessageDialog(this, "Seleccione una cuenta");
+				return;
+			}
+
+			if (cuentaSeleccionada != null) {
+				onRegistroGastos.accept(cuentaSeleccionada);
+			}
+		});
 
 		cargarCuentas();
 	}
@@ -142,13 +155,6 @@ public class PanelCuentasNuevo extends JPanel {
 	// =========================
 	// MÉTODOS
 	// =========================
-
-	private void irAGastos() {
-
-		if (irAGastos != null) {
-			irAGastos.run();
-		}
-	}
 
 	private void registrarIngreso() {
 
@@ -312,5 +318,9 @@ public class PanelCuentasNuevo extends JPanel {
 
 	public void setIrAGastos(Runnable irAGastos) {
 		this.irAGastos = irAGastos;
+	}
+
+	public void setOnRegistroGastos(Consumer<Cuenta> listener) {
+		this.onRegistroGastos = listener;
 	}
 }
