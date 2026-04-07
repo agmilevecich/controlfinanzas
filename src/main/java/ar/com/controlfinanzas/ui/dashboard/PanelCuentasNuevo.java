@@ -286,6 +286,15 @@ public class PanelCuentasNuevo extends JPanel {
 			return;
 		}
 
+		List<Cuenta> cuentas = cuentaService.getCuentasUsuario(SesionUsuario.getUsuarioActual());
+
+		cuentas.removeIf(c -> c.equals(cuentaSeleccionada) || !c.getMoneda().equals(cuentaSeleccionada.getMoneda()));
+
+		if (cuentas.isEmpty()) {
+			JOptionPane.showMessageDialog(null, "No hay otras cuentas en la misma moneda para transferir");
+			return;
+		}
+
 		new TransferenciaDialog((JFrame) SwingUtilities.getWindowAncestor(this), cuentaSeleccionada, cuentaService,
 				movimientoService, () -> {
 					cargarCuentas();

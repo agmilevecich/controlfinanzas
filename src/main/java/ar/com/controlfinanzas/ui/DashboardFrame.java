@@ -141,6 +141,13 @@ public class DashboardFrame extends JFrame {
 			panelGastos.aplicarContexto(GastoContexto.desdeCuenta(cuenta));
 			tabs.setSelectedComponent(panelGastos);
 		});
+
+		panelCuentasMovimientos.setActualizarCuentas(() -> {
+			refrescarEstadoFinanciero();
+			panelGastos.refrescar();
+			panelTarjetaCredito.actualizarBancos();
+		});
+
 		// Sincronización entre paneles
 		panelCuentas.setCuentaSeleccionadaListener(cuenta -> panelMovimientos.actualizarCuenta(cuenta));
 

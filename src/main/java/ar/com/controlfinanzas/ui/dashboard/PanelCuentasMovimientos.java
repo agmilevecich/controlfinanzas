@@ -71,4 +71,8 @@ public class PanelCuentasMovimientos extends JPanel {
 	public void setOnRegistroGastos(Consumer<Cuenta> listener) {
 		this.onRegistroGastos = listener;
 	}
+
+	public void setActualizarCuentas(Runnable callback) {
+		panelCuentas.setActualizarCuentas(callback);
+	}
 }
