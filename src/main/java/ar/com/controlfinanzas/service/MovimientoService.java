@@ -622,4 +622,102 @@ public class MovimientoService {
 		registrarMovimiento(origenMovimiento);
 		registrarMovimiento(destinoMovimiento);
 	}
+
+	public CategoriaGasto sugerirCategoria(String descripcion) {
+
+		if (descripcion == null || descripcion.isBlank()) {
+			return null;
+		}
+
+		List<Movimiento> movimientos = listarPorUsuario();
+
+		Map<CategoriaGasto, BigDecimal> montoPorCategoria = new HashMap<>();
+		Map<CategoriaGasto, Long> frecuencia = new HashMap<>();
+
+		for (Movimiento m : movimientos) {
+
+			if (m.getCategoria() == null || m.getDescripcion() == null) {
+				continue;
+			}
+
+			if (!m.getDescripcion().toLowerCase().contains(descripcion.toLowerCase())) {
+				continue;
+			}
+
+			CategoriaGasto cat = m.getCategoria();
+
+			frecuencia.put(cat, frecuencia.getOrDefault(cat, 0L) + 1);
+			montoPorCategoria.put(cat, montoPorCategoria.getOrDefault(cat, BigDecimal.ZERO).add(m.getMonto()));
+		}
+
+		CategoriaGasto mejor = null;
+		double mejorScore = 0;
+
+		for (CategoriaGasto cat : frecuencia.keySet()) {
+
+			long freq = frecuencia.get(cat);
+			BigDecimal monto = montoPorCategoria.get(cat);
+
+			double score = freq + (monto.doubleValue() * 0.0001);
+
+			if (score > mejorScore) {
+				mejorScore = score;
+				mejor = cat;
+			}
+		}
+
+		return mejor;
+	}
+
+	public List<String> sugerirDescripciones(String texto) {
+
+		if (texto == null || texto.isBlank()) {
+			return List.of();
+		}
+
+		String textoLower = texto.toLowerCase();
+
+		List<String> descripciones = listarPorUsuario().stream().map(Movimiento::getDescripcion)
+				.map(this::limpiarDescripcion).filter(d -> d != null).distinct().toList();
+
+		// Primero intentamos coincidencias que empiezan igual
+		List<String> startsWith = descripciones.stream().filter(d -> d.toLowerCase().startsWith(textoLower)).limit(5)
+				.toList();
+
+		if (!startsWith.isEmpty()) {
+			return startsWith;
+		}
+
+		// Si no hay, usamos contains
+		return descripciones.stream().filter(d -> d.toLowerCase().contains(textoLower)).limit(5).toList();
+	}
+
+	public BigDecimal calcularPromedioGasto(Integer usuarioId) {
+
+		YearMonth mesActual = YearMonth.now();
+
+		List<Movimiento> movimientos = listarPorUsuario();
+
+		List<Movimiento> gastos = movimientos.stream().filter(m -> m.getTipo() == TipoMovimiento.GASTO)
+				.filter(m -> m.getUsuario().getUsuarioID().equals(usuarioId))
+				.filter(m -> m.getCategoria() != CategoriaGasto.AJUSTE)
+				.filter(m -> m.getCategoria() != CategoriaGasto.TRANSFERENCIA)
+				.filter(m -> YearMonth.from(m.getFecha()).equals(mesActual)).toList();
+
+		if (gastos.isEmpty()) {
+			return BigDecimal.ZERO;
+		}
+
+		BigDecimal total = gastos.stream().map(Movimiento::getMonto).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+		return total.divide(BigDecimal.valueOf(gastos.size()), 2, RoundingMode.HALF_UP);
+	}
+
+	private String limpiarDescripcion(String descripcion) {
+		if (descripcion == null) {
+			return "";
+		}
+
+		return descripcion.replaceAll("\\s*\\([^)]*\\)$", "");
+	}
 }

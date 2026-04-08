@@ -167,6 +167,12 @@ public class DashboardFrame extends JFrame {
 			refrescarEstadoFinanciero();
 		});
 
+		panelTarjetaCredito.setOnRegistrarGasto(tarjeta -> {
+			panelGastos.refrescar();
+			panelGastos.aplicarContexto(GastoContexto.desdeTarjeta(tarjeta));
+			irATab(2);
+		});
+
 		panelCartera = new PanelCartera();
 		panelResumenKPIs = new PanelResumen();
 		panelMargen = new PanelMargen();

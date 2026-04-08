@@ -7,14 +7,17 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.function.Consumer;
 
 import javax.swing.DefaultListCellRenderer;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
@@ -38,6 +41,11 @@ public class PanelTarjetaCredito extends JPanel {
 	private JComboBox<Banco> comboBanco;
 
 	private JButton btnGuardar;
+	private JButton btnEliminar;
+	private JButton btnIrAgastos;
+
+	private DefaultListModel<TarjetaCredito> modeloTarjetas;
+	private JList<TarjetaCredito> listaTarjetas;
 
 	private TarjetaCreditoService tarjetaService;
 	private BancoService bancoService;
@@ -45,17 +53,19 @@ public class PanelTarjetaCredito extends JPanel {
 	private Usuario usuarioActual;
 
 	private Runnable actualizar;
+	private Consumer<TarjetaCredito> onRegistrarGasto;
 
 	public PanelTarjetaCredito(EntityManager em) {
 
 		this.usuarioActual = SesionUsuario.getUsuarioActual();
-		tarjetaService = new TarjetaCreditoService(em);
-		bancoService = new BancoService(em);
+		this.tarjetaService = new TarjetaCreditoService(em);
+		this.bancoService = new BancoService(em);
 
 		setLayout(new BorderLayout());
 
 		inicializarComponentes();
 		cargarBancos();
+		cargarTarjetas();
 	}
 
 	private void inicializarComponentes() {
@@ -65,9 +75,14 @@ public class PanelTarjetaCredito extends JPanel {
 		gbc.insets = new Insets(6, 2, 10, 10);
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 
+		// =========================
+		// CAMPOS
+		// =========================
+
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		formulario.add(new JLabel("Nombre Tarjeta:"), gbc);
+
 		gbc.gridx = 1;
 		txtNombre = new JTextField(15);
 		formulario.add(txtNombre, gbc);
@@ -75,13 +90,15 @@ public class PanelTarjetaCredito extends JPanel {
 		gbc.gridx = 0;
 		gbc.gridy++;
 		formulario.add(new JLabel("Límite:"), gbc);
-		txtLimite = new JTextField();
+
 		gbc.gridx = 1;
+		txtLimite = new JTextField();
 		formulario.add(txtLimite, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy++;
-		formulario.add(new JLabel("Cuenta asociada:"), gbc);
+		formulario.add(new JLabel("Banco:"), gbc);
+
 		gbc.gridx = 1;
 		comboBanco = new JComboBox<>();
 		comboBanco.setRenderer(new DefaultListCellRenderer() {
@@ -99,48 +116,82 @@ public class PanelTarjetaCredito extends JPanel {
 			}
 		});
 
-		comboBanco.revalidate();
-		comboBanco.repaint();
 		formulario.add(comboBanco, gbc);
 
 		gbc.gridx = 0;
 		gbc.gridy++;
 		formulario.add(new JLabel("Día de Cierre:"), gbc);
-		txtDiaCierre = new JSpinner(new SpinnerNumberModel(1, 1, 31, 1));
-		JSpinner.NumberEditor editorCierre = new JSpinner.NumberEditor(txtDiaCierre);
-		txtDiaCierre.setEditor(editorCierre);
-		editorCierre.getTextField().setColumns(2);
+
 		gbc.gridx = 1;
-		gbc.fill = GridBagConstraints.NONE;
-		gbc.anchor = GridBagConstraints.WEST;
+		txtDiaCierre = new JSpinner(new SpinnerNumberModel(1, 1, 31, 1));
 		formulario.add(txtDiaCierre, gbc);
-		gbc.fill = GridBagConstraints.HORIZONTAL;
 
 		gbc.gridx = 0;
 		gbc.gridy++;
 		formulario.add(new JLabel("Día de Vencimiento:"), gbc);
-		txtDiaVencimiento = new JSpinner(new SpinnerNumberModel(1, 1, 31, 1));
-		JSpinner.NumberEditor editorVencimiento = new JSpinner.NumberEditor(txtDiaVencimiento);
-		txtDiaVencimiento.setEditor(editorVencimiento);
-		editorVencimiento.getTextField().setColumns(2);
+
 		gbc.gridx = 1;
-		gbc.fill = GridBagConstraints.NONE;
-		gbc.anchor = GridBagConstraints.WEST;
+		txtDiaVencimiento = new JSpinner(new SpinnerNumberModel(1, 1, 31, 1));
 		formulario.add(txtDiaVencimiento, gbc);
-		gbc.fill = GridBagConstraints.HORIZONTAL;
+
+		// =========================
+		// BOTONES
+		// =========================
+
 		gbc.gridx = 0;
 		gbc.gridy++;
 		gbc.gridwidth = 2;
+
 		btnGuardar = new JButton("Guardar Tarjeta");
 		formulario.add(btnGuardar, gbc);
 
+		gbc.gridy++;
+		btnEliminar = new JButton("Eliminar Tarjeta");
+		formulario.add(btnEliminar, gbc);
+
 		add(formulario, BorderLayout.NORTH);
 
+		gbc.gridy++;
+		btnIrAgastos = new JButton("Registrar Gasto");
+		formulario.add(btnIrAgastos, gbc);
+		// =========================
+		// LISTA
+		// =========================
+
+		modeloTarjetas = new DefaultListModel<>();
+		listaTarjetas = new JList<>(modeloTarjetas);
+
+		listaTarjetas.setCellRenderer(new DefaultListCellRenderer() {
+			@Override
+			public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
+					boolean cellHasFocus) {
+
+				JLabel lbl = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+
+				if (value instanceof TarjetaCredito t) {
+					lbl.setText(t.getNombre() + " - " + t.getBanco().getNombre());
+				}
+
+				return lbl;
+			}
+		});
+
+		JPanel panelLista = new JPanel(new BorderLayout());
+		panelLista.add(new JLabel("Tarjetas"), BorderLayout.NORTH);
+		panelLista.add(new JScrollPane(listaTarjetas), BorderLayout.CENTER);
+
+		add(panelLista, BorderLayout.CENTER);
+
+		// =========================
+		// EVENTOS
+		// =========================
+
 		btnGuardar.addActionListener(e -> guardarTarjeta());
+		btnEliminar.addActionListener(e -> eliminarTarjeta());
+		btnIrAgastos.addActionListener(e -> irAgastos());
 	}
 
 	private void cargarBancos() {
-
 		List<Banco> bancos = bancoService.getBancosUsuario(usuarioActual);
 
 		comboBanco.removeAllItems();
@@ -154,6 +205,16 @@ public class PanelTarjetaCredito extends JPanel {
 		cargarBancos();
 	}
 
+	public void cargarTarjetas() {
+		modeloTarjetas.clear();
+
+		List<TarjetaCredito> tarjetas = tarjetaService.getTarjetasUsuario(usuarioActual.getUsuarioID());
+
+		for (TarjetaCredito t : tarjetas) {
+			modeloTarjetas.addElement(t);
+		}
+	}
+
 	public void setActualizarTarjeta(Runnable actualizar) {
 		this.actualizar = actualizar;
 	}
@@ -163,7 +224,8 @@ public class PanelTarjetaCredito extends JPanel {
 		try {
 
 			String nombre = txtNombre.getText();
-			if (txtNombre.getText().isBlank()) {
+
+			if (nombre.isBlank()) {
 				JOptionPane.showMessageDialog(this, "Debe ingresar un nombre de tarjeta");
 				return;
 			}
@@ -171,13 +233,12 @@ public class PanelTarjetaCredito extends JPanel {
 			BigDecimal limite = NumeroUtils.parse(txtLimite.getText());
 
 			int diaCierre = (int) txtDiaCierre.getValue();
-
 			int diaVencimiento = (int) txtDiaVencimiento.getValue();
 
 			Banco bancoSeleccionado = (Banco) comboBanco.getSelectedItem();
 
 			if (bancoSeleccionado == null) {
-				JOptionPane.showMessageDialog(this, "Debe seleccionar una cuenta");
+				JOptionPane.showMessageDialog(this, "Debe seleccionar un banco");
 				return;
 			}
 
@@ -192,6 +253,8 @@ public class PanelTarjetaCredito extends JPanel {
 
 			tarjetaService.guardar(tarjeta);
 
+			cargarTarjetas();
+
 			if (actualizar != null) {
 				actualizar.run();
 			}
@@ -201,14 +264,53 @@ public class PanelTarjetaCredito extends JPanel {
 			limpiarFormulario();
 
 		} catch (Exception ex) {
-
 			JOptionPane.showMessageDialog(this, "Error al guardar tarjeta");
 			ex.printStackTrace();
 		}
 	}
 
-	private void limpiarFormulario() {
+	private void eliminarTarjeta() {
 
+		TarjetaCredito t = listaTarjetas.getSelectedValue();
+
+		if (t == null) {
+			JOptionPane.showMessageDialog(this, "Seleccioná una tarjeta");
+			return;
+		}
+
+		int confirm = JOptionPane.showConfirmDialog(this, "¿Eliminar tarjeta?");
+
+		if (confirm == JOptionPane.YES_OPTION) {
+//			tarjetaService.eliminar(t.getId());
+
+			cargarTarjetas();
+
+			if (actualizar != null) {
+				actualizar.run();
+			}
+		}
+	}
+
+	private void irAgastos() {
+
+		TarjetaCredito tarjeta = listaTarjetas.getSelectedValue();
+
+		if (tarjeta == null) {
+			JOptionPane.showMessageDialog(this, "Seleccioná una tarjeta");
+			return;
+		}
+
+		if (onRegistrarGasto != null) {
+			onRegistrarGasto.accept(tarjeta);
+		}
+
+	}
+
+	public void setOnRegistrarGasto(Consumer<TarjetaCredito> onRegistrarGasto) {
+		this.onRegistrarGasto = onRegistrarGasto;
+	}
+
+	private void limpiarFormulario() {
 		txtNombre.setText("");
 		txtLimite.setText("");
 		txtDiaCierre.setValue(1);

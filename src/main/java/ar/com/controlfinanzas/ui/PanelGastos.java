@@ -23,12 +23,17 @@ import javax.swing.DefaultComboBoxModel;
 import javax.swing.JButton;
 import javax.swing.JComboBox;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 
 import org.jfree.chart.ChartFactory;
@@ -97,6 +102,8 @@ public class PanelGastos extends JPanel {
 	private JLabel lblCuotas;
 	private JLabel lblInteres;
 
+	private JPopupMenu popupSugerencia = new JPopupMenu();
+
 	public PanelGastos(CuentaService cuentaService, MovimientoService movimientoService,
 			TarjetaCreditoService tarjetaCreditoService, PanelResumenTarjeta panelResumenTarjeta) {
 
@@ -124,6 +131,24 @@ public class PanelGastos extends JPanel {
 		gbc.fill = GridBagConstraints.HORIZONTAL;
 
 		txtDescripcion = new JTextField(15);
+		txtDescripcion.getDocument().addDocumentListener(new DocumentListener() {
+
+			@Override
+			public void removeUpdate(DocumentEvent e) {
+				actualizarAutoComplete();
+			}
+
+			@Override
+			public void insertUpdate(DocumentEvent e) {
+				actualizarAutoComplete();
+			}
+
+			@Override
+			public void changedUpdate(DocumentEvent e) {
+				actualizarAutoComplete();
+			}
+		});
+
 		txtMonto = new JTextField(8);
 		txtCuotas = new JTextField(5);
 		txtInteres = new JTextField(5);
@@ -258,6 +283,61 @@ public class PanelGastos extends JPanel {
 		JButton[] boton = botones.getBotones();
 		boton[0].addActionListener(e -> agregarGasto());
 		mostrarCamposCredito(false);
+	}
+
+	private void actualizarAutoComplete() {
+		SwingUtilities.invokeLater(() -> {
+			String texto = txtDescripcion.getText().trim();
+			popupSugerencia.setVisible(false);
+			popupSugerencia.removeAll();
+
+			if (texto.length() < 2) {
+				return;
+			}
+
+			List<String> sugerencias = movimientoService.sugerirDescripciones(texto);
+			if (sugerencias == null || sugerencias.isEmpty()) {
+				return;
+			}
+
+			for (String s : sugerencias) {
+				String limpio = limpiarDescripcion(s);
+				JMenuItem item = new JMenuItem(limpio);
+
+				item.addActionListener(e -> {
+					txtDescripcion.setText(limpio);
+					popupSugerencia.setVisible(false);
+					sugerirCategoria();
+				});
+
+				popupSugerencia.add(item);
+			}
+			popupSugerencia.setFocusable(false);
+			popupSugerencia.show(txtDescripcion, 0, txtDescripcion.getHeight());
+			SwingUtilities.invokeLater(() -> {
+				txtDescripcion.requestFocusInWindow();
+			});
+
+			if (texto.length() >= 3) {
+				sugerirCategoria();
+			}
+		});
+
+	}
+
+	private void sugerirCategoria() {
+		String desc = txtDescripcion.getText();
+		CategoriaGasto sugerida = movimientoService.sugerirCategoria(desc);
+		if (sugerida != null) {
+			cbCategoria.setSelectedItem(sugerida);
+		}
+	}
+
+	private String limpiarDescripcion(String s) {
+		if (s == null) {
+			return "";
+		}
+		return s.replaceAll("\\s*\\(.*?\\)$", "");
 	}
 
 	private void simularCuotas() {
