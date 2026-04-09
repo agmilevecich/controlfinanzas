@@ -104,6 +104,8 @@ public class PanelGastos extends JPanel {
 
 	private JPopupMenu popupSugerencia = new JPopupMenu();
 
+	private boolean categoriaManual = false;
+
 	public PanelGastos(CuentaService cuentaService, MovimientoService movimientoService,
 			TarjetaCreditoService tarjetaCreditoService, PanelResumenTarjeta panelResumenTarjeta) {
 
@@ -169,6 +171,12 @@ public class PanelGastos extends JPanel {
 		cbCategoria.insertItemAt(null, 0);
 		cbCategoria.setRenderer(new ComboRendererGenerico<>("Seleccione una categoría", CategoriaGasto::toString));
 		cbCategoria.setSelectedIndex(0);
+		cbCategoria.addActionListener(e -> {
+
+			if (cbCategoria.isPopupVisible()) {
+				categoriaManual = true;
+			}
+		});
 
 		cbCuenta = new JComboBox<>(modelCuenta);
 		cbCuenta.setRenderer(new ComboRendererGenerico<>("Seleccione una cuenta", Cuenta::getNombre));
@@ -295,6 +303,10 @@ public class PanelGastos extends JPanel {
 				return;
 			}
 
+			if (texto.length() >= 3 && !categoriaManual) {
+				sugerirCategoria();
+			}
+
 			List<String> sugerencias = movimientoService.sugerirDescripciones(texto);
 			if (sugerencias == null || sugerencias.isEmpty()) {
 				return;
@@ -307,7 +319,9 @@ public class PanelGastos extends JPanel {
 				item.addActionListener(e -> {
 					txtDescripcion.setText(limpio);
 					popupSugerencia.setVisible(false);
-					sugerirCategoria();
+					if (!categoriaManual) {
+						sugerirCategoria();
+					}
 				});
 
 				popupSugerencia.add(item);
@@ -318,16 +332,13 @@ public class PanelGastos extends JPanel {
 				txtDescripcion.requestFocusInWindow();
 			});
 
-			if (texto.length() >= 3) {
-				sugerirCategoria();
-			}
 		});
 
 	}
 
 	private void sugerirCategoria() {
 		String desc = txtDescripcion.getText();
-		CategoriaGasto sugerida = movimientoService.sugerirCategoria(desc);
+		CategoriaGasto sugerida = movimientoService.sugerirCategoriaAvanzada(desc);
 		if (sugerida != null) {
 			cbCategoria.setSelectedItem(sugerida);
 		}
@@ -443,6 +454,7 @@ public class PanelGastos extends JPanel {
 		cbCategoria.setSelectedIndex(0);
 		cbCuenta.setSelectedIndex(0);
 		cbFormaPago.setSelectedIndex(0);
+		categoriaManual = false;
 	}
 
 	public void cargarGastos() {

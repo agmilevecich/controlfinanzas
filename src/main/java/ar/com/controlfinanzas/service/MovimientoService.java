@@ -19,6 +19,7 @@ import ar.com.controlfinanzas.model.CompraTarjeta;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.FormaPago;
 import ar.com.controlfinanzas.model.Movimiento;
+import ar.com.controlfinanzas.model.ReglaCategoria;
 import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.TarjetaCredito;
 import ar.com.controlfinanzas.model.TipoMovimiento;
@@ -42,9 +43,10 @@ public class MovimientoService {
 				movimiento.setCuenta(null);
 				movimiento.setPendiente(true);
 			}
+
 			if (movimiento.getTipo() == TipoMovimiento.GASTO && movimiento.getFormaPago() != FormaPago.CREDITO
-					&& (movimiento.getCategoria() != CategoriaGasto.AJUSTE
-							|| movimiento.getCategoria() != CategoriaGasto.TRANSFERENCIA)) {
+					&& movimiento.getCategoria() != CategoriaGasto.AJUSTE
+					&& movimiento.getCategoria() != CategoriaGasto.TRANSFERENCIA) {
 
 				Cuenta cuenta = movimiento.getCuenta();
 
@@ -58,19 +60,34 @@ public class MovimientoService {
 					throw new RuntimeException("Saldo insuficiente en la cuenta");
 				}
 			}
-			// ✅ DESPUÉS validar
+
+			// ✅ validar
 			movimiento.validar();
 
 			em.getTransaction().begin();
 
+			em.persist(movimiento);
+
 			if (movimiento.getFormaPago() != FormaPago.CREDITO) {
-				em.persist(movimiento);
 				movimiento.getCuenta().getMovimientos().add(movimiento);
-			} else {
-				em.persist(movimiento);
 			}
 
+			// 🔥 APRENDIZAJE (ACÁ VA)
+			if (movimiento.getTipo() == TipoMovimiento.GASTO && movimiento.getCategoria() != null
+					&& movimiento.getCategoria() != CategoriaGasto.AJUSTE
+					&& movimiento.getCategoria() != CategoriaGasto.TRANSFERENCIA) {
+
+				guardarReglaCategoria(movimiento.getDescripcion(), movimiento.getCategoria(), movimiento.getUsuario());
+			}
 			em.getTransaction().commit();
+
+			// 🔥 APRENDIZAJE (ACÁ VA)
+			if (movimiento.getTipo() == TipoMovimiento.GASTO && movimiento.getCategoria() != null
+					&& movimiento.getCategoria() != CategoriaGasto.AJUSTE
+					&& movimiento.getCategoria() != CategoriaGasto.TRANSFERENCIA) {
+
+				guardarReglaCategoria(movimiento.getDescripcion(), movimiento.getCategoria(), movimiento.getUsuario());
+			}
 
 		} catch (Exception e) {
 			if (em.getTransaction().isActive()) {
@@ -128,6 +145,8 @@ public class MovimientoService {
 
 			em.persist(compra);
 
+			Movimiento movimiento = null;
+
 			for (int i = 1; i <= cuotas; i++) {
 
 				LocalDate fechaCuota = fechaBase.plusMonths(i - 1);
@@ -158,6 +177,15 @@ public class MovimientoService {
 
 				// 🔴 IMPORTANTE: NO usar registrarMovimiento acá
 				em.persist(mov);
+				movimiento = mov;
+			}
+
+			// 🔥 APRENDIZAJE (ACÁ VA)
+			if (movimiento.getTipo() == TipoMovimiento.GASTO && movimiento.getCategoria() != null
+					&& movimiento.getCategoria() != CategoriaGasto.AJUSTE
+					&& movimiento.getCategoria() != CategoriaGasto.TRANSFERENCIA) {
+
+				guardarReglaCategoria(movimiento.getDescripcion(), movimiento.getCategoria(), tarjeta.getUsuario());
 			}
 
 			em.getTransaction().commit();
@@ -669,6 +697,56 @@ public class MovimientoService {
 		return mejor;
 	}
 
+	public CategoriaGasto sugerirCategoriaAvanzada(String descripcion) {
+
+		if (descripcion == null || descripcion.isBlank()) {
+			return null;
+		}
+
+		String texto = limpiarDescripcion(descripcion).toLowerCase();
+
+		// 🔥 1. BUSCAR REGLA
+		ReglaCategoria regla = em.createQuery(
+				"SELECT r FROM ReglaCategoria r WHERE :texto LIKE CONCAT('%', r.palabraClave, '%') AND r.usuario = :usuario",
+				ReglaCategoria.class).setParameter("texto", texto)
+				.setParameter("usuario", SesionUsuario.getUsuarioActual()).setMaxResults(1).getResultStream()
+				.findFirst().orElse(null);
+
+		if (regla != null) {
+			return regla.getCategoria();
+		}
+
+		// 🔁 2. fallback al método anterior (historial)
+		return sugerirCategoriaPorHistorial(texto);
+	}
+
+	public CategoriaGasto sugerirCategoriaPorHistorial(String texto) {
+
+		if (texto == null || texto.isBlank()) {
+			return null;
+		}
+
+		Map<CategoriaGasto, Integer> contador = new HashMap<>();
+
+		for (Movimiento m : listarPorUsuario()) {
+
+			if (m.getCategoria() == null) {
+				continue;
+			}
+
+			String desc = limpiarDescripcion(m.getDescripcion()).toLowerCase();
+
+			// 🔎 coincidencia flexible
+			if (desc.startsWith(texto) || texto.startsWith(desc)) {
+
+				contador.put(m.getCategoria(), contador.getOrDefault(m.getCategoria(), 0) + 1);
+			}
+		}
+
+		// 🎯 devolver la categoría más frecuente
+		return contador.entrySet().stream().max(Map.Entry.comparingByValue()).map(Map.Entry::getKey).orElse(null);
+	}
+
 	public List<String> sugerirDescripciones(String texto) {
 
 		if (texto == null || texto.isBlank()) {
@@ -690,6 +768,31 @@ public class MovimientoService {
 
 		// Si no hay, usamos contains
 		return descripciones.stream().filter(d -> d.toLowerCase().contains(textoLower)).limit(5).toList();
+	}
+
+	private void guardarReglaCategoria(String descripcion, CategoriaGasto categoria, Usuario usuario) {
+
+		String clave = limpiarDescripcion(descripcion).toLowerCase();
+
+		if (clave.length() < 3) {
+			return;
+		}
+
+		ReglaCategoria existente = em
+				.createQuery("SELECT r FROM ReglaCategoria r WHERE r.palabraClave = :clave AND r.usuario = :usuario",
+						ReglaCategoria.class)
+				.setParameter("clave", clave).setParameter("usuario", usuario).getResultStream().findFirst()
+				.orElse(null);
+
+		if (existente == null) {
+			ReglaCategoria r = new ReglaCategoria();
+			r.setPalabraClave(clave);
+			r.setCategoria(categoria);
+			r.setUsuario(usuario);
+			em.persist(r);
+		} else {
+			existente.setCategoria(categoria); // se actualiza si cambió
+		}
 	}
 
 	public BigDecimal calcularPromedioGasto(Integer usuarioId) {

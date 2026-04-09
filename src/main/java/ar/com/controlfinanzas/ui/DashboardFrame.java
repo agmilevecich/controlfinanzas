@@ -111,6 +111,8 @@ public class DashboardFrame extends JFrame {
 		PanelBancos panelBancos = new PanelBancos(bancoService);
 		PanelResumenTarjeta panelResumenTarjeta = new PanelResumenTarjeta(cuentaService, em);
 
+		panelBancos.setActualizar(() -> panelTarjetaCredito.actualizarBancos());
+
 		PanelGastos panelGastos = new PanelGastos(cuentaService, movimientoService, tarjetaCreditoService,
 				panelResumenTarjeta);
 		panelGastos.setActualizaGastos(() -> {

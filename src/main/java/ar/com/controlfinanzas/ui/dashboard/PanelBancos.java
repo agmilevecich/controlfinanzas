@@ -26,6 +26,8 @@ public class PanelBancos extends JPanel {
 
 	private PanelBotones botones = new PanelBotones();
 
+	private Runnable actualizar;
+
 	public PanelBancos(BancoService bancoService) {
 
 		this.usuario = usuario = SesionUsuario.getUsuarioActual();
@@ -50,6 +52,10 @@ public class PanelBancos extends JPanel {
 		cargarBancos();
 	}
 
+	public void setActualizar(Runnable actualizar) {
+		this.actualizar = actualizar;
+	}
+
 	private void crearBanco() {
 
 		String nombre = JOptionPane.showInputDialog(this, "Nombre del banco:");
@@ -61,6 +67,10 @@ public class PanelBancos extends JPanel {
 		bancoService.crearBanco(usuario, nombre);
 
 		cargarBancos();
+
+		if (actualizar != null) {
+			actualizar.run();
+		}
 	}
 
 	private void eliminarBanco() {
