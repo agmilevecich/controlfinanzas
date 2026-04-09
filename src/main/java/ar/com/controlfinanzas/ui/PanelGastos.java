@@ -412,6 +412,13 @@ public class PanelGastos extends JPanel {
 				JOptionPane.showMessageDialog(this, "Debe seleccionar una cuenta");
 				return;
 			}
+
+			boolean recurrente = movimientoService.esGastoRecurrente(descripcion, monto, usuario);
+
+			if (recurrente) {
+				JOptionPane.showMessageDialog(this, "🔁 Este gasto parece una suscripción o gasto recurrente");
+			}
+
 			if (formaPago != FormaPago.CREDITO) {
 
 				Movimiento mov = new Movimiento(LocalDate.now(), descripcion, monto, TipoMovimiento.GASTO);

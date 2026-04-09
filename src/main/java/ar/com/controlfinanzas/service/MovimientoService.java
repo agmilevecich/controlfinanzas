@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.time.temporal.ChronoUnit;
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -795,6 +796,40 @@ public class MovimientoService {
 		}
 	}
 
+	public boolean esGastoRecurrente(String descripcion, BigDecimal monto, Usuario usuario) {
+
+		String desLimpio = limpiarDescripcion(descripcion);
+
+		List<Movimiento> movimientos = listarPorUsuario().stream().filter(m -> m.getTipo() == TipoMovimiento.GASTO)
+				.filter(m -> m.getDescripcion() != null)
+				.filter(m -> limpiarDescripcion(m.getDescripcion()).startsWith(desLimpio)).toList();
+		if (movimientos.size() < 2) {
+			return false;
+		}
+
+		movimientos = movimientos.stream().sorted((a, b) -> a.getFecha().compareTo(b.getFecha())).toList();
+
+		int coincidencias = 0;
+
+		for (int i = 1; i < movimientos.size(); i++) {
+			Movimiento anterior = movimientos.get(i - 1);
+			Movimiento actual = movimientos.get(i);
+
+			long dias = ChronoUnit.DAYS.between(anterior.getFecha(), actual.getFecha());
+			BigDecimal diferenciaMonto = anterior.getMonto().subtract(actual.getMonto().abs());
+
+			boolean mensual = dias >= 25 && dias <= 35;
+			boolean montoSimilar = diferenciaMonto.compareTo(new BigDecimal("200")) < 0;
+
+			if (mensual && montoSimilar) {
+				coincidencias++;
+			}
+		}
+
+		return coincidencias >= 1;
+
+	}
+
 	public BigDecimal calcularPromedioGasto(Integer usuarioId) {
 
 		YearMonth mesActual = YearMonth.now();
@@ -823,4 +858,5 @@ public class MovimientoService {
 
 		return descripcion.replaceAll("\\s*\\([^)]*\\)$", "");
 	}
+
 }
