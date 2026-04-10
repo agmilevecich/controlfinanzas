@@ -124,9 +124,9 @@ public class TarjetaCreditoService {
 			throw new RuntimeException("Debe seleccionar una cuenta");
 		}
 
-		// 🔥 VALIDACIÓN DE SALDO (ANTES DE LA TRANSACCIÓN)
+		// 🔥 VALIDACIÓN DE SALDO
 		BigDecimal saldo = em.createQuery("""
-					    SELECT COALESCE(
+				    SELECT COALESCE(
 				        SUM(
 				            CASE
 				                WHEN m.tipo = :ingreso THEN m.monto
@@ -153,14 +153,15 @@ public class TarjetaCreditoService {
 		for (Movimiento m : movimientos) {
 
 			BigDecimal pagado = m.getMontoPagado() == null ? BigDecimal.ZERO : m.getMontoPagado();
-
 			BigDecimal deudaCuota = m.getRestante();
+
 			if (deudaCuota.compareTo(BigDecimal.ZERO) <= 0) {
 				continue;
 			}
 
 			if (restante.compareTo(deudaCuota) >= 0) {
 
+				// 🔥 paga cuota completa
 				m.setMontoPagado(m.getMonto());
 				m.setPendiente(false);
 
@@ -168,8 +169,8 @@ public class TarjetaCreditoService {
 
 			} else {
 
+				// 🔥 pago parcial
 				m.setMontoPagado(pagado.add(restante));
-
 				restante = BigDecimal.ZERO;
 
 				em.merge(m);
@@ -183,7 +184,23 @@ public class TarjetaCreditoService {
 			}
 		}
 
-		// 🔥 Si sobra dinero → saldo a favor
+		// 🔥 calcular cuánto realmente fue a deuda
+		BigDecimal pagadoReal = montoPago.subtract(restante);
+
+		// 🔥 registrar gasto REAL (solo lo que cancela deuda)
+		if (pagadoReal.compareTo(BigDecimal.ZERO) > 0) {
+
+			Movimiento pago = new Movimiento(LocalDate.now(), "Pago tarjeta " + tarjeta.getNombre(), pagadoReal,
+					TipoMovimiento.GASTO);
+
+			pago.setFormaPago(FormaPago.DEBITO);
+			pago.setCuenta(cuenta);
+			pago.setPendiente(false);
+
+			em.persist(pago);
+		}
+
+		// 🔥 saldo a favor (NO es gasto)
 		if (restante.compareTo(BigDecimal.ZERO) > 0) {
 
 			Movimiento saldoFavor = new Movimiento(LocalDate.now(), "Saldo a favor tarjeta " + tarjeta.getNombre(),
@@ -194,19 +211,6 @@ public class TarjetaCreditoService {
 
 			em.persist(saldoFavor);
 		}
-
-		// 🔥 Movimiento de pago desde la cuenta
-		Movimiento pago = new Movimiento(LocalDate.now(), "Pago tarjeta " + tarjeta.getNombre(), montoPago,
-				TipoMovimiento.GASTO);
-
-		pago.setFormaPago(FormaPago.DEBITO);
-		pago.setCuenta(cuenta);
-		pago.setPendiente(false);
-
-		em.persist(pago);
-
-		// opcional (no es obligatorio si JPA está bien mapeado)
-//		cuenta.getMovimientos().add(pago);
 
 		em.getTransaction().commit();
 	}

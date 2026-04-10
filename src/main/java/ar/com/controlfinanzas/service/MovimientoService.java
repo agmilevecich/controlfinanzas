@@ -40,12 +40,13 @@ public class MovimientoService {
 	public Movimiento registrarMovimiento(Movimiento movimiento) {
 
 		try {
-			// 🔥 PRIMERO ajustar estado
+			// 🔥 SI ES TARJETA → ES DEUDA
 			if (movimiento.getFormaPago() == FormaPago.CREDITO) {
 				movimiento.setCuenta(null);
 				movimiento.setPendiente(true);
 			}
 
+			// 🔥 VALIDAR SALDO SOLO SI NO ES TARJETA
 			if (movimiento.getTipo() == TipoMovimiento.GASTO && movimiento.getFormaPago() != FormaPago.CREDITO
 					&& movimiento.getCategoria() != CategoriaGasto.AJUSTE
 					&& movimiento.getCategoria() != CategoriaGasto.TRANSFERENCIA) {
@@ -63,33 +64,24 @@ public class MovimientoService {
 				}
 			}
 
-			// ✅ validar
 			movimiento.validar();
 
 			em.getTransaction().begin();
-
 			em.persist(movimiento);
 
 			if (movimiento.getFormaPago() != FormaPago.CREDITO) {
 				movimiento.getCuenta().getMovimientos().add(movimiento);
 			}
 
-			// 🔥 APRENDIZAJE (ACÁ VA)
-			if (movimiento.getTipo() == TipoMovimiento.GASTO && movimiento.getCategoria() != null
-					&& movimiento.getCategoria() != CategoriaGasto.AJUSTE
+			// 🔥 APRENDIZAJE (UNA SOLA VEZ)
+			if (movimiento.getTipo() == TipoMovimiento.GASTO && movimiento.getFormaPago() != FormaPago.CREDITO
+					&& movimiento.getCategoria() != null && movimiento.getCategoria() != CategoriaGasto.AJUSTE
 					&& movimiento.getCategoria() != CategoriaGasto.TRANSFERENCIA) {
 
 				guardarReglaCategoria(movimiento.getDescripcion(), movimiento.getCategoria(), movimiento.getUsuario());
 			}
+
 			em.getTransaction().commit();
-
-			// 🔥 APRENDIZAJE (ACÁ VA)
-			if (movimiento.getTipo() == TipoMovimiento.GASTO && movimiento.getCategoria() != null
-					&& movimiento.getCategoria() != CategoriaGasto.AJUSTE
-					&& movimiento.getCategoria() != CategoriaGasto.TRANSFERENCIA) {
-
-				guardarReglaCategoria(movimiento.getDescripcion(), movimiento.getCategoria(), movimiento.getUsuario());
-			}
 
 		} catch (Exception e) {
 			if (em.getTransaction().isActive()) {
@@ -275,15 +267,20 @@ public class MovimientoService {
 
 	public List<Movimiento> listarPorUsuario() {
 		String jpql = """
-				    SELECT m FROM Movimiento m
-				    WHERE m.usuario = :usuario
-				    AND m.tipo = :tipo AND m.categoria != :categoria
-				    ORDER BY m.fecha DESC
+					SELECT m FROM Movimiento m
+					WHERE m.usuario = :usuario
+					AND m.tipo = :tipo
+					AND m.categoria != :categoria
+					AND (
+						m.formaPago IS NULL
+						OR m.formaPago <> :credito
+						OR m.pendiente = false
+					)
 				""";
 
 		return em.createQuery(jpql, Movimiento.class).setParameter("usuario", SesionUsuario.getUsuarioActual())
 				.setParameter("tipo", TipoMovimiento.GASTO).setParameter("categoria", CategoriaGasto.TRANSFERENCIA)
-				.getResultList();
+				.setParameter("credito", FormaPago.CREDITO).getResultList();
 	}
 
 	public BigDecimal obtenerTotalPorUsuario(Integer usuarioId) {
@@ -346,11 +343,13 @@ public class MovimientoService {
 	}
 
 	public BigDecimal calcularTotalHistorico(Integer usuarioId) {
-		return listarPorUsuario().stream().map(m -> m.getMonto()).reduce(BigDecimal.ZERO, BigDecimal::add);
+		return listarPorUsuario().stream().filter(m -> !(m.getFormaPago() == FormaPago.CREDITO && m.isPendiente()))
+				.map(m -> m.getMonto()).reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 
 	public BigDecimal calcularTotalPorMes(Integer usuarioId, YearMonth mes) {
-		return listarPorUsuario().stream().filter(m -> YearMonth.from(m.getFecha()).equals(mes)).map(m -> m.getMonto())
+		return listarPorUsuario().stream().filter(m -> YearMonth.from(m.getFecha()).equals(mes))
+				.filter(m -> !(m.getFormaPago() == FormaPago.CREDITO && m.isPendiente())).map(m -> m.getMonto())
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
 

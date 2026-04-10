@@ -524,6 +524,10 @@ public class PanelGastos extends JPanel {
 		Map<CategoriaGasto, BigDecimal> totales = new HashMap<>();
 		for (Movimiento m : movimientosCache) {
 
+			if (m.isPendiente()) {
+				continue;
+			}
+
 			if (m.getCategoria() == CategoriaGasto.AJUSTE || m.getCategoria() == CategoriaGasto.TRANSFERENCIA) {
 				continue;
 			}
@@ -551,6 +555,10 @@ public class PanelGastos extends JPanel {
 		Map<String, BigDecimal> totales = new TreeMap<>();
 
 		for (Movimiento m : movimientosCache) {
+
+			if (m.isPendiente()) {
+				continue;
+			}
 
 			if (m.getCategoria() == CategoriaGasto.AJUSTE || m.getCategoria() == CategoriaGasto.TRANSFERENCIA) {
 				continue;
