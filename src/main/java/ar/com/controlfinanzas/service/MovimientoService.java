@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -828,6 +829,52 @@ public class MovimientoService {
 
 		return coincidencias >= 1;
 
+	}
+
+	public BigDecimal predecirGastoMesSiguiente(Integer usuarioId) {
+
+		List<Movimiento> movimientos = listarPorUsuario().stream().filter(m -> m.getTipo() == TipoMovimiento.GASTO)
+				.filter(m -> m.getCategoria() != CategoriaGasto.AJUSTE)
+				.filter(m -> m.getCategoria() != CategoriaGasto.TRANSFERENCIA).toList();
+
+		if (movimientos.isEmpty()) {
+			return BigDecimal.ZERO;
+		}
+
+		// agrupar por mes (yyyy-MM)
+		Map<String, BigDecimal> gastosPorMes = new TreeMap<>();
+
+		for (Movimiento m : movimientos) {
+
+			String clave = m.getFecha().getYear() + "-" + String.format("%02d", m.getFecha().getMonthValue());
+
+			gastosPorMes.put(clave, gastosPorMes.getOrDefault(clave, BigDecimal.ZERO).add(m.getMonto()));
+		}
+
+		List<BigDecimal> ultimosMeses = gastosPorMes.values().stream().skip(Math.max(0, gastosPorMes.size() - 3))
+				.toList();
+
+		if (ultimosMeses.isEmpty()) {
+			return BigDecimal.ZERO;
+		}
+
+		// promedio
+		BigDecimal suma = ultimosMeses.stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+
+		BigDecimal promedio = suma.divide(BigDecimal.valueOf(ultimosMeses.size()), 2, RoundingMode.HALF_UP);
+
+		// 🔥 tendencia simple (último vs anterior)
+		if (ultimosMeses.size() >= 2) {
+			BigDecimal ultimo = ultimosMeses.get(ultimosMeses.size() - 1);
+			BigDecimal anterior = ultimosMeses.get(ultimosMeses.size() - 2);
+
+			BigDecimal diferencia = ultimo.subtract(anterior);
+
+			// suavizamos impacto
+			promedio = promedio.add(diferencia.multiply(new BigDecimal("0.5")));
+		}
+
+		return promedio.max(BigDecimal.ZERO);
 	}
 
 	public BigDecimal calcularPromedioGasto(Integer usuarioId) {

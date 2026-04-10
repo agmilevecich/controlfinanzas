@@ -1,6 +1,7 @@
 package ar.com.controlfinanzas.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.GridLayout;
 import java.math.BigDecimal;
 import java.time.YearMonth;
@@ -46,6 +47,7 @@ public class PanelResumenFinanciero extends JPanel {
 	private JLabel lblTotalGastos;
 	private JLabel lblSaldoNeto;
 	private JLabel lblGastosMes;
+	private JLabel lblPrediccion;
 
 	private JPanel panelGraficos;
 
@@ -66,17 +68,19 @@ public class PanelResumenFinanciero extends JPanel {
 
 	private void inicializarComponentes() {
 
-		JPanel panelMetricas = new JPanel(new GridLayout(4, 1));
+		JPanel panelMetricas = new JPanel(new GridLayout(5, 1));
 
 		lblTotalInversiones = new JLabel("Total Inversiones: $0.00", SwingConstants.CENTER);
 		lblTotalGastos = new JLabel("Gastos Históricos: $0.00", SwingConstants.CENTER);
 		lblSaldoNeto = new JLabel("Patrimonio Neto: $0.00", SwingConstants.CENTER);
 		lblGastosMes = new JLabel("Gastos Mes Actual: $0.00", SwingConstants.CENTER);
+		lblPrediccion = new JLabel("Predicción Próxiomo Mes: $0.00", SwingConstants.CENTER);
 
 		panelMetricas.add(lblTotalInversiones);
 		panelMetricas.add(lblTotalGastos);
 		panelMetricas.add(lblSaldoNeto);
 		panelMetricas.add(lblGastosMes);
+		panelMetricas.add(lblPrediccion);
 
 		add(panelMetricas, BorderLayout.NORTH);
 
@@ -99,7 +103,7 @@ public class PanelResumenFinanciero extends JPanel {
 			BigDecimal totalInversiones = inversionService.calcularCapitalTotal(usuario.getUsuarioID());
 			BigDecimal totalGastosHistorico = movimientoService.calcularTotalHistorico(usuario.getUsuarioID());
 			BigDecimal gastosMes = movimientoService.calcularTotalPorMes(usuario.getUsuarioID(), mesActual);
-
+			BigDecimal prediccion = movimientoService.predecirGastoMesSiguiente(usuario.getUsuarioID());
 			if (totalInversiones == null) {
 				totalInversiones = BigDecimal.ZERO;
 			}
@@ -137,6 +141,15 @@ public class PanelResumenFinanciero extends JPanel {
 
 			lblGastosMes.setText("Gastos " + mesActual + ": $"
 					+ NumeroUtils.formatearMonedaARS(NumeroUtils.redondearMoneda(gastosMes)));
+
+			if (prediccion.compareTo(gastosMes) > 0) {
+				lblPrediccion.setForeground(Color.RED);
+			} else {
+				lblPrediccion.setForeground(new Color(0, 128, 0));
+			}
+
+			lblPrediccion.setText("Predicción Próximo Mes: $"
+					+ NumeroUtils.formatearMonedaARS(NumeroUtils.redondearMoneda(prediccion)));
 
 			// ============================
 			// GRÁFICO INVERSIONES POR TIPO
