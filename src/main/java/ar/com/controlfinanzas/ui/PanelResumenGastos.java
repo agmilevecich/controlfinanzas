@@ -92,6 +92,11 @@ public class PanelResumenGastos extends JPanel {
 		List<Movimiento> movimientos = movimientoService.listarPorUsuarioYPeriodo(inicio, fin);
 
 		for (Movimiento m : movimientos) {
+
+			if (m.isPendiente()) {
+				continue;
+			}
+
 			if (m.getCategoria() == CategoriaGasto.AJUSTE || m.getCategoria() == CategoriaGasto.TRANSFERENCIA) {
 				continue;
 			}

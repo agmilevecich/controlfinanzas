@@ -198,6 +198,11 @@ public class PanelResumenTarjeta extends JPanel {
 
 		List<Cuenta> cuentas = cuentaService.getCuentasUsuario(usuario);
 
+		if (cuentas.isEmpty()) {
+			JOptionPane.showMessageDialog(null, "No hay cuentas para seleccionar");
+			return;
+		}
+
 		Cuenta cuenta = (Cuenta) JOptionPane.showInputDialog(this, "Seleccione una cuenta:", "Cuenta",
 				JOptionPane.QUESTION_MESSAGE, null, cuentas.toArray(), cuentas.get(0));
 
