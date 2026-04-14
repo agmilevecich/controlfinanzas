@@ -283,6 +283,22 @@ public class MovimientoService {
 				.setParameter("credito", FormaPago.CREDITO).getResultList();
 	}
 
+	public List<Movimiento> listarGastosReales() {
+		String jpql = """
+				    SELECT m FROM Movimiento m
+				    WHERE m.tipo = :tipo
+				    AND (m.categoria IS NULL OR m.categoria != :categoria)
+				    AND (m.formaPago IS NULL OR m.formaPago <> :credito)
+				    AND m.cuenta.usuario.usuarioID = :usuarioId
+				    ORDER BY m.fecha DESC
+				""";
+
+		return em.createQuery(jpql, Movimiento.class)
+				.setParameter("usuarioId", SesionUsuario.getUsuarioActual().getUsuarioID())
+				.setParameter("tipo", TipoMovimiento.GASTO).setParameter("categoria", CategoriaGasto.TRANSFERENCIA)
+				.setParameter("credito", FormaPago.CREDITO).getResultList();
+	}
+
 	public BigDecimal obtenerTotalPorUsuario(Integer usuarioId) {
 		return em
 				.createQuery("SELECT COALESCE(SUM(g.monto), 0) " + "FROM movimientos m "

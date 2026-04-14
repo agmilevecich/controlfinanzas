@@ -466,7 +466,7 @@ public class PanelGastos extends JPanel {
 
 	public void cargarGastos() {
 
-		movimientosCache = movimientoService.listarPorUsuario();
+		movimientosCache = movimientoService.listarGastosReales();
 
 		tableModel.setRowCount(0);
 
@@ -522,6 +522,7 @@ public class PanelGastos extends JPanel {
 
 		DefaultPieDataset dataset = new DefaultPieDataset();
 		Map<CategoriaGasto, BigDecimal> totales = new HashMap<>();
+		movimientosCache = movimientoService.listarPorUsuario();
 		for (Movimiento m : movimientosCache) {
 
 			if (m.isPendiente()) {

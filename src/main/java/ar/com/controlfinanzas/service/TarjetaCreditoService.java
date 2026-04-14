@@ -10,6 +10,7 @@ import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.FormaPago;
 import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.model.ResumenTarjeta;
+import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.TarjetaCredito;
 import ar.com.controlfinanzas.model.TipoMovimiento;
 import ar.com.controlfinanzas.repository.TarjetaCreditoRepository;
@@ -193,11 +194,13 @@ public class TarjetaCreditoService {
 			Movimiento pago = new Movimiento(LocalDate.now(), "Pago tarjeta " + tarjeta.getNombre(), pagadoReal,
 					TipoMovimiento.GASTO);
 
+			pago.setUsuario(SesionUsuario.getUsuarioActual());
 			pago.setFormaPago(FormaPago.DEBITO);
 			pago.setCuenta(cuenta);
 			pago.setPendiente(false);
 
 			em.persist(pago);
+			cuenta.getMovimientos().add(pago);
 		}
 
 		// 🔥 saldo a favor (NO es gasto)
@@ -206,6 +209,7 @@ public class TarjetaCreditoService {
 			Movimiento saldoFavor = new Movimiento(LocalDate.now(), "Saldo a favor tarjeta " + tarjeta.getNombre(),
 					restante, TipoMovimiento.INGRESO);
 
+			saldoFavor.setUsuario(SesionUsuario.getUsuarioActual());
 			saldoFavor.setTarjeta(tarjeta);
 			saldoFavor.setPendiente(false);
 
