@@ -20,6 +20,7 @@ import ar.com.controlfinanzas.model.CategoriaGasto;
 import ar.com.controlfinanzas.model.CompraTarjeta;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.FormaPago;
+import ar.com.controlfinanzas.model.ModoGasto;
 import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.model.ReglaCategoria;
 import ar.com.controlfinanzas.model.SesionUsuario;
@@ -275,7 +276,7 @@ public class MovimientoService {
 						m.formaPago IS NULL
 						OR m.formaPago <> :credito
 						OR m.pendiente = false
-					)
+					) ORDER BY m.cuenta
 				""";
 
 		return em.createQuery(jpql, Movimiento.class).setParameter("usuario", SesionUsuario.getUsuarioActual())
@@ -283,20 +284,26 @@ public class MovimientoService {
 				.setParameter("credito", FormaPago.CREDITO).getResultList();
 	}
 
-	public List<Movimiento> listarGastosReales() {
+	private List<Movimiento> listarGastosReales() {
 		String jpql = """
 				    SELECT m FROM Movimiento m
 				    WHERE m.tipo = :tipo
 				    AND (m.categoria IS NULL OR m.categoria != :categoria)
 				    AND (m.formaPago IS NULL OR m.formaPago <> :credito)
 				    AND m.cuenta.usuario.usuarioID = :usuarioId
-				    ORDER BY m.fecha DESC
+				    ORDER BY m.fecha, m.monto DESC
 				""";
 
 		return em.createQuery(jpql, Movimiento.class)
 				.setParameter("usuarioId", SesionUsuario.getUsuarioActual().getUsuarioID())
 				.setParameter("tipo", TipoMovimiento.GASTO).setParameter("categoria", CategoriaGasto.TRANSFERENCIA)
 				.setParameter("credito", FormaPago.CREDITO).getResultList();
+	}
+
+	public List<Movimiento> listarGastosPorModo(ModoGasto modo) {
+
+		return (modo == ModoGasto.REAL) ? listarGastosReales() : listarPorUsuario();
+
 	}
 
 	public BigDecimal obtenerTotalPorUsuario(Integer usuarioId) {

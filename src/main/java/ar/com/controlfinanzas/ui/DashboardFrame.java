@@ -120,8 +120,8 @@ public class DashboardFrame extends JFrame {
 		PanelGastos panelGastos = new PanelGastos(cuentaService, movimientoService, tarjetaCreditoService,
 				panelResumenTarjeta);
 		panelGastos.setActualizaGastos(() -> {
-			panelMovimientos.cargarMovimientos();
 			panelCuentas.cargarCuentas();
+			panelCuentasMovimientos.refrescar();
 			panelResumen.actualizarResumen();
 			panelResumenGastos.refrescar(SesionUsuario.getUsuarioActual().getUsuarioID());
 
@@ -164,7 +164,7 @@ public class DashboardFrame extends JFrame {
 		});
 
 		panelResumenTarjeta.setActualizar(() -> {
-			panelMovimientos.cargarMovimientos();
+			panelCuentasMovimientos.refrescar();
 		});
 
 		panelMovimientos.setActualizarPanelCuentasCallback(() -> {

@@ -332,4 +332,5 @@ public class PanelCuentasNuevo extends JPanel {
 	public void setOnRegistroGastos(Consumer<Cuenta> listener) {
 		this.onRegistroGastos = listener;
 	}
+
 }

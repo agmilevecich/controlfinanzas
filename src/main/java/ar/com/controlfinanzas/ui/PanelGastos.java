@@ -1,6 +1,7 @@
 package ar.com.controlfinanzas.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -31,6 +32,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.JToggleButton;
 import javax.swing.SwingUtilities;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -45,6 +47,7 @@ import org.jfree.data.general.DefaultPieDataset;
 import ar.com.controlfinanzas.model.CategoriaGasto;
 import ar.com.controlfinanzas.model.Cuenta;
 import ar.com.controlfinanzas.model.FormaPago;
+import ar.com.controlfinanzas.model.ModoGasto;
 import ar.com.controlfinanzas.model.Movimiento;
 import ar.com.controlfinanzas.model.SesionUsuario;
 import ar.com.controlfinanzas.model.TarjetaCredito;
@@ -83,12 +86,15 @@ public class PanelGastos extends JPanel {
 	private JPanel panelGraficos;
 	private JSplitPane split;
 
+	private JToggleButton tgbGasto;
+	private ModoGasto modoActual = ModoGasto.REAL;
+
 	private final CuentaService cuentaService;
 	private final MovimientoService movimientoService;
 
 	private Usuario usuario;
 
-	private List<Movimiento> movimientosCache;
+	private List<Movimiento> movimientosActuales;
 
 	private PanelBotones botones = new PanelBotones();
 	private DefaultComboBoxModel<Cuenta> modelCuenta = new DefaultComboBoxModel<>();
@@ -199,14 +205,35 @@ public class PanelGastos extends JPanel {
 			mostrarCamposCredito(esCredito);
 		});
 
+		tgbGasto = new JToggleButton();
+		tgbGasto.setText("Real");
+		tgbGasto.setSelected(true);
+		tgbGasto.setPreferredSize(new Dimension(120, 25));
+		tgbGasto.addActionListener((e) -> {
+			tgbGasto.setText((tgbGasto.isSelected()) ? "Real" : "Consumo");
+			modoActual = (tgbGasto.isSelected() ? ModoGasto.REAL : ModoGasto.CONSUMO);
+			cargarGastos();
+			actualizarGraficos();
+		});
+
 		gbc.gridx = 0;
 		gbc.gridy = 0;
 		panelFormulario.add(new JLabel("Descripción:"), gbc);
 		gbc.gridx = 1;
 		panelFormulario.add(txtDescripcion, gbc);
 
+		gbc.gridx = 2;
+		gbc.gridy = 0;
+		gbc.weightx = 1.0;
+		gbc.weighty = 1.0;
+		gbc.fill = GridBagConstraints.NONE;
+		gbc.anchor = GridBagConstraints.EAST;
+		panelFormulario.add(tgbGasto, gbc);
+
 		gbc.gridx = 0;
 		gbc.gridy = 1;
+		gbc.fill = GridBagConstraints.HORIZONTAL;
+		gbc.anchor = GridBagConstraints.WEST;
 		panelFormulario.add(new JLabel("Monto:"), gbc);
 		gbc.gridx = 1;
 		panelFormulario.add(txtMonto, gbc);
@@ -260,7 +287,7 @@ public class PanelGastos extends JPanel {
 
 		gbc.gridx = 0;
 		gbc.gridy = 10;
-		gbc.gridwidth = 2;
+		gbc.gridwidth = 3;
 		panelFormulario.add(botones, gbc);
 
 		tableModel = new DefaultTableModel(
@@ -280,6 +307,7 @@ public class PanelGastos extends JPanel {
 
 		panelGraficos = new JPanel();
 		panelGraficos.setLayout(new BoxLayout(panelGraficos, BoxLayout.Y_AXIS));
+		panelGraficos.setBackground(Color.WHITE);
 		JScrollPane scrollGrafico = new JScrollPane(panelGraficos);
 
 		split = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, panelTabla, scrollGrafico);
@@ -466,11 +494,11 @@ public class PanelGastos extends JPanel {
 
 	public void cargarGastos() {
 
-		movimientosCache = movimientoService.listarGastosReales();
+		movimientosActuales = movimientoService.listarGastosPorModo(modoActual);
 
 		tableModel.setRowCount(0);
 
-		for (Movimiento m : movimientosCache) {
+		for (Movimiento m : movimientosActuales) {
 
 			if (m.getCategoria() == CategoriaGasto.AJUSTE || m.getCategoria() == CategoriaGasto.TRANSFERENCIA) {
 				continue;
@@ -516,17 +544,21 @@ public class PanelGastos extends JPanel {
 	}
 
 	private void actualizarGraficoPie() {
-		if (movimientosCache == null || movimientosCache.isEmpty()) {
+		if (movimientosActuales == null || movimientosActuales.isEmpty()) {
 			return;
 		}
 
 		DefaultPieDataset dataset = new DefaultPieDataset();
 		Map<CategoriaGasto, BigDecimal> totales = new HashMap<>();
-		movimientosCache = movimientoService.listarPorUsuario();
-		for (Movimiento m : movimientosCache) {
+		movimientosActuales = movimientoService.listarGastosPorModo(modoActual);
+		for (Movimiento m : movimientosActuales) {
 
 			if (m.isPendiente()) {
 				continue;
+			}
+
+			if (m.getCategoria() == null || m.getMonto() == null) {
+				continue; // 🔥 evita el error Null key
 			}
 
 			if (m.getCategoria() == CategoriaGasto.AJUSTE || m.getCategoria() == CategoriaGasto.TRANSFERENCIA) {
@@ -538,7 +570,9 @@ public class PanelGastos extends JPanel {
 		for (Map.Entry<CategoriaGasto, BigDecimal> e : totales.entrySet()) {
 			dataset.setValue(e.getKey(), e.getValue());
 		}
-		JFreeChart chart = ChartFactory.createPieChart("Gastos por Categoría", dataset, true, true, false);
+		JFreeChart chart = ChartFactory.createPieChart(
+				"Gastos por Categoría\n" + ((modoActual == ModoGasto.REAL) ? "Real" : "Consumo"), dataset, true, true,
+				false);
 		ChartUtils.aplicarEstiloBasico(chart);
 
 		ChartPanel chartPanel = new ChartPanel(chart);
@@ -547,7 +581,7 @@ public class PanelGastos extends JPanel {
 	}
 
 	private void actualizarGraficoBarras() {
-		if (movimientosCache == null || movimientosCache.isEmpty()) {
+		if (movimientosActuales == null || movimientosActuales.isEmpty()) {
 			return;
 		}
 
@@ -555,7 +589,7 @@ public class PanelGastos extends JPanel {
 
 		Map<String, BigDecimal> totales = new TreeMap<>();
 
-		for (Movimiento m : movimientosCache) {
+		for (Movimiento m : movimientosActuales) {
 
 			if (m.isPendiente()) {
 				continue;
