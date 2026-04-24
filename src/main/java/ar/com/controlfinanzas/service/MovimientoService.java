@@ -300,9 +300,21 @@ public class MovimientoService {
 				.setParameter("credito", FormaPago.CREDITO).getResultList();
 	}
 
+	public List<Movimiento> listarGastosConsumo() {
+		return em.createQuery("""
+				    SELECT m FROM Movimiento m
+				    WHERE m.tipo = :tipo
+				    AND m.usuario = :usuario
+				    AND m.categoria != :categoria
+				    ORDER BY m.fecha, m.monto DESC
+				""", Movimiento.class).setParameter("tipo", TipoMovimiento.GASTO)
+				.setParameter("usuario", SesionUsuario.getUsuarioActual())
+				.setParameter("categoria", CategoriaGasto.TRANSFERENCIA).getResultList();
+	}
+
 	public List<Movimiento> listarGastosPorModo(ModoGasto modo) {
 
-		return (modo == ModoGasto.REAL) ? listarGastosReales() : listarPorUsuario();
+		return (modo == ModoGasto.REAL) ? listarGastosReales() : listarGastosConsumo();
 
 	}
 
@@ -480,6 +492,26 @@ public class MovimientoService {
 
 		return movimientos.stream().map(Movimiento::getMonto).reduce(BigDecimal.ZERO, BigDecimal::add);
 
+	}
+
+	public Map<String, BigDecimal> obtenerTotalesPorMes(ModoGasto modo) {
+
+		List<Movimiento> movimientos = listarGastosPorModo(modo);
+
+		Map<String, BigDecimal> totales = new TreeMap<>();
+
+		for (Movimiento m : movimientos) {
+
+			if (m.getFecha() == null || m.getMonto() == null) {
+				continue;
+			}
+
+			String mes = m.getFecha().getYear() + "-" + String.format("%02d", m.getFecha().getMonthValue());
+
+			totales.merge(mes, m.getMonto(), BigDecimal::add);
+		}
+
+		return totales;
 	}
 
 	public List<Object[]> obtenerDeudaPorMes() {

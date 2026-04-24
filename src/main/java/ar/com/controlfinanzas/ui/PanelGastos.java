@@ -18,6 +18,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import javax.swing.BoxLayout;
 import javax.swing.DefaultComboBoxModel;
@@ -539,6 +540,7 @@ public class PanelGastos extends JPanel {
 		actualizarGraficoBarras();
 		actualizarGraficoDeudaPorMes();
 		actualizarGraficoSaldo();
+		actualizarGraficoEvolucion();
 		panelGraficos.revalidate();
 		panelGraficos.repaint();
 	}
@@ -627,6 +629,46 @@ public class PanelGastos extends JPanel {
 		chartPanel.setPreferredSize(new Dimension(400, 300));
 
 		panelGraficos.add(chartPanel);
+	}
+
+	private void actualizarGraficoEvolucion() {
+		ChartPanel chartPanel = new ChartPanel(crearGraficoEvolucion());
+		chartPanel.setPreferredSize(new Dimension(400, 300));
+		panelGraficos.add(chartPanel);
+	}
+
+	private JFreeChart crearGraficoEvolucion() {
+
+		DefaultCategoryDataset dataset = crearDatasetEvolucion();
+
+		JFreeChart chart = ChartFactory.createLineChart("Evolución mensual", "Mes", "Monto", dataset);
+
+		ChartUtils.aplicarEstiloBasico(chart);
+
+		return chart;
+	}
+
+	private DefaultCategoryDataset crearDatasetEvolucion() {
+
+		DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+
+		Map<String, BigDecimal> reales = movimientoService.obtenerTotalesPorMes(ModoGasto.REAL);
+		Map<String, BigDecimal> consumos = movimientoService.obtenerTotalesPorMes(ModoGasto.CONSUMO);
+
+		Set<String> meses = new TreeSet<>();
+		meses.addAll(reales.keySet());
+		meses.addAll(consumos.keySet());
+
+		for (String mes : meses) {
+
+			BigDecimal real = reales.getOrDefault(mes, BigDecimal.ZERO);
+			BigDecimal consumo = consumos.getOrDefault(mes, BigDecimal.ZERO);
+
+			dataset.addValue(real, "Gastos reales", mes);
+			dataset.addValue(consumo, "Consumos", mes);
+		}
+
+		return dataset;
 	}
 
 	public void setActualizaGastos(Runnable actualizaGastos) {
