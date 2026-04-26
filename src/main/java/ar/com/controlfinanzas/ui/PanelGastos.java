@@ -543,6 +543,10 @@ public class PanelGastos extends JPanel {
 		actualizarGraficoEvolucion();
 		panelGraficos.revalidate();
 		panelGraficos.repaint();
+
+		if (isShowing()) {
+			mostrarAlertaFinanciera();
+		}
 	}
 
 	private void actualizarGraficoPie() {
@@ -759,6 +763,19 @@ public class PanelGastos extends JPanel {
 		panel.setPreferredSize(new Dimension(500, 300));
 
 		panelGraficos.add(panel);
+	}
+
+	private void mostrarAlertaFinanciera() {
+
+		BigDecimal diferencia = movimientoService.calcularDiferenciaConsumoVsReal();
+
+		if (diferencia.compareTo(BigDecimal.ZERO) > 0) {
+
+			JOptionPane.showMessageDialog(this,
+					"⚠️ Estás gastando más de lo que pagás\n\n" + "Diferencia financiada: $" + diferencia,
+					"Alerta financiera", JOptionPane.WARNING_MESSAGE);
+
+		}
 	}
 
 	public void aplicarContexto(GastoContexto contexto) {

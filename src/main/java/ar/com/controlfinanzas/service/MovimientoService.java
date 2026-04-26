@@ -318,6 +318,41 @@ public class MovimientoService {
 
 	}
 
+	public BigDecimal calcularDiferenciaMesActual() {
+
+		YearMonth mesActual = YearMonth.now();
+
+		List<Movimiento> movimientos = listarPorUsuario();
+
+		BigDecimal totalReal = BigDecimal.ZERO;
+		BigDecimal totalConsumo = BigDecimal.ZERO;
+
+		for (Movimiento m : movimientos) {
+
+			if (m.getFecha() == null || m.getMonto() == null) {
+				continue;
+			}
+
+			if (!YearMonth.from(m.getFecha()).equals(mesActual)) {
+				continue;
+			}
+
+			if (m.getCategoria() == CategoriaGasto.TRANSFERENCIA) {
+				continue;
+			}
+
+			// 🔹 consumo = TODO
+			totalConsumo = totalConsumo.add(m.getMonto());
+
+			// 🔹 real = lo que efectivamente salió de cuenta
+			if (m.getFormaPago() != FormaPago.CREDITO) {
+				totalReal = totalReal.add(m.getMonto());
+			}
+		}
+
+		return totalConsumo.subtract(totalReal);
+	}
+
 	public BigDecimal obtenerTotalPorUsuario(Integer usuarioId) {
 		return em
 				.createQuery("SELECT COALESCE(SUM(g.monto), 0) " + "FROM movimientos m "
@@ -512,6 +547,18 @@ public class MovimientoService {
 		}
 
 		return totales;
+	}
+
+	public BigDecimal calcularDiferenciaConsumoVsReal() {
+
+		Map<String, BigDecimal> reales = obtenerTotalesPorMes(ModoGasto.REAL);
+		Map<String, BigDecimal> consumos = obtenerTotalesPorMes(ModoGasto.CONSUMO);
+
+		BigDecimal totalReal = reales.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+
+		BigDecimal totalConsumo = consumos.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+
+		return totalConsumo.subtract(totalReal);
 	}
 
 	public List<Object[]> obtenerDeudaPorMes() {

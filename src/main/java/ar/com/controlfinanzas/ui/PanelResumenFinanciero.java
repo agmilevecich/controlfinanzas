@@ -13,6 +13,7 @@ import java.util.Map;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.SwingConstants;
+import javax.swing.border.MatteBorder;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -48,6 +49,7 @@ public class PanelResumenFinanciero extends JPanel {
 	private JLabel lblSaldoNeto;
 	private JLabel lblGastosMes;
 	private JLabel lblPrediccion;
+	private JLabel lblAlertaFinanciera;
 
 	private JPanel panelGraficos;
 
@@ -68,19 +70,23 @@ public class PanelResumenFinanciero extends JPanel {
 
 	private void inicializarComponentes() {
 
-		JPanel panelMetricas = new JPanel(new GridLayout(5, 1));
+		JPanel panelMetricas = new JPanel(new GridLayout(6, 1));
 
 		lblTotalInversiones = new JLabel("Total Inversiones: $0.00", SwingConstants.CENTER);
 		lblTotalGastos = new JLabel("Gastos Históricos: $0.00", SwingConstants.CENTER);
 		lblSaldoNeto = new JLabel("Patrimonio Neto: $0.00", SwingConstants.CENTER);
 		lblGastosMes = new JLabel("Gastos Mes Actual: $0.00", SwingConstants.CENTER);
 		lblPrediccion = new JLabel("Predicción Próxiomo Mes: $0.00", SwingConstants.CENTER);
+		lblAlertaFinanciera = new JLabel("Estado Financiero: -", SwingConstants.CENTER);
 
+		panelMetricas.setBackground(Color.WHITE);
+		panelMetricas.setBorder(new MatteBorder(0, 0, 1, 0, Color.BLACK));
 		panelMetricas.add(lblTotalInversiones);
 		panelMetricas.add(lblTotalGastos);
 		panelMetricas.add(lblSaldoNeto);
 		panelMetricas.add(lblGastosMes);
 		panelMetricas.add(lblPrediccion);
+		panelMetricas.add(lblAlertaFinanciera);
 
 		add(panelMetricas, BorderLayout.NORTH);
 
@@ -128,6 +134,8 @@ public class PanelResumenFinanciero extends JPanel {
 			BigDecimal supermercadoMes = movimientoService.calcularTotalesPorCategoriaYMes(CategoriaGasto.SUPERMERCADO,
 					mesActual);
 
+			BigDecimal diferencia = movimientoService.calcularDiferenciaMesActual();
+
 			LinkedHashMap<CategoriaGasto, BigDecimal> ranking = movimientoService.rankingCategoriasPorMes(mesActual);
 
 			lblTotalInversiones.setText("Total Inversiones: $"
@@ -150,6 +158,21 @@ public class PanelResumenFinanciero extends JPanel {
 
 			lblPrediccion.setText("Predicción Próximo Mes: $"
 					+ NumeroUtils.formatearMonedaARS(NumeroUtils.redondearMoneda(prediccion)));
+
+			if (diferencia.compareTo(BigDecimal.ZERO) > 0) {
+
+				if (diferencia.compareTo(new BigDecimal("50000")) > 0) {
+					lblAlertaFinanciera.setForeground(Color.RED);
+					lblAlertaFinanciera.setText("🔴 Alto nivel de financiación: $" + diferencia);
+				} else {
+					lblAlertaFinanciera.setForeground(Color.ORANGE);
+					lblAlertaFinanciera.setText("🟠 Estás financiando $" + diferencia);
+				}
+
+			} else {
+				lblAlertaFinanciera.setForeground(new Color(0, 128, 0));
+				lblAlertaFinanciera.setText("🟢 Finanzas saludables este mes");
+			}
 
 			// ============================
 			// GRÁFICO INVERSIONES POR TIPO
